@@ -1,3 +1,11 @@
+ELECTRIFICATION_OPTIONS = ['grid', 'mg', 'shs']
+SENARII = ['bau', 'se4all', 'prog']
+
+MIN_TIER_LEVEL = 3
+MIN_RATED_CAPACITY = {3: 200, 4: 800, 5: 2000}  # index is TIER level [W]
+MIN_ANNUAL_CONSUMPTION = {3: 365, 4: 1250, 5: 3000}  # index is TIER level [kWh/a]
+
+
 def map_gdp_class(gdp_per_capita):
     """Assign an index value to differentiate gdp per capita"""
     answer = 1
@@ -45,4 +53,17 @@ def map_weak_grid_class(weak_grid_idx):
         answer = 0.5
     if weak_grid_idx <= 9:
         answer = 0
+    return answer
+
+
+def map_tier_yearly_consumption(
+        yearly_consumption,
+        electrification_option_share,
+        tier_level=MIN_TIER_LEVEL
+):
+    """Assign yearly consumption adjusted for tier level"""
+    if yearly_consumption < MIN_ANNUAL_CONSUMPTION[tier_level]:
+        answer = MIN_ANNUAL_CONSUMPTION[tier_level] * electrification_option_share
+    else:
+        answer = yearly_consumption * electrification_option_share
     return answer
