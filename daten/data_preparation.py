@@ -1,12 +1,39 @@
 import numpy as np
+import pandas as pd
 
-ELECTRIFICATION_OPTIONS = ['grid', 'mg', 'shs']
-SENARII = ['bau', 'se4all', 'prog']
+
+GRID = 'grid'
+MG = 'mg'
+SHS = 'shs'
+
+ELECTRIFICATION_OPTIONS = [GRID, MG, SHS]
+BAU_SENARIO = 'bau'
+SE4ALL_SHIFT_SENARIO = 'se4all_shift'
+PROG_SENARIO = 'prog'
+SENARII = [BAU_SENARIO, SE4ALL_SHIFT_SENARIO, PROG_SENARIO]
 
 MIN_TIER_LEVEL = 3
 MIN_RATED_CAPACITY = {3: 200, 4: 800, 5: 2000}  # index is TIER level [W]
 MIN_ANNUAL_CONSUMPTION = {3: 365, 4: 1250, 5: 3000}  # index is TIER level [kWh/a]
 RATIO_CAP_CONSUMPTION = {}
+
+# drives for the socio-economic model
+MENTI = pd.DataFrame({MG: [3, 13. / 6, 19. / 6, 3.25, 11. / 3],
+                      SHS: [23. / 12, 4.5, 37. / 12, 17. / 6, 41. / 12],
+                      'labels': [
+                          'high_gdp',
+                          'high_mobile_money',
+                          'high_ease_doing_business',
+                          'low_corruption',
+                          'high_grid_weakness'
+                      ]
+                      })
+MENTI = MENTI.set_index('labels')
+
+WEIGHT_GRID = 0.8  # $RT_shift_factors.$O$2
+WEIGHT = 0.2  # $RT_shift_factors.$P$2
+RISE_INDICES = ['rise_%s' % opt for opt in ELECTRIFICATION_OPTIONS]
+SHIFT_MENTI = ['shift_menti_mg', 'shift_menti_shs']
 
 
 def _slope_capacity_vs_yearly_consumption(tier_level):
