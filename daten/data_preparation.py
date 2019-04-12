@@ -136,9 +136,9 @@ def map_corruption_class(corruption_idx):
 def map_weak_grid_class(weak_grid_idx):
     """Assign an index value to differentiate weak grid"""
     answer = 1
-    if weak_grid_idx <= 4.5:
-        answer = 0.5
     if weak_grid_idx <= 9:
+        answer = 0.5
+    if weak_grid_idx <= 4.5:
         answer = 0
     return answer
 
