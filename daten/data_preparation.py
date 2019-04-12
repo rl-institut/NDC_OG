@@ -118,7 +118,7 @@ def map_ease_doing_business_class(business_ease):
     answer = 1
     if business_ease <= 164:
         answer = 0.5
-    if business_ease <= 131:
+    if business_ease < 131:
         answer = 0
     return answer
 
@@ -128,7 +128,7 @@ def map_corruption_class(corruption_idx):
     answer = 1
     if corruption_idx <= 33:
         answer = 0.5
-    if corruption_idx <= 26:
+    if corruption_idx < 26:
         answer = 0
     return answer
 
@@ -138,7 +138,7 @@ def map_weak_grid_class(weak_grid_idx):
     answer = 1
     if weak_grid_idx <= 9:
         answer = 0.5
-    if weak_grid_idx <= 4.5:
+    if weak_grid_idx < 4.5:
         answer = 0
     return answer
 
