@@ -246,3 +246,27 @@ def prepare_endogenous_variables(input_df, shs_sales_volumes=None):
 
     return df
 
+
+def prepare_bau_data(input_df, bau_data=None):
+
+    if bau_data is None:
+        bau_data = BAU_DATA
+    df = input_df.copy()
+
+    df['iea_regional_electricity_coverage'] = df['region'].map(
+        lambda region: bau_data.loc[region]['iea_regional_electricity_coverage'])
+    df.loc[df.country_iso == 'IND', 'iea_regional_electricity_coverage'] = 1
+    df.loc[df.country_iso == 'IDN', 'iea_regional_electricity_coverage'] = 1
+    df.loc[df.country_iso == 'YEM', 'iea_regional_electricity_coverage'] = 0.95
+
+    df['bau_pop_newly_electrified'] = \
+        df.iea_regional_electricity_coverage \
+        * df.pop_newly_electrified_2030
+
+    for opt in ELECTRIFICATION_OPTIONS:
+        # assign the regional electricity share for each options
+        df['bau_pop_%s_share' % opt] = df['region'].map(
+            lambda region: bau_data.loc[region]['%s_share' % opt])
+
+    return df
+
