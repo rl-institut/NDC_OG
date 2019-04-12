@@ -197,3 +197,52 @@ def shs_av_power(power_cat, shs_power_categories=None):
     if shs_power_categories is None:
         shs_power_categories = SHS_POWER_CATEGORIES
     return shs_power_categories.loc[power_cat, 'power_av']
+
+
+def prepare_endogenous_variables(input_df, shs_sales_volumes=None):
+
+    if shs_sales_volumes is None:
+        shs_sales_volumes = SHS_SALES_VOLUMES
+    df = input_df.copy()
+
+    # compute the grid and mg yearly consumption adjusted for tier level
+    for opt in [GRID, MG]:
+        df['hh_%s_tier_yearly_electricity_consumption' % opt] = \
+            np.vectorize(map_tier_yearly_consumption)(
+                df.hh_yearly_electricity_consumption,
+                df['hh_%s_share' % opt]
+            )
+
+    df['shs_unit_av_capacity'] = df.region.map(
+        lambda region: shs_sales_volumes.loc[region]['weighted_tot_5-7 [W]']
+    )
+
+    opt = GRID
+    for tier_level in [5, 4]:
+        df.loc[
+            df.hh_yearly_electricity_consumption <= MIN_ANNUAL_CONSUMPTION[tier_level],
+            'cap_sn2_%s_tier_up' % opt] = MIN_RATED_CAPACITY[tier_level] / 1000
+
+    opt = MG
+    df['cap_sn2_%s_tier_up' % opt] = df.cap_sn2_grid_tier_up * df.hh_mg_share
+
+    opt = SHS
+    df['cap_sn2_%s_tier_up' % opt] = df.shs_unit_av_capacity.map(
+        lambda shs_cap: shs_av_power(6) if shs_cap <= shs_av_power(5) else shs_av_power(7)
+    )
+
+    # peak demand
+    for opt in [GRID, MG]:
+        df['hh_%s_tier_peak_demand' % opt] = \
+            df['hh_%s_tier_yearly_electricity_consumption' % opt].map(
+                get_peak_capacity_from_yearly_consumption,
+                na_action='ignore'
+            )
+
+    df['pop_rel_growth'] = df.pop_2030 / df.pop_2017
+    df['pop_dark_2017'] = df.pop_2017 * df.dark_rate
+    df['pop_newly_electrified_2030'] = df.pop_rel_growth * df.pop_dark_2017
+    df['pop_electrified_2017'] = df.electrification_rate * df.pop_2017
+
+    return df
+
