@@ -154,3 +154,46 @@ def map_tier_yearly_consumption(
     else:
         answer = yearly_consumption * electrification_option_share
     return answer
+
+
+def prepare_shs_power_and_sales_volumes():
+    shs_sales_volumes = pd.read_csv('daten/shs_sales_volumes.csv', comment='#')
+    # compute the average of the product categories 5 to 7
+    shs_sales_volumes['tot_5-7'] = shs_sales_volumes[['5', '6', '7']].sum(axis=1)
+
+    shs_power_categories = pd.read_csv('daten/shs_power_per_product_categories.csv', comment='#')
+
+    # compute the average power for each category
+    shs_power_categories['power_av'] = shs_power_categories[
+        ['power_low', 'power_high']].mean(axis=1)
+
+    # select only the average power for the product categories 5 to 7
+    cat_power_av_5_7 = shs_power_categories['power_av'].loc[
+        shs_power_categories.category >= 5].values
+    # compute the average power per region (multiply the number units sold per product
+    # categories by the average power of the respective category)
+    power_av_5_7 = shs_sales_volumes[['5', '6', '7']].values * cat_power_av_5_7
+    # compute the average unit power per region (divide the sum over the
+    # categories by the total unit sold)
+    shs_sales_volumes['weighted_tot_5-7 [W]'] = \
+        power_av_5_7.sum(axis=1) \
+        / shs_sales_volumes['tot_5-7'].values
+
+    return shs_power_categories.set_index('category'), shs_sales_volumes.set_index('region')
+
+
+SHS_POWER_CATEGORIES, SHS_SALES_VOLUMES = prepare_shs_power_and_sales_volumes()
+
+
+def extract_bau_data(fname='daten/bau.csv'):
+    bau_data = pd.read_csv(fname, comment='#')
+    return bau_data.set_index('region')
+
+
+BAU_DATA = extract_bau_data()
+
+
+def shs_av_power(power_cat, shs_power_categories=None):
+    if shs_power_categories is None:
+        shs_power_categories = SHS_POWER_CATEGORIES
+    return shs_power_categories.loc[power_cat, 'power_av']
