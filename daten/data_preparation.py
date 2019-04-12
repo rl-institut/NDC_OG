@@ -32,10 +32,16 @@ def _find_tier_level(yearly_consumption):
     """Find the lower bound of the TIER level based on the electrical yearly consumption
 
     Compare the yearly electricity consumption between the minimal yearly consumptions
-    for tier levels (3, 4) and (4, 5)
+    for tier levels (3, 4) and (4, 5).
+
+    ### APPROXIMATION ###
+
+    If the yearly_consumption is lower that the minimum consumption for tier level 3
+    then tier level 3 is returned nevertheless.
+
     :param yearly_consumption: yearly electricity consumption per household
     """
-    answer = np.nan
+    answer = 3
     for tier_level in [3, 4]:
         if MIN_ANNUAL_CONSUMPTION[tier_level] \
                 <= yearly_consumption \
@@ -44,8 +50,12 @@ def _find_tier_level(yearly_consumption):
     return answer
 
 
-def get_rated_capacity_from_yearly_consumption(yearly_consumption):
-    """Use linear interpolation of the minimum values of capacity and consumption"""
+def get_peak_capacity_from_yearly_consumption(yearly_consumption):
+    """Use linear interpolation of the minimum values of capacity and consumption
+
+    :param yearly_consumption: yearly consuption per household in kWh/year
+    :return: peak capacity in kW
+    """
     # Find the lower tier level bound
     tier_level = _find_tier_level(yearly_consumption)
     # Renaming the variables to explicitly show the formula used
@@ -53,7 +63,7 @@ def get_rated_capacity_from_yearly_consumption(yearly_consumption):
     m = RATIO_CAP_CONSUMPTION[tier_level]
     x_i = MIN_ANNUAL_CONSUMPTION[tier_level]
     y_i = MIN_RATED_CAPACITY[tier_level]
-    return m * (x - x_i) + y_i
+    return (m * (x - x_i) + y_i) * 1e-3
 
 
 def map_gdp_class(gdp_per_capita):
