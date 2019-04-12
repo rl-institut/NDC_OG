@@ -270,3 +270,77 @@ def prepare_bau_data(input_df, bau_data=None):
 
     return df
 
+
+def prepare_se4all_shift_drives(df):
+    # compute the shift drives
+    df['weak_grid_class'] = df['weak_grid_index'].map(map_weak_grid_class, na_action='ignore')
+    df['corruption_class'] = df['corruption_index'].map(map_corruption_class, na_action='ignore')
+    df['ease_doing_business_class'] = df['ease_doing_business_index'].map(
+        map_ease_doing_business_class, na_action='ignore')
+    df['gdp_class'] = df['gdp_per_capita'].map(map_gdp_class, na_action='ignore')
+    df['mobile_money'] = df['mobile_money_2017'].fillna(df['mobile_money_2014'])
+    df['mobile_money_class'] = df['mobile_money'].map(
+        map_mobile_money_class, na_action='ignore').fillna(0)
+
+
+def apply_se4all_shift_drives(df, menti=None):
+    if menti is None:
+        menti = MENTI
+    # apply the shift drives
+    for opt in [MG, SHS]:
+        df['shift_menti_%s' % opt] = \
+            df.gdp_class * menti[opt]['high_gdp'] \
+            + df.mobile_money_class * menti[opt]['high_mobile_money'] \
+            + df.ease_doing_business_class * menti[opt]['high_ease_doing_business']\
+            + df.corruption_class * menti[opt]['low_corruption']\
+            + df.weak_grid_class * menti[opt]['high_grid_weakness']
+
+
+def prepare_se4all_data(input_df, weight_grid=WEIGHT_GRID, weight=WEIGHT):
+    # for se4all+SHIFT
+
+    df = input_df.copy()
+    prepare_se4all_shift_drives(df)
+    apply_se4all_shift_drives(df)
+
+    for opt in ELECTRIFICATION_OPTIONS:
+        df['pop_get_%s_2030' % opt] = df['pop_%s_share' % opt] * df.pop_newly_electrified_2030
+
+    # to normalize the senarii weigthed sum
+    weighted_norm = \
+        df.loc[:, RISE_INDICES].sum(axis=1) * weight_grid \
+        + df.loc[:, SHIFT_MENTI].sum(axis=1) * weight
+
+    non_zero_indices = df.loc[:, RISE_INDICES + SHIFT_MENTI].sum(axis=1) != 0
+
+    for col in ['shift_grid_share', 'shift_grid_to_mg_share', 'shift_grid_to_shs_share']:
+        # if the sum of the RISE indices and shift MENTI is 0 the corresponding rows
+        # in the given columns are set to 0
+        df.loc[df.loc[:, RISE_INDICES + SHIFT_MENTI].sum(axis=1) == 0, col] = 0
+
+    # share of population which will be on the grid in the se4all+SHIFT senario
+    df.loc[non_zero_indices, 'shift_grid_share'] = df.rise_grid * weight_grid / weighted_norm
+
+    # share of population which will have changed from grid to mg in the se4all+SHIFT senario
+    df.loc[non_zero_indices, 'shift_grid_to_mg_share'] = \
+        (df.rise_mg * weight_grid + df.shift_menti_mg * weight) / weighted_norm
+
+    # share of population which will have changed from grid to shs in the se4all+SHIFT senario
+    df.loc[non_zero_indices, 'shift_grid_to_shs_share'] = \
+        (df.rise_shs * weight_grid + df.shift_menti_shs * weight) / weighted_norm
+
+    # SHARED WITH prOG
+    # if the predicted mg share is larger than the predicted grid share, the number of people
+    # predited to use mg in the se4all+SHIFT senario is returned, otherwise it is set to 0
+    df.loc[df.shift_grid_to_mg_share >= df.shift_grid_share, 'shift_pop_grid_to_mg'] = \
+        df.shift_grid_to_mg_share * df.pop_get_grid_2030
+    df.loc[df.shift_grid_to_mg_share < df.shift_grid_share, 'shift_pop_grid_to_mg'] = 0
+
+    # if the predicted shs share is larger than the predicted grid share, the number of people
+    # predited to use shs in the se4all+SHIFT senario is returned, otherwise it is set to 0
+    df.loc[df.shift_grid_to_shs_share >= df.shift_grid_share, 'shift_pop_grid_to_shs'] = \
+        df.shift_grid_to_shs_share * df.pop_get_grid_2030
+    df.loc[df.shift_grid_to_shs_share < df.shift_grid_share, 'shift_pop_grid_to_shs'] = 0
+
+    return df
+
