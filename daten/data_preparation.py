@@ -392,3 +392,63 @@ def prepare_prog_data(input_df):
 
     return df
 
+
+def extract_results_senario(input_df, senario, regions=None, bau_data=None):
+    df = input_df.copy()
+
+    if senario == BAU_SENARIO:
+        if regions is None:
+            regions = ['SSA', 'DA', 'LA']
+        if bau_data is None:
+            bau_data = BAU_DATA
+        for opt in ELECTRIFICATION_OPTIONS:
+            # not valid for other senario than bau at the moment
+            # create a columns with regional electrification option shares
+            df['temp_%s' % opt] = df['region'].replace(regions, bau_data.loc[regions][
+                '%s_share' % opt].to_list())
+
+            # predicted number of people getting access to electricity (regional detail level)
+            df['pop_get_%s_2030' % opt] = df.bau_pop_newly_electrified * df['temp_%s' % opt]
+    elif senario in [SE4ALL_SHIFT_SENARIO, PROG_SENARIO]:
+        # SUMME(AA4:AB4) --> df.loc[:,['shift_pop_grid_to_mg' 'shift_pop_grid_to_shs']].sum(axis=1)
+        # grid =D4-SUMME(AA4:AB4)
+        opt = 'grid'
+        # predicted number of people getting access to electricity (regional detail level)
+        cumul_mg_shs = df.loc[:, ['shift_pop_grid_to_mg', 'shift_pop_grid_to_shs']].sum(axis=1)
+        df['pop_get_%s_2030' % opt] = df['pop_get_%s_2030' % opt] - cumul_mg_shs
+
+        # mg =E5+AA5
+        opt = 'mg'
+        # predicted number of people getting access to electricity (regional detail level)
+        df['pop_get_%s_2030' % opt] = \
+            df['pop_get_%s_2030' % opt] \
+            + df['shift_pop_grid_to_%s' % opt]
+
+        # shs =F6+AB6
+        opt = 'shs'
+        # predicted number of people getting access to electricity (regional detail level)
+        df['pop_get_%s_2030' % opt] = \
+            df['pop_get_%s_2030' % opt] \
+            + df['shift_pop_grid_to_%s' % opt]
+    else:
+        raise ValueError
+
+    for opt in ELECTRIFICATION_OPTIONS:
+        # predicted number of household getting access to electricity (regional detail level)
+        df['hh_get_%s_2030' % opt] = df['pop_get_%s_2030' % opt] / df.hh_av_size
+        # predicted power (in kW) that the access to electricity will represent
+        # (regional detail level)
+        # the analysis is based on the peak demand for the grid and mg senarii, and the average
+        # power of solar panel for shs senario
+        if opt in (GRID, MG):
+            df['hh_%s_capacity' % opt] = df['hh_get_%s_2030' % opt] * df[
+                'hh_%s_tier_peak_demand' % opt]
+            df['hh_cap_scn2_%s_capacity' % opt] = df['hh_get_%s_2030' % opt] * df[
+                'cap_sn2_%s_tier_up' % opt]
+        else:
+            df['hh_%s_capacity' % opt] = df['hh_get_%s_2030' % opt] * df[
+                'shs_unit_av_capacity'] / 1000
+            df['hh_cap_scn2_%s_capacity' % opt] = df['hh_get_%s_2030' % opt] * df[
+                'cap_sn2_%s_tier_up' % opt] / 1000
+
+    return df
