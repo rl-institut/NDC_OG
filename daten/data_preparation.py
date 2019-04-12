@@ -149,8 +149,8 @@ def map_tier_yearly_consumption(
         tier_level=MIN_TIER_LEVEL
 ):
     """Assign yearly consumption adjusted for tier level"""
-    if yearly_consumption < MIN_ANNUAL_CONSUMPTION[tier_level]:
-        answer = MIN_ANNUAL_CONSUMPTION[tier_level] * electrification_option_share
+    if yearly_consumption < MIN_ANNUAL_CONSUMPTION[tier_level] / electrification_option_share:
+        answer = MIN_ANNUAL_CONSUMPTION[tier_level]
     else:
         answer = yearly_consumption * electrification_option_share
     return answer
