@@ -253,6 +253,13 @@ app.layout = html.Div(
                         ),
                     ]
                 ),
+                dcc.Dropdown(
+                    id='country-input',
+                    className='app__input__dropdown',
+                    options=[],
+                    value=None,
+                    multi=False
+                ),
                 html.Div(
                     id='map-div',
                     className='app__map',
@@ -262,9 +269,15 @@ app.layout = html.Div(
                         style={'width': '90vh', 'height': '90vh'}
                     ),
                 ),
-            ],
-        ),
-    ]
+                html.Div(
+                    id='country-div',
+                    className='app__country',
+                    children=country_div(),
+                )
+            ]
+
+        )
+    ],
 )
 
 
