@@ -9,7 +9,12 @@ import plotly.graph_objs as go
 
 
 # Input from the user
-SENARII = dict(bau='BaU', se4='SE4All', prog='prOG', indiv='Individual')
+SCENARIOS_DICT = {
+    BAU_SENARIO: 'BaU',
+    SE4ALL_SHIFT_SENARIO: 'SE4All',
+    PROG_SENARIO: 'prOG',
+    'indiv':'Individual'
+}
 REGIONS = dict(WD='World', SA='South America', AF='Africa', AS='Asia')
 
 # World countries maps
@@ -62,7 +67,7 @@ layout = go.Layout(
 fig_map = go.Figure(data=data, layout=layout)
 
 
-labels = list(SENARII.keys())
+labels = list(SCENARIOS_DICT.keys())
 values = [4500, 2500, 1053, 500]
 
 piechart = go.Figure(data=[go.Pie(labels=labels, values=values)])
@@ -92,8 +97,8 @@ app.layout = html.Div(
                             id='senario-input',
                             className='app__input__dropdown',
                             options=[
-                                {'label': SENARII[k], 'value': k}
-                                for k in SENARII
+                                {'label': SCENARIOS_DICT[k], 'value': k}
+                                for k in SCENARIOS_DICT
                             ],
                             value='bau',
                         ),
