@@ -388,5 +388,34 @@ def update_piechart(selected_data, fig):
     return fig
 
 
+@app.callback(
+    Output('country-input', 'value'),
+    [Input('data-store', 'data')],
+    [
+        State('country-input', 'value')
+    ]
+)
+def update_selected_country_on_map(cur_data, cur_val):
+
+    country_iso = cur_data.get('selected_country')
+    if country_iso is None:
+        country_iso = cur_val
+
+    print(country_iso)
+    return country_iso
+
+
+@app.callback(
+    Output('data-store', 'data'),
+    [Input('map', 'clickData')],
+    [State('data-store', 'data')]
+)
+def update_data_store(clicked_data, cur_data):
+    if clicked_data is not None:
+        country_iso = clicked_data['points'][0]['location']
+        cur_data.update({'selected_country': country_iso})
+    return cur_data
+
+
 if __name__ == '__main__':
     app.run_server(debug=True)
