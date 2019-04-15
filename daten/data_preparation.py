@@ -393,6 +393,26 @@ def prepare_prog_data(input_df):
     return df
 
 
+def prepare_scenario_data(df, scenario, prepare_endogenous=False):
+    """Prepare the data prior to compute the exogenous results for a given scenario.
+    :param df (pandas.DataFrame): a dataframe for which the 'prepare_endogenous_variables' has
+    been already applied (if prepare_endogenous is not True)
+    :param scenario (str): name of the scenario
+    :param prepare_endogenous (bool):
+    :return: a copy of the dataframe with the scenario specific data
+    """
+    if prepare_endogenous:
+        df = prepare_endogenous_variables(input_df=df)
+
+    if scenario == BAU_SENARIO:
+        df = prepare_bau_data(input_df=df)
+    elif scenario == SE4ALL_SHIFT_SENARIO:
+        df = prepare_se4all_data(input_df=df)
+    elif scenario == PROG_SENARIO:
+        df = prepare_prog_data(input_df=df)
+    return df
+
+
 def extract_results_scenario(input_df, scenario, regions=None, bau_data=None):
     df = input_df.copy()
 
@@ -452,3 +472,17 @@ def extract_results_scenario(input_df, scenario, regions=None, bau_data=None):
                 'cap_sn2_%s_tier_up' % opt] / 1000
 
     return df
+
+
+def compute_ndc_results_from_raw_data(scenario, fname='daten/raw_data.csv'):
+    """Compute the exogenous results from the raw data for a given scenario
+    :param scenario (str): name of the scenario
+    :param fname (str): path to the raw data csv file
+    :return:
+    """
+    # Load data from csv
+    df = pd.read_csv(fname, float_precision='high')
+    # Compute endogenous results for the given scenario
+    df = prepare_scenario_data(df, scenario, prepare_endogenous=True)
+    # Compute the exogenous results
+    return extract_results_scenario(df, scenario)
