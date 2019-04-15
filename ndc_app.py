@@ -264,7 +264,7 @@ app.layout = html.Div(
                     id='map-div',
                     className='app__map',
                     children=dcc.Graph(
-                        id='graph',
+                        id='map',
                         figure=fig_map,
                         style={'width': '90vh', 'height': '90vh'}
                     ),
@@ -282,9 +282,9 @@ app.layout = html.Div(
 
 
 @app.callback(
-    Output('graph', 'figure'),
+    Output('map', 'figure'),
     [Input('region-input', 'value')],
-    [State('graph', 'figure')]
+    [State('map', 'figure')]
 )
 def update_map(region_id, fig):
 
@@ -307,7 +307,7 @@ def update_map(region_id, fig):
 
 @app.callback(
     Output('piechart', 'figure'),
-    [Input('graph', 'hoverData')],
+    [Input('map', 'hoverData')],
     [State('piechart', 'figure')]
 )
 def update_piechart(selected_data, fig):
