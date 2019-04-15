@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import geopandas as gpd
 import dash
 from dash.dependencies import Output, Input, State
@@ -301,9 +302,7 @@ def update_map(region_id, fig):
             'text': df['text'],
         }
     )
-
     fig['layout']['geo'].update({'scope': region_name.lower()})
-
     return fig
 
 
@@ -368,12 +367,44 @@ def toggle_country_div(region_id, country_sel, cur_style):
 
 
 @app.callback(
+    Output('country-div', 'children'),
+    [Input('country-input', 'value')],
+    [
+        State('scenario-input', 'value'),
+        State('data-store', 'data'),
+    ]
+)
+def update_country_content(country_sel, scenario, cur_data):
+    """Display information on a country."""
+    ctx = dash.callback_context
+
+    df = None
+    country_iso = None
+
+    if ctx.triggered:
+        prop_id = ctx.triggered[0]['prop_id']
+        # trigger comes from clicking on a country
+        if 'data-store' in prop_id:
+            country_iso = cur_data.get('selected_country')
+        # trigger comes from selecting one or more country in the country div
+        if 'country-input' in prop_id:
+            country_iso = country_sel
+            if np.shape(country_iso) and len(country_iso) == 1:
+                country_iso = country_iso[0]
+
+    if country_iso is not None:
+        if scenario in SCENARIOS:
+            df = pd.read_json(cur_data[scenario]).set_index('country_iso')
+
+    return country_div(df, country_iso)
+
+
+@app.callback(
     Output('piechart', 'figure'),
     [Input('map', 'hoverData')],
     [State('piechart', 'figure')]
 )
 def update_piechart(selected_data, fig):
-
     if selected_data is not None:
         chosen = [point['location'] if point['pointNumber'] != 0 else None for point in
                   selected_data['points']]
@@ -424,6 +455,7 @@ def update_country_selection_options(region_id, scenario, cur_data):
             countries_in_region.append({'label': row['country'], 'value': row['country_iso']})
 
     return countries_in_region
+
 
 @app.callback(
     Output('data-store', 'data'),
