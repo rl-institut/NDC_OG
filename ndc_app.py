@@ -111,7 +111,7 @@ app.layout = html.Div(
                             children='Senario'
                         ),
                         dcc.Dropdown(
-                            id='senario-input',
+                            id='scenario-input',
                             className='app__input__dropdown',
                             options=[
                                 {'label': SCENARIOS_DICT[k], 'value': k}
