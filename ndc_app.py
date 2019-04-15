@@ -6,14 +6,26 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash_daq as daq
 import plotly.graph_objs as go
+from data_preparation import (
+    SCENARIOS,
+    BAU_SENARIO,
+    SE4ALL_SHIFT_SENARIO,
+    PROG_SENARIO,
+    compute_ndc_results_from_raw_data
+)
 
+from app_components import country_div
 
 # Input from the user
 SCENARIOS_DICT = {
     BAU_SENARIO: 'BaU',
     SE4ALL_SHIFT_SENARIO: 'SE4All',
     PROG_SENARIO: 'prOG',
-    'indiv':'Individual'
+    # 'indiv': 'Individual'
+}
+# A dict with the data for each scenario in json format
+SCENARIOS_DATA = {
+    sce: compute_ndc_results_from_raw_data(sce).to_json() for sce in SCENARIOS
 }
 REGIONS = dict(WD='World', SA='South America', AF='Africa', AS='Asia')
 
@@ -80,6 +92,11 @@ app.layout = html.Div(
     id='app-div',
     className='app',
     children=[
+        dcc.Store(
+            id='data-store',
+            storage_type='session',
+            data=SCENARIOS_DATA.copy()
+        ),
         html.Div(
             id='controls-div',
             className='app__container',
