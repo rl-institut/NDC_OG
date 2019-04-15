@@ -42,3 +42,36 @@
     height: 25%;
     border: solid 1px #E8F0F9;
 }
+
+#country-info-div{
+    border: solid 1px #E8F0F9;
+}
+
+
+.country__results__pop__hdr{
+    display: flex;
+    flex-direction: row;
+}
+
+.country__results__pop__line{
+    display: flex;
+    flex-direction: row;
+}
+
+.country__results__cap__hdr{
+    display: flex;
+    flex-direction: row;
+}
+
+.country__results__cap__line{
+
+    display: flex;
+    flex-direction: row;
+}
+
+.country__results p {
+    width: 10%;
+    align-content: center;
+    border: solid 1px #E8F0F9;
+    padding: 10px
+}
