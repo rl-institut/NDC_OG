@@ -306,6 +306,66 @@ def update_map(region_id, fig):
 
 
 @app.callback(
+    Output('map-div', 'style'),
+    [
+        Input('region-input', 'value'),
+        Input('country-input', 'value')
+    ],
+    [State('map-div', 'style')]
+)
+def toggle_map_div(region_id, country_sel, cur_style):
+    """Hide the map-div when user clicks on a country."""
+
+    ctx = dash.callback_context
+
+    if cur_style is None:
+        cur_style = {'display': 'flex'}
+
+    if ctx.triggered:
+        prop_id = ctx.triggered[0]['prop_id']
+        # trigger comes from clicking on a country
+        if 'country-input' in prop_id:
+            if country_sel:
+                cur_style.update({'display': 'none'})
+            else:
+                cur_style.update({'display': 'flex'})
+
+        # trigger comes from selecting a region
+        elif 'region-input' in prop_id:
+            cur_style.update({'display': 'flex'})
+    return cur_style
+
+
+@app.callback(
+    Output('country-div', 'style'),
+    [
+        Input('region-input', 'value'),
+        Input('country-input', 'value')
+    ],
+    [State('country-div', 'style')]
+)
+def toggle_country_div(region_id, country_sel, cur_style):
+    """Show the country-div when user clicks on a country."""
+    ctx = dash.callback_context
+
+    if cur_style is None:
+        cur_style = {'display': 'none'}
+
+    if ctx.triggered:
+        prop_id = ctx.triggered[0]['prop_id']
+        # trigger comes from clicking on a country
+        if 'country-input' in prop_id:
+            if country_sel:
+                cur_style.update({'display': 'flex'})
+            else:
+                cur_style.update({'display': 'none'})
+        # trigger comes from selecting a region
+        elif 'region-input' in prop_id:
+            cur_style.update({'display': 'none'})
+    return cur_style
+
+
+@app.callback(
     Output('piechart', 'figure'),
     [Input('map', 'hoverData')],
     [State('piechart', 'figure')]
