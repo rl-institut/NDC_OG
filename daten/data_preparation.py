@@ -1,6 +1,46 @@
 import numpy as np
 import pandas as pd
 
+RAW_DATA_LABELS = [
+    'region',
+    'pop_grid_share',
+    'hh_yearly_electricity_consumption',
+    'rise_shs',
+    'country_iso',
+    'country',
+    'ease_doing_business_index',
+    'pop_2017',
+    'pop_shs_share',
+    'rise_mg',
+    'weak_grid_index',
+    'dark_rate',
+    'pop_mg_share',
+    'gdp_per_capita',
+    'hh_mg_share',
+    'electrification_rate',
+    'mobile_money_2014',
+    'hh_av_size',
+    'hh_grid_share',
+    'corruption_index',
+    'pop_2030',
+    'rise_grid',
+    'mobile_money_2017'
+]
+
+EXOGENOUS_RESULTS_LABELS = [
+    'pop_newly_electrified_2030',
+    'hh_grid_tier_peak_demand',
+    'pop_rel_growth',
+    'hh_mg_tier_peak_demand',
+    'shs_unit_av_capacity',
+    'cap_sn2_grid_tier_up',
+    'pop_electrified_2017',
+    'pop_dark_2017',
+    'cap_sn2_shs_tier_up',
+    'hh_mg_tier_yearly_electricity_consumption',
+    'hh_grid_tier_yearly_electricity_consumption',
+    'cap_sn2_mg_tier_up'
+]
 
 GRID = 'grid'
 MG = 'mg'
@@ -291,8 +331,8 @@ def apply_se4all_shift_drives(df, menti=None):
         df['shift_menti_%s' % opt] = \
             df.gdp_class * menti[opt]['high_gdp'] \
             + df.mobile_money_class * menti[opt]['high_mobile_money'] \
-            + df.ease_doing_business_class * menti[opt]['high_ease_doing_business']\
-            + df.corruption_class * menti[opt]['low_corruption']\
+            + df.ease_doing_business_class * menti[opt]['high_ease_doing_business'] \
+            + df.corruption_class * menti[opt]['low_corruption'] \
             + df.weak_grid_class * menti[opt]['high_grid_weakness']
 
 
