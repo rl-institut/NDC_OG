@@ -318,26 +318,26 @@ def prepare_se4all_data(input_df, weight_grid=WEIGHT_GRID, weight=WEIGHT):
         # in the given columns are set to 0
         df.loc[df.loc[:, RISE_INDICES + SHIFT_MENTI].sum(axis=1) == 0, col] = 0
 
-    # share of population which will be on the grid in the se4all+SHIFT senario
+    # share of population which will be on the grid in the se4all+SHIFT scenario
     df.loc[non_zero_indices, 'shift_grid_share'] = df.rise_grid * weight_grid / weighted_norm
 
-    # share of population which will have changed from grid to mg in the se4all+SHIFT senario
+    # share of population which will have changed from grid to mg in the se4all+SHIFT scenario
     df.loc[non_zero_indices, 'shift_grid_to_mg_share'] = \
         (df.rise_mg * weight_grid + df.shift_menti_mg * weight) / weighted_norm
 
-    # share of population which will have changed from grid to shs in the se4all+SHIFT senario
+    # share of population which will have changed from grid to shs in the se4all+SHIFT scenario
     df.loc[non_zero_indices, 'shift_grid_to_shs_share'] = \
         (df.rise_shs * weight_grid + df.shift_menti_shs * weight) / weighted_norm
 
     # SHARED WITH prOG
     # if the predicted mg share is larger than the predicted grid share, the number of people
-    # predited to use mg in the se4all+SHIFT senario is returned, otherwise it is set to 0
+    # predited to use mg in the se4all+SHIFT scenario is returned, otherwise it is set to 0
     df.loc[df.shift_grid_to_mg_share >= df.shift_grid_share, 'shift_pop_grid_to_mg'] = \
         df.shift_grid_to_mg_share * df.endo_pop_get_grid_2030
     df.loc[df.shift_grid_to_mg_share < df.shift_grid_share, 'shift_pop_grid_to_mg'] = 0
 
     # if the predicted shs share is larger than the predicted grid share, the number of people
-    # predited to use shs in the se4all+SHIFT senario is returned, otherwise it is set to 0
+    # predited to use shs in the se4all+SHIFT scenario is returned, otherwise it is set to 0
     df.loc[df.shift_grid_to_shs_share >= df.shift_grid_share, 'shift_pop_grid_to_shs'] = \
         df.shift_grid_to_shs_share * df.endo_pop_get_grid_2030
     df.loc[df.shift_grid_to_shs_share < df.shift_grid_share, 'shift_pop_grid_to_shs'] = 0
@@ -365,26 +365,26 @@ def prepare_prog_data(input_df):
         # the given columns are set to 0
         df.loc[df.loc[:, RISE_INDICES].sum(axis=1) == 0, col] = 0
 
-    # share of population which will be on the grid in the se4all+SHIFT senario
+    # share of population which will be on the grid in the se4all+SHIFT scenario
     df.loc[non_zero_indices, 'shift_grid_share'] = df.rise_grid / weighted_norm
 
-    # share of population which will have changed from grid to mg in the se4all+SHIFT senario
+    # share of population which will have changed from grid to mg in the se4all+SHIFT scenario
     df.loc[non_zero_indices, 'shift_grid_to_mg_share'] = df.rise_mg / weighted_norm
 
-    # share of population which will have changed from grid to shs in the se4all+SHIFT senario
+    # share of population which will have changed from grid to shs in the se4all+SHIFT scenario
     df.loc[non_zero_indices, 'shift_grid_to_shs_share'] = df.rise_shs / weighted_norm
 
     # Shared with se4all
 
     # if the predicted mg share is larger than the predicted grid share, the number of people
-    # predited to use mg in the se4all+SHIFT senario is returned
+    # predited to use mg in the se4all+SHIFT scenario is returned
     # otherwise it is set to 0
     df.loc[df.shift_grid_to_mg_share >= df.shift_grid_share, 'shift_pop_grid_to_mg'] = \
         df.shift_grid_to_mg_share * df.endo_pop_get_grid_2030
     df.loc[df.shift_grid_to_mg_share < df.shift_grid_share, 'shift_pop_grid_to_mg'] = 0
 
     # if the predicted shs share is larger than the predicted grid share, the number of people
-    # predited to use shs in the se4all+SHIFT senario is returned
+    # predited to use shs in the se4all+SHIFT scenario is returned
     # otherwise it is set to 0
     df.loc[df.shift_grid_to_shs_share >= df.shift_grid_share, 'shift_pop_grid_to_shs'] = \
         df.shift_grid_to_shs_share * df.endo_pop_get_grid_2030
@@ -393,23 +393,23 @@ def prepare_prog_data(input_df):
     return df
 
 
-def extract_results_senario(input_df, senario, regions=None, bau_data=None):
+def extract_results_scenario(input_df, scenario, regions=None, bau_data=None):
     df = input_df.copy()
 
-    if senario == BAU_SENARIO:
+    if scenario == BAU_SENARIO:
         if regions is None:
             regions = ['SSA', 'DA', 'LA']
         if bau_data is None:
             bau_data = BAU_DATA
         for opt in ELECTRIFICATION_OPTIONS:
-            # not valid for other senario than bau at the moment
+            # not valid for other scenario than bau at the moment
             # create a columns with regional electrification option shares
             df['temp_%s' % opt] = df['region'].replace(regions, bau_data.loc[regions][
                 '%s_share' % opt].to_list())
 
             # predicted number of people getting access to electricity (regional detail level)
             df['pop_get_%s_2030' % opt] = df.bau_pop_newly_electrified * df['temp_%s' % opt]
-    elif senario in [SE4ALL_SHIFT_SENARIO, PROG_SENARIO]:
+    elif scenario in [SE4ALL_SHIFT_SENARIO, PROG_SENARIO]:
         # SUMME(AA4:AB4) --> df.loc[:,['shift_pop_grid_to_mg' 'shift_pop_grid_to_shs']].sum(axis=1)
         # grid =D4-SUMME(AA4:AB4)
         opt = 'grid'
@@ -439,7 +439,7 @@ def extract_results_senario(input_df, senario, regions=None, bau_data=None):
         # predicted power (in kW) that the access to electricity will represent
         # (regional detail level)
         # the analysis is based on the peak demand for the grid and mg senarii, and the average
-        # power of solar panel for shs senario
+        # power of solar panel for shs scenario
         if opt in (GRID, MG):
             df['hh_%s_capacity' % opt] = df['hh_get_%s_2030' % opt] * df[
                 'hh_%s_tier_peak_demand' % opt]
