@@ -29,6 +29,8 @@ SCENARIOS_DATA = {
 }
 REGIONS = dict(WD='World', SA='South America', AF='Africa', AS='Asia')
 
+REGIONS_NDC = dict(WD=['LA', 'SSA', 'DA'], SA='LA', AF='SSA', AS='DA')
+
 # World countries maps
 world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
 
@@ -404,6 +406,24 @@ def update_selected_country_on_map(cur_data, cur_val):
     print(country_iso)
     return country_iso
 
+
+@app.callback(
+    Output('country-input', 'options'),
+    [Input('region-input', 'value')],
+    [
+        State('scenario-input', 'value'),
+        State('data-store', 'data')
+    ]
+)
+def update_country_selection_options(region_id, scenario, cur_data):
+    countries_in_region = []
+    if scenario is not None:
+        df = pd.read_json(cur_data[scenario])
+
+        for idx, row in df.loc[df.region == REGIONS_NDC[region_id]].iterrows():
+            countries_in_region.append({'label': row['country'], 'value': row['country_iso']})
+
+    return countries_in_region
 
 @app.callback(
     Output('data-store', 'data'),
