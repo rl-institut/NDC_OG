@@ -197,11 +197,11 @@ def map_tier_yearly_consumption(
 
 
 def prepare_shs_power_and_sales_volumes():
-    shs_sales_volumes = pd.read_csv('daten/shs_sales_volumes.csv', comment='#')
+    shs_sales_volumes = pd.read_csv('data/shs_sales_volumes.csv', comment='#')
     # compute the average of the product categories 5 to 7
     shs_sales_volumes['tot_5-7'] = shs_sales_volumes[['5', '6', '7']].sum(axis=1)
 
-    shs_power_categories = pd.read_csv('daten/shs_power_per_product_categories.csv', comment='#')
+    shs_power_categories = pd.read_csv('data/shs_power_per_product_categories.csv', comment='#')
 
     # compute the average power for each category
     shs_power_categories['power_av'] = shs_power_categories[
@@ -225,7 +225,7 @@ def prepare_shs_power_and_sales_volumes():
 SHS_POWER_CATEGORIES, SHS_SALES_VOLUMES = prepare_shs_power_and_sales_volumes()
 
 
-def extract_bau_data(fname='daten/bau.csv'):
+def extract_bau_data(fname='data/bau.csv'):
     bau_data = pd.read_csv(fname, comment='#')
     return bau_data.set_index('region')
 
@@ -514,7 +514,7 @@ def extract_results_scenario(input_df, scenario, regions=None, bau_data=None):
     return df
 
 
-def compute_ndc_results_from_raw_data(scenario, fname='daten/raw_data.csv'):
+def compute_ndc_results_from_raw_data(scenario, fname='data/raw_data.csv'):
     """Compute the exogenous results from the raw data for a given scenario
     :param scenario (str): name of the scenario
     :param fname (str): path to the raw data csv file
