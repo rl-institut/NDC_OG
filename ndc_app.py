@@ -390,30 +390,22 @@ def toggle_country_div_display(cur_view, cur_style):
 
 @app.callback(
     Output('country-div', 'children'),
-    [Input('country-input', 'value')],
     [
-        State('scenario-input', 'value'),
-        State('data-store', 'data'),
-    ]
+        Input('country-input', 'value'),
+        Input('scenario-input', 'value')
+    ],
+    [State('data-store', 'data')]
 )
-def update_country_content(country_sel, scenario, cur_data):
-    """Display information on a country."""
-    ctx = dash.callback_context
+def update_country_div_content(country_sel, scenario, cur_data):
+    """Display information and study's results for a country."""
 
     df = None
-    country_iso = None
+    country_iso = country_sel
+    # in case of country_iso is a list of one element
+    if np.shape(country_iso) and len(country_iso) == 1:
+        country_iso = country_iso[0]
 
-    if ctx.triggered:
-        prop_id = ctx.triggered[0]['prop_id']
-        # trigger comes from clicking on a country
-        if 'data-store' in prop_id:
-            country_iso = cur_data.get('selected_country')
-        # trigger comes from selecting one or more country in the country div
-        if 'country-input' in prop_id:
-            country_iso = country_sel
-            if np.shape(country_iso) and len(country_iso) == 1:
-                country_iso = country_iso[0]
-
+    # extract the data from the selected scenario if a country was selected
     if country_iso is not None:
         if scenario in SCENARIOS:
             df = pd.read_json(cur_data[scenario]).set_index('country_iso')
@@ -446,17 +438,13 @@ def update_piechart(selected_data, fig):
 @app.callback(
     Output('country-input', 'value'),
     [Input('data-store', 'data')],
-    [
-        State('country-input', 'value')
-    ]
+    [State('country-input', 'value')]
 )
 def update_selected_country_on_map(cur_data, cur_val):
 
     country_iso = cur_data.get('selected_country')
     if country_iso is None:
         country_iso = cur_val
-
-    print(country_iso)
     return country_iso
 
 
