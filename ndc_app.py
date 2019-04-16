@@ -107,7 +107,7 @@ app.layout = html.Div(
         dcc.Store(
             id='view-store',
             storage_type='session',
-            data={'view': VIEW_GENERAL}
+            data={'app_view': VIEW_GENERAL}
         ),
         html.Div(
             id='controls-div',
@@ -344,13 +344,13 @@ def update_view(region_id, country_sel, cur_view):
         # trigger comes from clicking on a country
         if 'country-input' in prop_id:
             if country_sel:
-                cur_view.update({'view': VIEW_COUNTRY})
+                cur_view.update({'app_view': VIEW_COUNTRY})
             else:
-                cur_view.update({'view': VIEW_GENERAL})
+                cur_view.update({'app_view': VIEW_GENERAL})
 
         # trigger comes from selecting a region
         elif 'region-input' in prop_id:
-            cur_view.update({'view': VIEW_GENERAL})
+            cur_view.update({'app_view': VIEW_GENERAL})
     return cur_view
 
 
@@ -362,11 +362,11 @@ def update_view(region_id, country_sel, cur_view):
 def toggle_map_div_display(cur_view, cur_style):
     """Change the display of map-div between the app's views."""
     if cur_style is None:
-        cur_style = {'view': VIEW_GENERAL}
+        cur_style = {'app_view': VIEW_GENERAL}
 
-    if cur_view['view'] == VIEW_GENERAL:
+    if cur_view['app_view'] == VIEW_GENERAL:
         cur_style.update({'display': 'flex'})
-    elif cur_view['view'] == VIEW_COUNTRY:
+    elif cur_view['app_view'] == VIEW_COUNTRY:
         cur_style.update({'display': 'none'})
     return cur_style
 
@@ -379,11 +379,11 @@ def toggle_map_div_display(cur_view, cur_style):
 def toggle_country_div_display(cur_view, cur_style):
     """Change the display of country-div between the app's views."""
     if cur_style is None:
-        cur_style = {'view': VIEW_GENERAL}
+        cur_style = {'app_view': VIEW_GENERAL}
 
-    if cur_view['view'] == VIEW_GENERAL:
+    if cur_view['app_view'] == VIEW_GENERAL:
         cur_style.update({'display': 'none'})
-    elif cur_view['view'] == VIEW_COUNTRY:
+    elif cur_view['app_view'] == VIEW_COUNTRY:
         cur_style.update({'display': 'flex'})
     return cur_style
 
