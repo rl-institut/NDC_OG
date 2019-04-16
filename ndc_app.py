@@ -15,7 +15,13 @@ from data_preparation import (
     MG,
     GRID,
     SHS,
-    compute_ndc_results_from_raw_data
+    HH_CAP,
+    compute_ndc_results_from_raw_data,
+    prepare_endogenous_variables,
+    prepare_bau_data,
+    prepare_se4all_data,
+    prepare_prog_data,
+    extract_results_scenario
 )
 
 from app_components import (
@@ -357,18 +363,31 @@ def update_country_div_content(
     # extract the data from the selected scenario if a country was selected
     if country_iso is not None:
         if scenario in SCENARIOS:
-            df = pd.read_json(cur_data[scenario]).set_index('country_iso')
-
-            if scenario == SE4ALL_SHIFT_SENARIO:
-                if gdp_class is not None:
-                    df.loc[country_iso, 'gdp_class'] = gdp_class
-                if mm_class is not None:
-                    df.loc[country_iso, 'mobile_money_class'] = mm_class
+            df = pd.read_json(cur_data[scenario])
+            df = df.loc[df.country_iso == country_iso]
 
             if scenario in [SE4ALL_SHIFT_SENARIO, PROG_SENARIO]:
+                # TODO: only recompute the tier if it has changed (with context)
                 if tier_level is not None:
-                    df.loc[country_iso, 'mobile_money_class'] = tier_level
-    return country_div(df, country_iso)
+                    df = prepare_endogenous_variables(
+                        input_df=df,
+                        tier_level=tier_level
+                    )
+
+            if scenario == SE4ALL_SHIFT_SENARIO:
+
+                if gdp_class is not None:
+                    df.loc[:, 'gdp_class'] = gdp_class
+                if mm_class is not None:
+                    df.loc[:, 'mobile_money_class'] = mm_class
+                print(df[['shift_pop_grid_to_mg', 'shift_pop_grid_to_shs']+HH_CAP])
+
+                # recompute the results after updating the shift drives
+                df = prepare_se4all_data(input_df=df, fixed_shift_drives=False)
+                df = extract_results_scenario(df, scenario)
+                print(df[['shift_pop_grid_to_mg', 'shift_pop_grid_to_shs']+HH_CAP])
+
+    return country_div(df)
 
 
 @app.callback(

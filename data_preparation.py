@@ -358,11 +358,17 @@ def apply_se4all_shift_drives(df, menti=None):
             + df.weak_grid_class * menti[opt]['high_grid_weakness']
 
 
-def prepare_se4all_data(input_df, weight_grid=WEIGHT_GRID, weight=WEIGHT):
+def prepare_se4all_data(
+        input_df,
+        weight_grid=WEIGHT_GRID,
+        weight=WEIGHT,
+        fixed_shift_drives=True
+):
     # for se4all+SHIFT
 
     df = input_df.copy()
-    prepare_se4all_shift_drives(df)
+    if fixed_shift_drives:
+        prepare_se4all_shift_drives(df)
     apply_se4all_shift_drives(df)
 
     for opt in ELECTRIFICATION_OPTIONS:
@@ -455,7 +461,7 @@ def prepare_prog_data(input_df):
     return df
 
 
-def prepare_scenario_data(df, scenario, prepare_endogenous=False):
+def prepare_scenario_data(df, scenario, prepare_endogenous=False, tier_level=MIN_TIER_LEVEL):
     """Prepare the data prior to compute the exogenous results for a given scenario.
     :param df (pandas.DataFrame): a dataframe for which the 'prepare_endogenous_variables' has
     been already applied (if prepare_endogenous is not True)
@@ -464,7 +470,7 @@ def prepare_scenario_data(df, scenario, prepare_endogenous=False):
     :return: a copy of the dataframe with the scenario specific data
     """
     if prepare_endogenous:
-        df = prepare_endogenous_variables(input_df=df)
+        df = prepare_endogenous_variables(input_df=df, tier_level=tier_level)
 
     if scenario == BAU_SENARIO:
         df = prepare_bau_data(input_df=df)

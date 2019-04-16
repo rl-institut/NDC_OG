@@ -13,8 +13,12 @@ from data_preparation import (
 )
 
 
-def country_div(df=None, country_iso=None):
-    """Fill and return a specific country exogenous results and information."""
+def country_div(df=None):
+    """Fill and return a specific country exogenous results and information.
+
+    :param df: a single line of the dataframe corresponding to the results of a country
+    :return: the content of the country-div
+    """
 
     # variables used in the div
     pop_2017 = 0
@@ -23,11 +27,9 @@ def country_div(df=None, country_iso=None):
 
     if df is not None:
         df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0)
-        # narrow the selection for the country specific information
-        dfc = df.loc[country_iso]
-        pop_2017 = dfc.pop_2017
-        country_pop_res = np.squeeze(dfc[POP_GET].values)
-        country_cap_res = np.squeeze(dfc[HH_CAP].values) * 1e-6
+        pop_2017 = df.pop_2017
+        country_pop_res = np.squeeze(df[POP_GET].values)
+        country_cap_res = np.squeeze(df[HH_CAP].values) * 1e-6
 
     divs = [
         html.Div(
@@ -121,6 +123,7 @@ def scenario_div(init_scenario, init_elec_opt):
 
 def controls_div(scenario):
     """Return controls for scenario dependent variables."""
+
     view_on_se4all = 'none'
     view_on_prog = 'none'
     view_on_both = 'none'
