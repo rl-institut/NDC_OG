@@ -5,25 +5,28 @@ import dash
 from dash.dependencies import Output, Input, State
 import dash_core_components as dcc
 import dash_html_components as html
-import dash_daq as daq
 import plotly.graph_objs as go
 from data_preparation import (
     SCENARIOS,
     BAU_SENARIO,
     SE4ALL_SHIFT_SENARIO,
     PROG_SENARIO,
+    SCENARIOS_DICT,
+    MG,
+    GRID,
+    SHS,
+
     compute_ndc_results_from_raw_data
 )
 
-from app_components import country_div
+from app_components import (
+    country_div,
+    scenario_div,
+    controls_div,
+    general_info_div
+)
 
-# Input from the user
-SCENARIOS_DICT = {
-    BAU_SENARIO: 'BaU',
-    SE4ALL_SHIFT_SENARIO: 'SE4All',
-    PROG_SENARIO: 'prOG',
-    # 'indiv': 'Individual'
-}
+
 # A dict with the data for each scenario in json format
 SCENARIOS_DATA = {
     sce: compute_ndc_results_from_raw_data(sce).to_json() for sce in SCENARIOS
@@ -91,7 +94,6 @@ values = [4500, 2500, 1053, 500]
 
 piechart = go.Figure(data=[go.Pie(labels=labels, values=values)])
 
-
 # Initializes dash app
 app = dash.Dash(__name__)
 
@@ -114,128 +116,22 @@ app.layout = html.Div(
             className='app__container',
             children=[
                 html.Div(
-                    id='senario-div',
-                    className='app__input',
-                    children=[
-                        html.Div(
-                            id='senario-label',
-                            className='app__input__label',
-                            children='Senario'
-                        ),
-                        dcc.Dropdown(
-                            id='scenario-input',
-                            className='app__input__dropdown',
-                            options=[
-                                {'label': SCENARIOS_DICT[k], 'value': k}
-                                for k in SCENARIOS_DICT
-                            ],
-                            value='bau',
-                        ),
-                    ]
+                    id='scenario-div',
+                    className='app__options',
+                    children=scenario_div(BAU_SENARIO, GRID)
                 ),
                 html.Div(
-                    id='rise-shs-div',
-                    className='app__input__slider',
-                    children=[
-                        html.Div(
-                            id='rise-shs-label',
-                            className='app__input__label',
-                            children='RISE-SHS'
-                        ),
-                        daq.Slider(
-                            id='rise-shs-input',
-                            min=0,
-                            max=100,
-                            value=14,
-                            handleLabel={
-                                "showCurrentValue": True, "label": "VALUE"},
-                            step=1,
-                        ),
-                    ]
+                    id='controls-div',
+                    className='app__controls',
+                    style={'display': 'none'},
+                    children=controls_div(piechart),
                 ),
                 html.Div(
-                    id='rise-mg-div',
-                    className='app__input__slider',
-                    children=[
-                        html.Div(
-                            id='rise-label',
-                            className='app__input__label',
-                            children='RISE-MG'
-                        ),
-                        daq.Slider(
-                            id='rise-mg-input',
-                            min=0,
-                            max=100,
-                            value=67,
-                            handleLabel={
-                                "showCurrentValue": True, "label": "VALUE"},
-                            step=1,
-                        ),
-                    ]
-                ),
-                html.Div(
-                    id='framework-div',
-                    className='app__input__slider',
-                    children=[
-                        html.Div(
-                            id='framework-label',
-                            className='app__input__label',
-                            children='Framework'
-                        ),
-                        daq.Slider(
-                            id='framework-input',
-                            min=0,
-                            max=10,
-                            value=4,
-                            handleLabel={
-                                "showCurrentValue": True, "label": "VALUE"},
-                            step=1,
-                        ),
-                    ]
-                ),
-                html.Div(
-                    id='tier-div',
-                    className='app__input',
-                    children=[
-                        html.Div(
-                            id='tier-label',
-                            className='app__input__label',
-                            children='TIER'
-                        ),
-                        daq.NumericInput(
-                            id='tier-input',
-                            value=2
-                        ),
-                    ]
-                ),
-                html.Div(
-                    id='invest-div',
-                    className='app__input',
-                    children=[
-                        html.Div(
-                            id='invest-label',
-                            className='app__input__label',
-                            children='Invest'
-                        ),
-                        daq.NumericInput(
-                            id='invest-input',
-                            label='USD/kW',
-                            labelPosition='right'
-                        ),
-                    ]
-                ),
-                html.Div(
-                    id='piechart-div',
-                    className='app__piechart',
-                    children=dcc.Graph(
-                        id='piechart',
-                        figure=piechart,
-                        style={
-                            'height': '55vh',
-                        }
-                    ),
+                    id='general-info-div',
+                    className='app__info',
+                    children=general_info_div()
                 )
-            ],
+            ]
         ),
         html.Div(
             id='visualization-div',
@@ -252,8 +148,8 @@ app.layout = html.Div(
                                 dcc.Dropdown(
                                     id='region-input',
                                     options=[
-                                        {'label': REGIONS[k], 'value': k}
-                                        for k in REGIONS
+                                        {'label': v, 'value': k}
+                                        for k, v in REGIONS.items()
                                     ],
                                     value='SA'
                                 )
@@ -338,7 +234,6 @@ def update_view(region_id, country_sel, cur_view):
     specific country or selecting it with the country dropdown,
     """
     ctx = dash.callback_context
-    print(ctx)
     if ctx.triggered:
         prop_id = ctx.triggered[0]['prop_id']
         # trigger comes from clicking on a country
@@ -385,6 +280,40 @@ def toggle_country_div_display(cur_view, cur_style):
         cur_style.update({'display': 'none'})
     elif cur_view['app_view'] == VIEW_COUNTRY:
         cur_style.update({'display': 'flex'})
+    return cur_style
+
+
+@app.callback(
+    Output('controls-div', 'style'),
+    [Input('view-store', 'data')],
+    [State('controls-div', 'style')]
+)
+def toggle_controls_div_display(cur_view, cur_style):
+    """Change the display of controls-div between the app's views."""
+    if cur_style is None:
+        cur_style = {'app_view': VIEW_GENERAL}
+
+    if cur_view['app_view'] == VIEW_GENERAL:
+        cur_style.update({'display': 'none'})
+    elif cur_view['app_view'] == VIEW_COUNTRY:
+        cur_style.update({'display': 'flex'})
+    return cur_style
+
+
+@app.callback(
+    Output('general-info-div', 'style'),
+    [Input('view-store', 'data')],
+    [State('general-info-div', 'style')]
+)
+def toggle_general_info_div_display(cur_view, cur_style):
+    """Change the display of general-info-div between the app's views."""
+    if cur_style is None:
+        cur_style = {'app_view': VIEW_GENERAL}
+
+    if cur_view['app_view'] == VIEW_GENERAL:
+        cur_style.update({'display': 'flex'})
+    elif cur_view['app_view'] == VIEW_COUNTRY:
+        cur_style.update({'display': 'none'})
     return cur_style
 
 
