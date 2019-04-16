@@ -45,12 +45,31 @@ EXOGENOUS_RESULTS_LABELS = [
 GRID = 'grid'
 MG = 'mg'
 SHS = 'shs'
-
 ELECTRIFICATION_OPTIONS = [GRID, MG, SHS]
 BAU_SENARIO = 'bau'
 SE4ALL_SHIFT_SENARIO = 'se4all_shift'
 PROG_SENARIO = 'prog'
 SCENARIOS = [BAU_SENARIO, SE4ALL_SHIFT_SENARIO, PROG_SENARIO]
+
+# Names for display
+SCENARIOS_DICT = {
+    BAU_SENARIO: 'BaU',
+    SE4ALL_SHIFT_SENARIO: 'SE4All',
+    PROG_SENARIO: 'prOG',
+}
+ELECTRIFICATION_DICT = {
+    GRID: 'Grid',
+    MG: 'Mini Grid',
+    SHS: 'Solar Home System'
+}
+
+
+# column names of the exogenous results
+POP_GET = ['pop_get_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS]
+HH_GET = ['hh_get_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS]
+HH_CAP = ['hh_%s_capacity' % opt for opt in ELECTRIFICATION_OPTIONS]
+HH_SCN2 = ['hh_cap_scn2_%s_capacity' % opt for opt in ELECTRIFICATION_OPTIONS]
+EXO_RESULTS = POP_GET + HH_GET + HH_CAP + HH_SCN2
 
 MIN_TIER_LEVEL = 3
 MIN_RATED_CAPACITY = {3: 200, 4: 800, 5: 2000}  # index is TIER level [W]
@@ -371,13 +390,13 @@ def prepare_se4all_data(input_df, weight_grid=WEIGHT_GRID, weight=WEIGHT):
 
     # SHARED WITH prOG
     # if the predicted mg share is larger than the predicted grid share, the number of people
-    # predited to use mg in the se4all+SHIFT scenario is returned, otherwise it is set to 0
+    # predicted to use mg in the se4all+SHIFT scenario is returned, otherwise it is set to 0
     df.loc[df.shift_grid_to_mg_share >= df.shift_grid_share, 'shift_pop_grid_to_mg'] = \
         df.shift_grid_to_mg_share * df.endo_pop_get_grid_2030
     df.loc[df.shift_grid_to_mg_share < df.shift_grid_share, 'shift_pop_grid_to_mg'] = 0
 
     # if the predicted shs share is larger than the predicted grid share, the number of people
-    # predited to use shs in the se4all+SHIFT scenario is returned, otherwise it is set to 0
+    # predicted to use shs in the se4all+SHIFT scenario is returned, otherwise it is set to 0
     df.loc[df.shift_grid_to_shs_share >= df.shift_grid_share, 'shift_pop_grid_to_shs'] = \
         df.shift_grid_to_shs_share * df.endo_pop_get_grid_2030
     df.loc[df.shift_grid_to_shs_share < df.shift_grid_share, 'shift_pop_grid_to_shs'] = 0
