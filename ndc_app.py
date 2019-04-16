@@ -112,7 +112,7 @@ app.layout = html.Div(
             data={'app_view': VIEW_GENERAL}
         ),
         html.Div(
-            id='controls-div',
+            id='left-panel-div',
             className='app__container',
             children=[
                 html.Div(
@@ -134,7 +134,7 @@ app.layout = html.Div(
             ]
         ),
         html.Div(
-            id='visualization-div',
+            id='right-panel-div',
             className='app__container',
             children=[
                 html.Div(
