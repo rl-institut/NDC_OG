@@ -32,6 +32,10 @@ REGIONS = dict(WD='World', SA='South America', AF='Africa', AS='Asia')
 
 REGIONS_NDC = dict(WD=['LA', 'SSA', 'DA'], SA='LA', AF='SSA', AS='DA')
 
+VIEW_GENERAL = 'general'
+VIEW_COUNTRY = 'specific'
+
+
 # World countries maps
 world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
 
@@ -99,6 +103,11 @@ app.layout = html.Div(
             id='data-store',
             storage_type='session',
             data=SCENARIOS_DATA.copy()
+        ),
+        dcc.Store(
+            id='view-store',
+            storage_type='session',
+            data={'view': VIEW_GENERAL}
         ),
         html.Div(
             id='controls-div',
@@ -307,62 +316,75 @@ def update_map(region_id, fig):
 
 
 @app.callback(
-    Output('map-div', 'style'),
+    Output('view-store', 'data'),
     [
         Input('region-input', 'value'),
         Input('country-input', 'value')
     ],
-    [State('map-div', 'style')]
+    [State('view-store', 'data')]
 )
-def toggle_map_div(region_id, country_sel, cur_style):
-    """Hide the map-div when user clicks on a country."""
+def update_view(region_id, country_sel, cur_view):
+    """Toggle between the different views of the app.
 
+    There are currently two views:
+    - VIEW_GENERAL : information panel on the left and map of the world with countries of the
+    study highlighted on the right panel. The user can hover over the countries and a piechart
+    will update on the right panel. The only controls available in this view are the scenario
+    and electrification option dropdowns.
+    - VIEW_COUNTRY : controls to change the value of the model parameters (model dependent) on
+    the left panel and results details as well as country-specific information on the right panel.
+
+    The app start in the VIEW_GENERAL. The VIEW_COUNTRY can be accessed by cliking on a
+    specific country or selecting it with the country dropdown,
+    """
     ctx = dash.callback_context
-
-    if cur_style is None:
-        cur_style = {'display': 'flex'}
-
+    print(ctx)
     if ctx.triggered:
         prop_id = ctx.triggered[0]['prop_id']
         # trigger comes from clicking on a country
         if 'country-input' in prop_id:
             if country_sel:
-                cur_style.update({'display': 'none'})
+                cur_view.update({'view': VIEW_COUNTRY})
             else:
-                cur_style.update({'display': 'flex'})
+                cur_view.update({'view': VIEW_GENERAL})
 
         # trigger comes from selecting a region
         elif 'region-input' in prop_id:
-            cur_style.update({'display': 'flex'})
+            cur_view.update({'view': VIEW_GENERAL})
+    return cur_view
+
+
+@app.callback(
+    Output('map-div', 'style'),
+    [Input('view-store', 'data')],
+    [State('map-div', 'style')]
+)
+def toggle_map_div_display(cur_view, cur_style):
+    """Change the display of map-div between the app's views."""
+    if cur_style is None:
+        cur_style = {'view': VIEW_GENERAL}
+
+    if cur_view['view'] == VIEW_GENERAL:
+        cur_style.update({'display': 'flex'})
+    elif cur_view['view'] == VIEW_COUNTRY:
+        cur_style.update({'display': 'none'})
     return cur_style
 
 
 @app.callback(
     Output('country-div', 'style'),
-    [
-        Input('region-input', 'value'),
-        Input('country-input', 'value')
-    ],
+    [Input('view-store', 'data')],
     [State('country-div', 'style')]
 )
-def toggle_country_div(region_id, country_sel, cur_style):
-    """Show the country-div when user clicks on a country."""
-    ctx = dash.callback_context
-
+def toggle_country_div_display(cur_view, cur_style):
+    """Change the display of country-div between the app's views."""
     if cur_style is None:
-        cur_style = {'display': 'none'}
+        cur_style = {'view': VIEW_GENERAL}
 
-    if ctx.triggered:
-        prop_id = ctx.triggered[0]['prop_id']
-        # trigger comes from clicking on a country
-        if 'country-input' in prop_id:
-            if country_sel:
-                cur_style.update({'display': 'flex'})
-            else:
-                cur_style.update({'display': 'none'})
-        # trigger comes from selecting a region
-        elif 'region-input' in prop_id:
-            cur_style.update({'display': 'none'})
+    if cur_view['view'] == VIEW_GENERAL:
+        cur_style.update({'display': 'none'})
+    elif cur_view['view'] == VIEW_COUNTRY:
+        cur_style.update({'display': 'flex'})
     return cur_style
 
 
