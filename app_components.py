@@ -82,7 +82,7 @@ def country_div(df=None, country_iso=None):
 
 
 def scenario_div(init_scenario, init_elec_opt):
-    """"""
+    """Return controls for choice of scenario and electrification options."""
 
     divs = [
         html.Div(
@@ -118,7 +118,7 @@ def scenario_div(init_scenario, init_elec_opt):
 
 
 def controls_div(piechart):
-    """"""
+    """Return controls for scenario dependent variables."""
     divs = [
         html.Div(
             id='rise-shs-div',
@@ -227,5 +227,5 @@ def controls_div(piechart):
 
 
 def general_info_div():
-    """"""
+    """Return text displayed for the user."""
     return dcc.Markdown('''Description of app and project here''')
