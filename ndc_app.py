@@ -354,6 +354,19 @@ def update_country_div_content(country_sel, scenario, cur_data):
 
 
 @app.callback(
+    Output('controls-div', 'children'),
+    [Input('scenario-input', 'value')],
+    [State('data-store', 'data')]
+)
+def update_controls_div_content(scenario, cur_data):
+    """Display information and study's results for a country."""
+
+    df = None
+    if scenario is None:
+        scenario = BAU_SENARIO
+
+    return controls_div(scenario)
+@app.callback(
     Output('piechart', 'figure'),
     [Input('map', 'hoverData')],
     [State('piechart', 'figure')]
