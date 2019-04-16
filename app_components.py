@@ -6,6 +6,8 @@ from data_preparation import (
     ELECTRIFICATION_OPTIONS,
     ELECTRIFICATION_DICT,
     SCENARIOS_DICT,
+    SE4ALL_SHIFT_SENARIO,
+    PROG_SENARIO,
     POP_GET,
     HH_CAP
 )
@@ -117,12 +119,23 @@ def scenario_div(init_scenario, init_elec_opt):
     return divs
 
 
-def controls_div(piechart):
+def controls_div(scenario):
     """Return controls for scenario dependent variables."""
+    view_on_se4all = 'none'
+    view_on_prog = 'none'
+    view_on_both = 'none'
+    if scenario == SE4ALL_SHIFT_SENARIO:
+        view_on_se4all = 'flex'
+    if scenario == PROG_SENARIO:
+        view_on_prog = 'flex'
+    if scenario in (SE4ALL_SHIFT_SENARIO, PROG_SENARIO):
+        view_on_both = 'flex'
+
     divs = [
         html.Div(
             id='rise-shs-div',
             className='app__input__slider',
+            style={'display': view_on_se4all},
             children=[
                 html.Div(
                     id='rise-shs-label',
@@ -143,6 +156,7 @@ def controls_div(piechart):
         html.Div(
             id='rise-mg-div',
             className='app__input__slider',
+            style={'display': view_on_se4all},
             children=[
                 html.Div(
                     id='rise-label',
@@ -163,65 +177,101 @@ def controls_div(piechart):
         html.Div(
             id='framework-div',
             className='app__input__slider',
+            style={'display': view_on_se4all},
             children=[
                 html.Div(
                     id='framework-label',
                     className='app__input__label',
                     children='Framework'
                 ),
-                daq.Slider(
-                    id='framework-input',
+                dcc.Input(
+                    id='mentis-gdp-input',
+                    className='app__input__num',
+                    value=0,
+                    type='number',
                     min=0,
-                    max=10,
-                    value=4,
-                    handleLabel={
-                        "showCurrentValue": True, "label": "VALUE"},
-                    step=1,
+                    max=1,
+                    step=0.5
                 ),
+                dcc.Input(
+                    id='mentis-mobile-money-input',
+                    className='app__input__num',
+                    value=0,
+                    type='number',
+                    min=0,
+                    max=1,
+                    step=0.5
+                ),
+                dcc.Input(
+                    id='mentis-ease-doing-business-input',
+                    className='app__input__num',
+                    value=0,
+                    type='number',
+                    min=0,
+                    max=1,
+                    step=0.5
+                ),
+                dcc.Input(
+                    id='mentis-corruption-input',
+                    className='app__input__num',
+                    value=0,
+                    type='number',
+                    min=0,
+                    max=1,
+                    step=0.5
+                ),
+                dcc.Input(
+                    id='mentis-grid_weakness-input',
+                    className='app__input__num',
+                    value=0,
+                    type='number',
+                    min=0,
+                    max=1,
+                    step=0.5
+                )
             ]
         ),
         html.Div(
             id='tier-div',
             className='app__input',
+            style={'display': view_on_both},
             children=[
                 html.Div(
                     id='tier-label',
                     className='app__input__label',
                     children='TIER'
                 ),
-                daq.NumericInput(
+                dcc.Input(
                     id='tier-input',
-                    value=2
+                    value=2,
+                    type='number',
+                    min=1,
+                    max=5,
+                    step=1
                 ),
             ]
         ),
         html.Div(
             id='invest-div',
             className='app__input',
+            style={'display': view_on_both},
             children=[
                 html.Div(
                     id='invest-label',
                     className='app__input__label',
                     children='Invest'
                 ),
-                daq.NumericInput(
+                dcc.Input(
                     id='invest-input',
-                    label='USD/kW',
-                    labelPosition='right'
+                    type='number',
+                ),
+                html.Div(
+                    id='invest-unit',
+                    className='app__input__label',
+                    children='USD/kW'
                 ),
             ]
         ),
-        html.Div(
-            id='piechart-div',
-            className='app__piechart',
-            children=dcc.Graph(
-                id='piechart',
-                figure=piechart,
-                style={
-                    'height': '55vh',
-                }
-            ),
-        )
     ]
     return divs
 

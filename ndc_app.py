@@ -124,12 +124,23 @@ app.layout = html.Div(
                     id='controls-div',
                     className='app__controls',
                     style={'display': 'none'},
-                    children=controls_div(piechart),
+                    children=controls_div(BAU_SENARIO),
                 ),
                 html.Div(
                     id='general-info-div',
                     className='app__info',
                     children=general_info_div()
+                ),
+                html.Div(
+                    id='piechart-div',
+                    className='app__piechart',
+                    children=dcc.Graph(
+                        id='piechart',
+                        figure=piechart,
+                        style={
+                            'height': '55vh',
+                        }
+                    ),
                 )
             ]
         ),
