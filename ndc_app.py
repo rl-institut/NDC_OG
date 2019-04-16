@@ -15,7 +15,6 @@ from data_preparation import (
     MG,
     GRID,
     SHS,
-
     compute_ndc_results_from_raw_data
 )
 
@@ -332,11 +331,21 @@ def toggle_general_info_div_display(cur_view, cur_style):
     Output('country-div', 'children'),
     [
         Input('country-input', 'value'),
-        Input('scenario-input', 'value')
+        Input('scenario-input', 'value'),
+        Input('mentis-gdp-input', 'value'),
+        Input('mentis-mobile-money-input', 'value'),
+        Input('tier-input', 'value')
     ],
     [State('data-store', 'data')]
 )
-def update_country_div_content(country_sel, scenario, cur_data):
+def update_country_div_content(
+        country_sel,
+        scenario,
+        gdp_class,
+        mm_class,
+        tier_level,
+        cur_data
+):
     """Display information and study's results for a country."""
 
     df = None
@@ -350,6 +359,15 @@ def update_country_div_content(country_sel, scenario, cur_data):
         if scenario in SCENARIOS:
             df = pd.read_json(cur_data[scenario]).set_index('country_iso')
 
+            if scenario == SE4ALL_SHIFT_SENARIO:
+                if gdp_class is not None:
+                    df.loc[country_iso, 'gdp_class'] = gdp_class
+                if mm_class is not None:
+                    df.loc[country_iso, 'mobile_money_class'] = mm_class
+
+            if scenario in [SE4ALL_SHIFT_SENARIO, PROG_SENARIO]:
+                if tier_level is not None:
+                    df.loc[country_iso, 'mobile_money_class'] = tier_level
     return country_div(df, country_iso)
 
 
@@ -366,6 +384,32 @@ def update_controls_div_content(scenario, cur_data):
         scenario = BAU_SENARIO
 
     return controls_div(scenario)
+
+
+@app.callback(
+    Output('mentis-gdp-input', 'value'),
+    [
+        Input('scenario-input', 'value'),
+        Input('country-input', 'value'),
+    ],
+    [State('data-store', 'data')]
+)
+def update_mentis_gdp_input(scenario, country_sel, cur_data):
+
+    answer = 0
+    country_iso = country_sel
+    # in case of country_iso is a list of one element
+    if np.shape(country_iso) and len(country_iso) == 1:
+        country_iso = country_iso[0]
+
+    # extract the data from the selected scenario if a country was selected
+    if country_iso is not None:
+        if scenario in SCENARIOS:
+            df = pd.read_json(cur_data[scenario]).set_index('country_iso')
+            answer = df.loc[country_iso, 'gdp_class']
+    return answer
+
+
 @app.callback(
     Output('piechart', 'figure'),
     [Input('map', 'hoverData')],
