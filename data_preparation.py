@@ -71,9 +71,11 @@ HH_CAP = ['hh_%s_capacity' % opt for opt in ELECTRIFICATION_OPTIONS]
 HH_SCN2 = ['hh_cap_scn2_%s_capacity' % opt for opt in ELECTRIFICATION_OPTIONS]
 EXO_RESULTS = POP_GET + HH_GET + HH_CAP + HH_SCN2
 
+# source http://www.worldbank.org/content/dam/Worldbank/Topics/Energy%20and%20Extract/
+# Beyond_Connections_Energy_Access_Redefined_Exec_ESMAP_2015.pdf
 MIN_TIER_LEVEL = 3
-MIN_RATED_CAPACITY = {3: 200, 4: 800, 5: 2000}  # index is TIER level [W]
-MIN_ANNUAL_CONSUMPTION = {3: 365, 4: 1250, 5: 3000}  # index is TIER level [kWh/a]
+MIN_RATED_CAPACITY = {1: 3, 2: 50, 3: 200, 4: 800, 5: 2000}  # index is TIER level [W]
+MIN_ANNUAL_CONSUMPTION = {1: 4.5, 2: 73, 3: 365, 4: 1250, 5: 3000}  # index is TIER level [kWh/a]
 RATIO_CAP_CONSUMPTION = {}
 
 # drives for the socio-economic model
@@ -103,14 +105,14 @@ def _slope_capacity_vs_yearly_consumption(tier_level):
     :param tier_level: either 3 or 4 (there are only 3 tier levels considered in this study)
     :return: the slope of the linear relation
     """
-    if tier_level not in [3, 4]:
+    if tier_level not in [1, 2, 3, 4]:
         raise ValueError
     m = (MIN_RATED_CAPACITY[tier_level + 1] - MIN_RATED_CAPACITY[tier_level]) \
         / (MIN_ANNUAL_CONSUMPTION[tier_level + 1] - MIN_ANNUAL_CONSUMPTION[tier_level])
     return m
 
 
-for tier_lvl in [3, 4]:
+for tier_lvl in [1, 2, 3, 4]:
     RATIO_CAP_CONSUMPTION[tier_lvl] = _slope_capacity_vs_yearly_consumption(tier_lvl)
 
 
@@ -139,7 +141,7 @@ def _find_tier_level(yearly_consumption):
 def get_peak_capacity_from_yearly_consumption(yearly_consumption):
     """Use linear interpolation of the minimum values of capacity and consumption
 
-    :param yearly_consumption: yearly consuption per household in kWh/year
+    :param yearly_consumption: yearly consumption per household in kWh/year
     :return: peak capacity in kW
     """
     # Find the lower tier level bound
@@ -258,7 +260,7 @@ def shs_av_power(power_cat, shs_power_categories=None):
     return shs_power_categories.loc[power_cat, 'power_av']
 
 
-def prepare_endogenous_variables(input_df, shs_sales_volumes=None):
+def prepare_endogenous_variables(input_df, shs_sales_volumes=None, tier_level=MIN_TIER_LEVEL):
 
     if shs_sales_volumes is None:
         shs_sales_volumes = SHS_SALES_VOLUMES
@@ -269,7 +271,8 @@ def prepare_endogenous_variables(input_df, shs_sales_volumes=None):
         df['hh_%s_tier_yearly_electricity_consumption' % opt] = \
             np.vectorize(map_tier_yearly_consumption)(
                 df.hh_yearly_electricity_consumption,
-                df['hh_%s_share' % opt]
+                df['hh_%s_share' % opt],
+                tier_level
             )
 
     df['shs_unit_av_capacity'] = df.region.map(
