@@ -82,7 +82,8 @@ def country_hover_text(input_df):
 world['results'] = np.random.rand(len(world.index), 4).tolist()
 
 scl = [
-    [0.0, 'rgb(242,240,247)'],
+    [0.0, 'rgb(136, 136, 68)'],
+    [0.001, 'rgb(242,240,247)'],
     [0.2, 'rgb(218,218,235)'],
     [0.4, 'rgb(188,189,220)'],
     [0.6, 'rgb(158,154,200)'],
@@ -244,8 +245,11 @@ app.layout = html.Div(
 def update_map(region_id, scenario, elec_opt, fig, cur_data):
 
     region_name = REGIONS_GPD[region_id]
+    # load the data of the scenario
     df = pd.read_json(cur_data[scenario])
+    # narrow to the region
     df = df.loc[df.region == REGIONS_NDC[region_id]]
+    # compute the percentage of people with the given electrification option
     z = df['pop_get_%s_2030' % elec_opt].div(df.pop_newly_electrified_2030, axis=0).round(3)
 
     fig['data'][0].update(
