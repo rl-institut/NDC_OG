@@ -114,7 +114,17 @@ layout = go.Layout(
         showlakes=True,
         showcountries=True,
         lakecolor='rgb(255, 255, 255)',
-        projection=dict(type='equirectangular')
+        projection=dict(type='equirectangular'),
+    ),
+    geo2=go.layout.Geo(
+        scope='world',
+        showlakes=True,
+        showcountries=True,
+        lakecolor='rgb(255, 255, 255)',
+        projection=dict(type='equirectangular'),
+        lonaxis=dict(range=[-95, -30.0]),
+        lataxis=dict(range=[-60, 30]),
+        framewidth=0,
     )
 )
 
@@ -258,8 +268,16 @@ def update_map(region_id, scenario, elec_opt, fig, cur_data):
     else:
         # color of country boundaries
         line_color = 'rgb(179,179,179)'
+
     # compute the percentage of people with the given electrification option
     z = df['pop_get_%s_2030' % elec_opt].div(df.pop_newly_electrified_2030, axis=0).round(3)
+
+    if region_id == 'SA':
+        region_name = REGIONS_GPD[WORLD_ID]
+        geo = 'geo2'
+    else:
+        region_name = REGIONS_GPD[region_id]
+        geo = 'geo'
 
     fig['data'][0].update(
         {
@@ -268,6 +286,7 @@ def update_map(region_id, scenario, elec_opt, fig, cur_data):
             'zmin': 0,
             'zmax': 100,
             'text': country_hover_text(df),
+            'geo': geo,
             'marker': {'line': {'color': line_color}},
             'colorbar': go.choropleth.ColorBar(
                 title="2030<br>%% %s<br>access" % elec_opt,
