@@ -246,12 +246,12 @@ def update_map(region_id, scenario, elec_opt, fig, cur_data):
     region_name = REGIONS_GPD[region_id]
     df = pd.read_json(cur_data[scenario])
     df = df.loc[df.region == REGIONS_NDC[region_id]]
-    z = df['pop_get_%s_2030' % elec_opt].div(df.pop_newly_electrified_2030, axis=0)
+    z = df['pop_get_%s_2030' % elec_opt].div(df.pop_newly_electrified_2030, axis=0).round(3)
 
     fig['data'][0].update(
         {
             'locations': df['country_iso'],
-            'z': z.astype(float),
+            'z': z * 100,
             'text': country_hover_text(df),
             'colorbar': go.choropleth.ColorBar(title="2030<br>%% %s<br>access" % elec_opt),
         }
