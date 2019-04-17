@@ -37,6 +37,7 @@ from app_components import (
 SCENARIOS_DATA = {
     sce: compute_ndc_results_from_raw_data(sce).to_json() for sce in SCENARIOS
 }
+WORLD_ID = 'WD'
 REGIONS_GPD = dict(WD='World', SA='South America', AF='Africa', AS='Asia')
 
 REGIONS_NDC = dict(WD=['LA', 'SSA', 'DA'], SA='LA', AF='SSA', AS='DA')
@@ -111,6 +112,7 @@ layout = go.Layout(
     geo=go.layout.Geo(
         scope='world',
         showlakes=True,
+        showcountries=True,
         lakecolor='rgb(255, 255, 255)',
         projection=dict(type='equirectangular')
     )
@@ -192,7 +194,7 @@ app.layout = html.Div(
                                         {'label': v, 'value': k}
                                         for k, v in REGIONS_GPD.items()
                                     ],
-                                    value='SA'
+                                    value=WORLD_ID
                                 )
                             ]
                         ),
@@ -243,12 +245,19 @@ app.layout = html.Div(
     ]
 )
 def update_map(region_id, scenario, elec_opt, fig, cur_data):
+    """Plot color map of the percentage of people with a given electrification option."""
 
-    region_name = REGIONS_GPD[region_id]
     # load the data of the scenario
     df = pd.read_json(cur_data[scenario])
-    # narrow to the region
-    df = df.loc[df.region == REGIONS_NDC[region_id]]
+
+    if region_id != WORLD_ID:
+        # narrow to the region if the scope is not on the whole world
+        df = df.loc[df.region == REGIONS_NDC[region_id]]
+        # color of country boundaries
+        line_color = 'rgb(255,255,255)'
+    else:
+        # color of country boundaries
+        line_color = 'rgb(179,179,179)'
     # compute the percentage of people with the given electrification option
     z = df['pop_get_%s_2030' % elec_opt].div(df.pop_newly_electrified_2030, axis=0).round(3)
 
@@ -259,6 +268,7 @@ def update_map(region_id, scenario, elec_opt, fig, cur_data):
             'zmin': 0,
             'zmax': 100,
             'text': country_hover_text(df),
+            'marker': {'line': {'color': line_color}},
             'colorbar': go.choropleth.ColorBar(
                 title="2030<br>%% %s<br>access" % elec_opt,
                 tickmode="array",
@@ -516,11 +526,19 @@ def update_selected_country_on_map(cur_data, cur_val):
     ]
 )
 def update_country_selection_options(region_id, scenario, cur_data):
+    """List the countries in a given region in alphabetical order."""
     countries_in_region = []
     if scenario is not None:
+        # load the data of the scenario
         df = pd.read_json(cur_data[scenario])
 
-        for idx, row in df.loc[df.region == REGIONS_NDC[region_id]].iterrows():
+        if region_id != WORLD_ID:
+            # narrow to the region if the scope is not on the whole world
+            df = df.loc[df.region == REGIONS_NDC[region_id]]
+
+        # sort alphabetically by country
+        df = df.sort_values('country')
+        for idx, row in df.iterrows():
             countries_in_region.append({'label': row['country'], 'value': row['country_iso']})
 
     return countries_in_region
