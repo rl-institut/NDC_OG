@@ -36,7 +36,7 @@ from app_components import (
 SCENARIOS_DATA = {
     sce: compute_ndc_results_from_raw_data(sce).to_json() for sce in SCENARIOS
 }
-REGIONS = dict(WD='World', SA='South America', AF='Africa', AS='Asia')
+REGIONS_GPD = dict(WD='World', SA='South America', AF='Africa', AS='Asia')
 
 REGIONS_NDC = dict(WD=['LA', 'SSA', 'DA'], SA='LA', AF='SSA', AS='DA')
 
@@ -54,6 +54,11 @@ world['text'] = world['name'] + '<br>' + 'Pop ' + world['pop_est'] + ' GDP ' + w
     'gdp_md_est'] + \
                 '<br>'
 
+
+def country_hover_text(input_df):
+
+    df = input_df.copy()
+    return df.country + '<br>'
 # Dummy variable for testing pie chart
 world['results'] = np.random.rand(len(world.index), 4).tolist()
 
@@ -165,7 +170,7 @@ app.layout = html.Div(
                                     id='region-input',
                                     options=[
                                         {'label': v, 'value': k}
-                                        for k, v in REGIONS.items()
+                                        for k, v in REGIONS_GPD.items()
                                     ],
                                     value='SA'
                                 )
@@ -207,20 +212,29 @@ app.layout = html.Div(
 
 @app.callback(
     Output('map', 'figure'),
-    [Input('region-input', 'value')],
-    [State('map', 'figure')]
+    [
+        Input('region-input', 'value'),
+        Input('scenario-input', 'value'),
+        Input('electrification-input', 'value')
+    ],
+    [
+        State('map', 'figure'),
+        State('data-store', 'data')
+    ]
 )
-def update_map(region_id, fig):
+def update_map(region_id, scenario, elec_opt, fig, cur_data):
 
-    region_name = REGIONS[region_id]
-
-    df = world.loc[world.continent == region_name]
+    region_name = REGIONS_GPD[region_id]
+    df = pd.read_json(cur_data[scenario])
+    df = df.loc[df.region == REGIONS_NDC[region_id]]
+    z = df['pop_get_%s_2030' % elec_opt].div(df.pop_newly_electrified_2030, axis=0)
 
     fig['data'][0].update(
         {
-            'locations': df['iso_a3'],
-            'z': df['pop_est'].astype(float),
-            'text': df['text'],
+            'locations': df['country_iso'],
+            'z': z.astype(float),
+            'text': country_hover_text(df),
+            'colorbar': go.choropleth.ColorBar(title="2030<br>%% %s<br>access" % elec_opt),
         }
     )
     fig['layout']['geo'].update({'scope': region_name.lower()})
