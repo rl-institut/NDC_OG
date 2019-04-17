@@ -15,6 +15,7 @@ from data_preparation import (
     MG,
     GRID,
     SHS,
+    ELECTRIFICATION_DICT,
     POP_GET,
     HH_CAP,
     compute_ndc_results_from_raw_data,
@@ -128,13 +129,13 @@ layout = go.Layout(
     )
 )
 
+
 fig_map = go.Figure(data=data, layout=layout)
 
 
-labels = list(SCENARIOS_DICT.keys())
-values = [4500, 2500, 1053, 500]
+PIECHART_LABELS = list(ELECTRIFICATION_DICT.values())
 
-piechart = go.Figure(data=[go.Pie(labels=labels, values=values)])
+piechart = go.Figure(data=[go.Pie(labels=PIECHART_LABELS, values=[4500, 2500, 1053], sort=False)])
 
 # Initializes dash app
 app = dash.Dash(__name__)
@@ -504,22 +505,41 @@ def update_mentis_gdp_input(scenario, country_sel, cur_data):
 @app.callback(
     Output('piechart', 'figure'),
     [Input('map', 'hoverData')],
-    [State('piechart', 'figure')]
+    [
+        State('piechart', 'figure'),
+        State('scenario-input', 'value'),
+        State('data-store', 'data')
+    ]
 )
-def update_piechart(selected_data, fig):
+def update_piechart(selected_data, fig, scenario, cur_data):
     if selected_data is not None:
         chosen = [point['location'] if point['pointNumber'] != 0 else None for point in
                   selected_data['points']]
         if chosen[0] is not None:
-            country_code = chosen[0]
+            country_iso = chosen[0]
+            if scenario in SCENARIOS:
+                # load the data of the scenario
+                df = pd.read_json(cur_data[scenario])
+                # narrow the selection to the selected country
+                df = df.loc[df.country_iso == country_iso]
 
-            df = world.loc[world.iso_a3 == country_code]
-            fig['data'][0].update(
-                {
-                    'values': df['results'].values[0]
-                }
-            )
+                # compute the percentage of people with the given electrification option
+                df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
+                # TODO: need to implement https://en.wikipedia.org/wiki/Largest_remainder_method
+                percentage = df[POP_GET].values[0] * 100
+                labels = PIECHART_LABELS
 
+                if scenario == BAU_SENARIO:
+                    diff = 100 - percentage.sum()
+                    percentage = np.append(percentage, diff)
+                    labels = PIECHART_LABELS + ['no electricity']
+
+                fig['data'][0].update(
+                    {
+                        'values': percentage,
+                        'labels': labels
+                    }
+                )
     return fig
 
 
