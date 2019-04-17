@@ -15,6 +15,7 @@ from data_preparation import (
     MG,
     GRID,
     SHS,
+    POP_GET,
     HH_CAP,
     compute_ndc_results_from_raw_data,
     prepare_endogenous_variables,
@@ -36,7 +37,7 @@ from app_components import (
 SCENARIOS_DATA = {
     sce: compute_ndc_results_from_raw_data(sce).to_json() for sce in SCENARIOS
 }
-REGIONS = dict(WD='World', SA='South America', AF='Africa', AS='Asia')
+REGIONS_GPD = dict(WD='World', SA='South America', AF='Africa', AS='Asia')
 
 REGIONS_NDC = dict(WD=['LA', 'SSA', 'DA'], SA='LA', AF='SSA', AS='DA')
 
@@ -54,11 +55,35 @@ world['text'] = world['name'] + '<br>' + 'Pop ' + world['pop_est'] + ' GDP ' + w
     'gdp_md_est'] + \
                 '<br>'
 
+
+def country_hover_text(input_df):
+    """Format the text displayed by the hover."""
+    df = input_df.copy()
+    # share of the population with electricity in 2030 (per electrification option)
+    df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0)
+
+    return df.country + '<br>' \
+        + '2017 <br>' \
+        + '  Pop : ' + df.pop_2017.div(1e6).map('{:.1f} MIO'.format) + '<br>' \
+        + '  Household electric consumption: ' + '<br>' \
+        + '  ' + df.hh_yearly_electricity_consumption.map('{:.1f} kWh/year'.format) + '<br>' \
+        + '  Grid share: ' + df.pop_grid_share.map('{:.1%}'.format) + '<br>' \
+        + '  MG: ' + df.pop_mg_share.map('{:.1%}'.format) + '<br>' \
+        + '  SHS: ' + df.pop_shs_share.map('{:.1%}'.format) + '<br>' \
+        + '2030 <br>' \
+        + '  Est Pop (2030): ' + df.pop_2030.div(1e6).map('{:.1f} MIO'.format) + '<br>' \
+        + '  Grid share: ' + df.pop_get_grid_2030.map('{:.1%}'.format) + '<br>' \
+        + '  MG: ' + df.pop_get_mg_2030.map('{:.1%}'.format) + '<br>' \
+        + '  SHS: ' + df.pop_get_shs_2030.map('{:.1%}'.format) + '<br>' \
+
+
+
 # Dummy variable for testing pie chart
 world['results'] = np.random.rand(len(world.index), 4).tolist()
 
 scl = [
-    [0.0, 'rgb(242,240,247)'],
+    [0.0, 'rgb(136, 136, 68)'],
+    [0.001, 'rgb(242,240,247)'],
     [0.2, 'rgb(218,218,235)'],
     [0.4, 'rgb(188,189,220)'],
     [0.6, 'rgb(158,154,200)'],
@@ -165,7 +190,7 @@ app.layout = html.Div(
                                     id='region-input',
                                     options=[
                                         {'label': v, 'value': k}
-                                        for k, v in REGIONS.items()
+                                        for k, v in REGIONS_GPD.items()
                                     ],
                                     value='SA'
                                 )
@@ -207,20 +232,38 @@ app.layout = html.Div(
 
 @app.callback(
     Output('map', 'figure'),
-    [Input('region-input', 'value')],
-    [State('map', 'figure')]
+    [
+        Input('region-input', 'value'),
+        Input('scenario-input', 'value'),
+        Input('electrification-input', 'value')
+    ],
+    [
+        State('map', 'figure'),
+        State('data-store', 'data')
+    ]
 )
-def update_map(region_id, fig):
+def update_map(region_id, scenario, elec_opt, fig, cur_data):
 
-    region_name = REGIONS[region_id]
-
-    df = world.loc[world.continent == region_name]
+    region_name = REGIONS_GPD[region_id]
+    # load the data of the scenario
+    df = pd.read_json(cur_data[scenario])
+    # narrow to the region
+    df = df.loc[df.region == REGIONS_NDC[region_id]]
+    # compute the percentage of people with the given electrification option
+    z = df['pop_get_%s_2030' % elec_opt].div(df.pop_newly_electrified_2030, axis=0).round(3)
 
     fig['data'][0].update(
         {
-            'locations': df['iso_a3'],
-            'z': df['pop_est'].astype(float),
-            'text': df['text'],
+            'locations': df['country_iso'],
+            'z': z * 100,
+            'zmin': 0,
+            'zmax': 100,
+            'text': country_hover_text(df),
+            'colorbar': go.choropleth.ColorBar(
+                title="2030<br>%% %s<br>access" % elec_opt,
+                tickmode="array",
+                tickvals=[10 * i for i in range(11)]
+            ),
         }
     )
     fig['layout']['geo'].update({'scope': region_name.lower()})
