@@ -399,6 +399,11 @@ def toggle_general_info_div_display(cur_view, cur_style):
         Input('scenario-input', 'value'),
         Input('mentis-gdp-input', 'value'),
         Input('mentis-mobile-money-input', 'value'),
+        Input('mentis-ease-doing-business-input', 'value'),
+        Input('mentis-corruption-input', 'value'),
+        Input('mentis-weak-grid-input', 'value'),
+        Input('rise-mg-input', 'value'),
+        Input('rise-shs-input', 'value'),
         Input('tier-input', 'value')
     ],
     [State('data-store', 'data')]
@@ -408,6 +413,11 @@ def update_country_div_content(
         scenario,
         gdp_class,
         mm_class,
+        edb_class,
+        corruption_class,
+        weak_grid_class,
+        rise_mg,
+        rise_shs,
         tier_level,
         cur_data
 ):
@@ -439,12 +449,20 @@ def update_country_div_content(
                     df.loc[:, 'gdp_class'] = gdp_class
                 if mm_class is not None:
                     df.loc[:, 'mobile_money_class'] = mm_class
-                print(df[['shift_pop_grid_to_mg', 'shift_pop_grid_to_shs']+HH_CAP])
+                if edb_class is not None:
+                    df.loc[:, 'ease_doing_business_class'] = edb_class
+                if corruption_class is not None:
+                    df.loc[:, 'corruption_class'] = corruption_class
+                if weak_grid_class is not None:
+                    df.loc[:, 'weak_grid_class'] = weak_grid_class
+                if rise_mg is not None:
+                    df.loc[:, 'rise_mg'] = rise_mg
+                if rise_shs is not None:
+                    df.loc[:, 'rise_shs'] = rise_shs
 
                 # recompute the results after updating the shift drives
                 df = prepare_se4all_data(input_df=df, fixed_shift_drives=False)
                 df = extract_results_scenario(df, scenario)
-                print(df[['shift_pop_grid_to_mg', 'shift_pop_grid_to_shs']+HH_CAP])
 
     return country_div(df)
 
