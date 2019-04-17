@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import geopandas as gpd
 import dash
 from dash.dependencies import Output, Input, State
 import dash_core_components as dcc
@@ -47,17 +46,6 @@ VIEW_GENERAL = 'general'
 VIEW_COUNTRY = 'specific'
 
 
-# World countries maps
-world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
-
-for col in world.columns:
-    world[col] = world[col].astype(str)
-
-world['text'] = world['name'] + '<br>' + 'Pop ' + world['pop_est'] + ' GDP ' + world[
-    'gdp_md_est'] + \
-                '<br>'
-
-
 def country_hover_text(input_df):
     """Format the text displayed by the hover."""
     df = input_df.copy()
@@ -78,10 +66,6 @@ def country_hover_text(input_df):
         + '  MG: ' + df.pop_get_mg_2030.map('{:.1%}'.format) + '<br>' \
         + '  SHS: ' + df.pop_get_shs_2030.map('{:.1%}'.format) + '<br>' \
 
-
-
-# Dummy variable for testing pie chart
-world['results'] = np.random.rand(len(world.index), 4).tolist()
 
 scl = [
     [0.0, 'rgb(136, 136, 68)'],
