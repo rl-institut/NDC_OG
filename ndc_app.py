@@ -15,6 +15,7 @@ from data_preparation import (
     GRID,
     SHS,
     ELECTRIFICATION_DICT,
+MENTI_DRIVES,
     POP_GET,
     HH_CAP,
     compute_ndc_results_from_raw_data,
@@ -29,7 +30,8 @@ from app_components import (
     country_div,
     scenario_div,
     controls_div,
-    general_info_div
+    general_info_div,
+    callback_generator
 )
 
 
@@ -460,28 +462,13 @@ def update_controls_div_content(scenario):
     return controls_div(scenario)
 
 
-@app.callback(
-    Output('mentis-gdp-input', 'value'),
-    [
-        Input('scenario-input', 'value'),
-        Input('country-input', 'value'),
-    ],
-    [State('data-store', 'data')]
-)
-def update_mentis_gdp_input(scenario, country_sel, cur_data):
+# generate callbacks for the mentis drives dcc.Input
+for input_name in MENTI_DRIVES:
+    callback_generator(app, 'mentis-%s' % input_name.replace('_', '-'), '%s_class' % input_name)
 
-    answer = 0
-    country_iso = country_sel
-    # in case of country_iso is a list of one element
-    if np.shape(country_iso) and len(country_iso) == 1:
-        country_iso = country_iso[0]
-
-    # extract the data from the selected scenario if a country was selected
-    if country_iso is not None:
-        if scenario in SCENARIOS:
-            df = pd.read_json(cur_data[scenario]).set_index('country_iso')
-            answer = df.loc[country_iso, 'gdp_class']
-    return answer
+# generate callbacks for the mentis drives dcc.Input
+for input_name in [MG, SHS]:
+    callback_generator(app, 'rise-%s' % input_name.replace('_', '-'), 'rise_%s' % input_name)
 
 
 @app.callback(

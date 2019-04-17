@@ -91,6 +91,8 @@ MENTI = pd.DataFrame({MG: [3, 13. / 6, 19. / 6, 3.25, 11. / 3],
                       })
 MENTI = MENTI.set_index('labels')
 
+MENTI_DRIVES = ['gdp', 'mobile_money', 'ease_doing_business', 'corruption', 'weak_grid']
+
 WEIGHT_GRID = 0.8  # $RT_shift_factors.$O$2
 WEIGHT = 0.2  # $RT_shift_factors.$P$2
 RISE_INDICES = ['rise_%s' % opt for opt in ELECTRIFICATION_OPTIONS]

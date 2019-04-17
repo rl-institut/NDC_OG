@@ -1,6 +1,8 @@
 import numpy as np
+import pandas as pd
 import dash_html_components as html
 import dash_core_components as dcc
+from dash.dependencies import Output, Input, State
 import dash_daq as daq
 from data_preparation import (
     ELECTRIFICATION_OPTIONS,
@@ -9,8 +11,40 @@ from data_preparation import (
     SE4ALL_SHIFT_SENARIO,
     PROG_SENARIO,
     POP_GET,
-    HH_CAP
+    HH_CAP,
+    MENTI_DRIVES
 )
+
+
+def callback_generator(app, input_name, df_name):
+    """Generate a callback for input components."""
+
+    @app.callback(
+        Output('%s-input' % input_name, 'value'),
+        [
+            Input('scenario-input', 'value'),
+            Input('country-input', 'value'),
+        ],
+        [State('data-store', 'data')]
+    )
+    def update_drive_input(scenario, country_sel, cur_data):
+
+        answer = 0
+        country_iso = country_sel
+        # in case of country_iso is a list of one element
+        if np.shape(country_iso) and len(country_iso) == 1:
+            country_iso = country_iso[0]
+
+        # extract the data from the selected scenario if a country was selected
+        if country_iso is not None:
+            if scenario == SE4ALL_SHIFT_SENARIO:
+                df = pd.read_json(cur_data[scenario]).set_index('country_iso')
+                answer = df.loc[country_iso, '%s' % df_name]
+        return answer
+
+    update_drive_input.__name__ = 'update_%s_input' % input_name
+
+    return update_drive_input
 
 
 def country_div(df=None):
@@ -182,57 +216,23 @@ def controls_div(scenario):
             className='app__input__slider',
             style={'display': view_on_se4all},
             children=[
-                html.Div(
-                    id='framework-label',
-                    className='app__input__label',
-                    children='Framework'
-                ),
-                dcc.Input(
-                    id='mentis-gdp-input',
-                    className='app__input__num',
-                    value=0,
-                    type='number',
-                    min=0,
-                    max=1,
-                    step=0.5
-                ),
-                dcc.Input(
-                    id='mentis-mobile-money-input',
-                    className='app__input__num',
-                    value=0,
-                    type='number',
-                    min=0,
-                    max=1,
-                    step=0.5
-                ),
-                dcc.Input(
-                    id='mentis-ease-doing-business-input',
-                    className='app__input__num',
-                    value=0,
-                    type='number',
-                    min=0,
-                    max=1,
-                    step=0.5
-                ),
-                dcc.Input(
-                    id='mentis-corruption-input',
-                    className='app__input__num',
-                    value=0,
-                    type='number',
-                    min=0,
-                    max=1,
-                    step=0.5
-                ),
-                dcc.Input(
-                    id='mentis-grid_weakness-input',
-                    className='app__input__num',
-                    value=0,
-                    type='number',
-                    min=0,
-                    max=1,
-                    step=0.5
-                )
-            ]
+                         html.Div(
+                             id='framework-label',
+                             className='app__input__label',
+                             children='Framework'
+                         )
+                     ] + [
+                         dcc.Input(
+                             id='mentis-%s-input' % input_name.replace('_', '-'),
+                             className='app__input__num',
+                             value=0,
+                             type='number',
+                             min=0,
+                             max=1,
+                             step=0.5
+                         )
+                         for input_name in MENTI_DRIVES
+                     ]
         ),
         html.Div(
             id='tier-div',
