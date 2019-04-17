@@ -64,7 +64,7 @@ def country_hover_text(input_df):
         + '  Est Pop (2030): ' + df.pop_2030.div(1e6).map('{:.1f} MIO'.format) + '<br>' \
         + '  Grid share: ' + df.pop_get_grid_2030.map('{:.1%}'.format) + '<br>' \
         + '  MG: ' + df.pop_get_mg_2030.map('{:.1%}'.format) + '<br>' \
-        + '  SHS: ' + df.pop_get_shs_2030.map('{:.1%}'.format) + '<br>' \
+        + '  SHS: ' + df.pop_get_shs_2030.map('{:.1%}'.format) + '<br>'
 
 
 scl = [
@@ -449,13 +449,11 @@ def update_country_div_content(
 
 @app.callback(
     Output('controls-div', 'children'),
-    [Input('scenario-input', 'value')],
-    [State('data-store', 'data')]
+    [Input('scenario-input', 'value')]
 )
-def update_controls_div_content(scenario, cur_data):
+def update_controls_div_content(scenario):
     """Display information and study's results for a country."""
 
-    df = None
     if scenario is None:
         scenario = BAU_SENARIO
 
