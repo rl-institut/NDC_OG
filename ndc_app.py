@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import geopandas as gpd
 import dash
 from dash.dependencies import Output, Input, State
 import dash_core_components as dcc
@@ -15,6 +14,7 @@ from data_preparation import (
     MG,
     GRID,
     SHS,
+    ELECTRIFICATION_DICT,
     POP_GET,
     HH_CAP,
     compute_ndc_results_from_raw_data,
@@ -37,23 +37,13 @@ from app_components import (
 SCENARIOS_DATA = {
     sce: compute_ndc_results_from_raw_data(sce).to_json() for sce in SCENARIOS
 }
+WORLD_ID = 'WD'
 REGIONS_GPD = dict(WD='World', SA='South America', AF='Africa', AS='Asia')
 
 REGIONS_NDC = dict(WD=['LA', 'SSA', 'DA'], SA='LA', AF='SSA', AS='DA')
 
 VIEW_GENERAL = 'general'
 VIEW_COUNTRY = 'specific'
-
-
-# World countries maps
-world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
-
-for col in world.columns:
-    world[col] = world[col].astype(str)
-
-world['text'] = world['name'] + '<br>' + 'Pop ' + world['pop_est'] + ' GDP ' + world[
-    'gdp_md_est'] + \
-                '<br>'
 
 
 def country_hover_text(input_df):
@@ -74,12 +64,8 @@ def country_hover_text(input_df):
         + '  Est Pop (2030): ' + df.pop_2030.div(1e6).map('{:.1f} MIO'.format) + '<br>' \
         + '  Grid share: ' + df.pop_get_grid_2030.map('{:.1%}'.format) + '<br>' \
         + '  MG: ' + df.pop_get_mg_2030.map('{:.1%}'.format) + '<br>' \
-        + '  SHS: ' + df.pop_get_shs_2030.map('{:.1%}'.format) + '<br>' \
+        + '  SHS: ' + df.pop_get_shs_2030.map('{:.1%}'.format) + '<br>'
 
-
-
-# Dummy variable for testing pie chart
-world['results'] = np.random.rand(len(world.index), 4).tolist()
 
 scl = [
     [0.0, 'rgb(136, 136, 68)'],
@@ -111,18 +97,29 @@ layout = go.Layout(
     geo=go.layout.Geo(
         scope='world',
         showlakes=True,
+        showcountries=True,
         lakecolor='rgb(255, 255, 255)',
-        projection=dict(type='equirectangular')
+        projection=dict(type='equirectangular'),
+    ),
+    geo2=go.layout.Geo(
+        scope='world',
+        showlakes=True,
+        showcountries=True,
+        lakecolor='rgb(255, 255, 255)',
+        projection=dict(type='equirectangular'),
+        lonaxis=dict(range=[-95, -30.0]),
+        lataxis=dict(range=[-60, 30]),
+        framewidth=0,
     )
 )
+
 
 fig_map = go.Figure(data=data, layout=layout)
 
 
-labels = list(SCENARIOS_DICT.keys())
-values = [4500, 2500, 1053, 500]
+PIECHART_LABELS = list(ELECTRIFICATION_DICT.values())
 
-piechart = go.Figure(data=[go.Pie(labels=labels, values=values)])
+piechart = go.Figure(data=[go.Pie(labels=PIECHART_LABELS, values=[4500, 2500, 1053], sort=False)])
 
 # Initializes dash app
 app = dash.Dash(__name__)
@@ -192,7 +189,7 @@ app.layout = html.Div(
                                         {'label': v, 'value': k}
                                         for k, v in REGIONS_GPD.items()
                                     ],
-                                    value='SA'
+                                    value=WORLD_ID
                                 )
                             ]
                         ),
@@ -243,14 +240,29 @@ app.layout = html.Div(
     ]
 )
 def update_map(region_id, scenario, elec_opt, fig, cur_data):
+    """Plot color map of the percentage of people with a given electrification option."""
 
-    region_name = REGIONS_GPD[region_id]
     # load the data of the scenario
     df = pd.read_json(cur_data[scenario])
-    # narrow to the region
-    df = df.loc[df.region == REGIONS_NDC[region_id]]
+
+    if region_id != WORLD_ID:
+        # narrow to the region if the scope is not on the whole world
+        df = df.loc[df.region == REGIONS_NDC[region_id]]
+        # color of country boundaries
+        line_color = 'rgb(255,255,255)'
+    else:
+        # color of country boundaries
+        line_color = 'rgb(179,179,179)'
+
     # compute the percentage of people with the given electrification option
     z = df['pop_get_%s_2030' % elec_opt].div(df.pop_newly_electrified_2030, axis=0).round(3)
+
+    if region_id == 'SA':
+        region_name = REGIONS_GPD[WORLD_ID]
+        geo = 'geo2'
+    else:
+        region_name = REGIONS_GPD[region_id]
+        geo = 'geo'
 
     fig['data'][0].update(
         {
@@ -259,6 +271,8 @@ def update_map(region_id, scenario, elec_opt, fig, cur_data):
             'zmin': 0,
             'zmax': 100,
             'text': country_hover_text(df),
+            'geo': geo,
+            'marker': {'line': {'color': line_color}},
             'colorbar': go.choropleth.ColorBar(
                 title="2030<br>%% %s<br>access" % elec_opt,
                 tickmode="array",
@@ -435,13 +449,11 @@ def update_country_div_content(
 
 @app.callback(
     Output('controls-div', 'children'),
-    [Input('scenario-input', 'value')],
-    [State('data-store', 'data')]
+    [Input('scenario-input', 'value')]
 )
-def update_controls_div_content(scenario, cur_data):
+def update_controls_div_content(scenario):
     """Display information and study's results for a country."""
 
-    df = None
     if scenario is None:
         scenario = BAU_SENARIO
 
@@ -475,22 +487,41 @@ def update_mentis_gdp_input(scenario, country_sel, cur_data):
 @app.callback(
     Output('piechart', 'figure'),
     [Input('map', 'hoverData')],
-    [State('piechart', 'figure')]
+    [
+        State('piechart', 'figure'),
+        State('scenario-input', 'value'),
+        State('data-store', 'data')
+    ]
 )
-def update_piechart(selected_data, fig):
+def update_piechart(selected_data, fig, scenario, cur_data):
     if selected_data is not None:
         chosen = [point['location'] if point['pointNumber'] != 0 else None for point in
                   selected_data['points']]
         if chosen[0] is not None:
-            country_code = chosen[0]
+            country_iso = chosen[0]
+            if scenario in SCENARIOS:
+                # load the data of the scenario
+                df = pd.read_json(cur_data[scenario])
+                # narrow the selection to the selected country
+                df = df.loc[df.country_iso == country_iso]
 
-            df = world.loc[world.iso_a3 == country_code]
-            fig['data'][0].update(
-                {
-                    'values': df['results'].values[0]
-                }
-            )
+                # compute the percentage of people with the given electrification option
+                df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
+                # TODO: need to implement https://en.wikipedia.org/wiki/Largest_remainder_method
+                percentage = df[POP_GET].values[0] * 100
+                labels = PIECHART_LABELS
 
+                if scenario == BAU_SENARIO:
+                    diff = 100 - percentage.sum()
+                    percentage = np.append(percentage, diff)
+                    labels = PIECHART_LABELS + ['no electricity']
+
+                fig['data'][0].update(
+                    {
+                        'values': percentage,
+                        'labels': labels
+                    }
+                )
     return fig
 
 
@@ -516,11 +547,19 @@ def update_selected_country_on_map(cur_data, cur_val):
     ]
 )
 def update_country_selection_options(region_id, scenario, cur_data):
+    """List the countries in a given region in alphabetical order."""
     countries_in_region = []
     if scenario is not None:
+        # load the data of the scenario
         df = pd.read_json(cur_data[scenario])
 
-        for idx, row in df.loc[df.region == REGIONS_NDC[region_id]].iterrows():
+        if region_id != WORLD_ID:
+            # narrow to the region if the scope is not on the whole world
+            df = df.loc[df.region == REGIONS_NDC[region_id]]
+
+        # sort alphabetically by country
+        df = df.sort_values('country')
+        for idx, row in df.iterrows():
             countries_in_region.append({'label': row['country'], 'value': row['country_iso']})
 
     return countries_in_region
