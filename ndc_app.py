@@ -252,8 +252,14 @@ def update_map(region_id, scenario, elec_opt, fig, cur_data):
         {
             'locations': df['country_iso'],
             'z': z * 100,
+            'zmin': 0,
+            'zmax': 100,
             'text': country_hover_text(df),
-            'colorbar': go.choropleth.ColorBar(title="2030<br>%% %s<br>access" % elec_opt),
+            'colorbar': go.choropleth.ColorBar(
+                title="2030<br>%% %s<br>access" % elec_opt,
+                tickmode="array",
+                tickvals=[10 * i for i in range(11)]
+            ),
         }
     )
     fig['layout']['geo'].update({'scope': region_name.lower()})
