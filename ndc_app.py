@@ -15,6 +15,7 @@ from data_preparation import (
     GRID,
     SHS,
     ELECTRIFICATION_DICT,
+MENTI_DRIVES,
     POP_GET,
     HH_CAP,
     compute_ndc_results_from_raw_data,
@@ -29,7 +30,8 @@ from app_components import (
     country_div,
     scenario_div,
     controls_div,
-    general_info_div
+    general_info_div,
+    callback_generator
 )
 
 
@@ -397,6 +399,11 @@ def toggle_general_info_div_display(cur_view, cur_style):
         Input('scenario-input', 'value'),
         Input('mentis-gdp-input', 'value'),
         Input('mentis-mobile-money-input', 'value'),
+        Input('mentis-ease-doing-business-input', 'value'),
+        Input('mentis-corruption-input', 'value'),
+        Input('mentis-weak-grid-input', 'value'),
+        Input('rise-mg-input', 'value'),
+        Input('rise-shs-input', 'value'),
         Input('tier-input', 'value')
     ],
     [State('data-store', 'data')]
@@ -406,6 +413,11 @@ def update_country_div_content(
         scenario,
         gdp_class,
         mm_class,
+        edb_class,
+        corruption_class,
+        weak_grid_class,
+        rise_mg,
+        rise_shs,
         tier_level,
         cur_data
 ):
@@ -437,12 +449,20 @@ def update_country_div_content(
                     df.loc[:, 'gdp_class'] = gdp_class
                 if mm_class is not None:
                     df.loc[:, 'mobile_money_class'] = mm_class
-                print(df[['shift_pop_grid_to_mg', 'shift_pop_grid_to_shs']+HH_CAP])
+                if edb_class is not None:
+                    df.loc[:, 'ease_doing_business_class'] = edb_class
+                if corruption_class is not None:
+                    df.loc[:, 'corruption_class'] = corruption_class
+                if weak_grid_class is not None:
+                    df.loc[:, 'weak_grid_class'] = weak_grid_class
+                if rise_mg is not None:
+                    df.loc[:, 'rise_mg'] = rise_mg
+                if rise_shs is not None:
+                    df.loc[:, 'rise_shs'] = rise_shs
 
                 # recompute the results after updating the shift drives
                 df = prepare_se4all_data(input_df=df, fixed_shift_drives=False)
                 df = extract_results_scenario(df, scenario)
-                print(df[['shift_pop_grid_to_mg', 'shift_pop_grid_to_shs']+HH_CAP])
 
     return country_div(df)
 
@@ -460,28 +480,13 @@ def update_controls_div_content(scenario):
     return controls_div(scenario)
 
 
-@app.callback(
-    Output('mentis-gdp-input', 'value'),
-    [
-        Input('scenario-input', 'value'),
-        Input('country-input', 'value'),
-    ],
-    [State('data-store', 'data')]
-)
-def update_mentis_gdp_input(scenario, country_sel, cur_data):
+# generate callbacks for the mentis drives dcc.Input
+for input_name in MENTI_DRIVES:
+    callback_generator(app, 'mentis-%s' % input_name.replace('_', '-'), '%s_class' % input_name)
 
-    answer = 0
-    country_iso = country_sel
-    # in case of country_iso is a list of one element
-    if np.shape(country_iso) and len(country_iso) == 1:
-        country_iso = country_iso[0]
-
-    # extract the data from the selected scenario if a country was selected
-    if country_iso is not None:
-        if scenario in SCENARIOS:
-            df = pd.read_json(cur_data[scenario]).set_index('country_iso')
-            answer = df.loc[country_iso, 'gdp_class']
-    return answer
+# generate callbacks for the mentis drives dcc.Input
+for input_name in [MG, SHS]:
+    callback_generator(app, 'rise-%s' % input_name.replace('_', '-'), 'rise_%s' % input_name)
 
 
 @app.callback(
