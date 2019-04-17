@@ -60,10 +60,10 @@ def country_div(df=None):
     country_cap_res = []
 
     if df is not None:
-        df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0)
+        df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
         pop_2017 = df.pop_2017
         country_pop_res = np.squeeze(df[POP_GET].values)
-        country_cap_res = np.squeeze(df[HH_CAP].values) * 1e-6
+        country_cap_res = np.squeeze(df[HH_CAP].values) * 1e-3
 
     divs = [
         html.Div(
@@ -89,7 +89,7 @@ def country_div(df=None):
                         html.Div(
                             className='country__results__pop__line',
                             children=[
-                                html.P('%.2f' % res) for res in country_pop_res
+                                html.P('{:.1f}'.format(res * 100)) for res in country_pop_res
                             ]
                         ),
                     ]
@@ -98,7 +98,7 @@ def country_div(df=None):
                     id='country-cap-results-div',
                     className='country__results__cap',
                     children=[
-                        html.H4('GW household capacity'),
+                        html.H4('MW household capacity'),
                         html.Div(
                             className='country__results__cap__hdr',
                             children=[
@@ -108,7 +108,7 @@ def country_div(df=None):
                         html.Div(
                             className='country__results__cap__line',
                             children=[
-                                html.P('%.2f' % res) for res in country_cap_res
+                                html.P('{:.1f}'.format(res)) for res in country_cap_res
                             ]
                         ),
                     ]
