@@ -153,7 +153,7 @@ app.layout = html.Div(
                     id='controls-div',
                     className='app__controls',
                     style={'display': 'none'},
-                    children=controls_div(BAU_SENARIO),
+                    children=controls_div(),
                 ),
                 html.Div(
                     id='general-info-div',
@@ -465,19 +465,6 @@ def update_country_div_content(
                 df = extract_results_scenario(df, scenario)
 
     return country_div(df)
-
-
-@app.callback(
-    Output('controls-div', 'children'),
-    [Input('scenario-input', 'value')]
-)
-def update_controls_div_content(scenario):
-    """Display information and study's results for a country."""
-
-    if scenario is None:
-        scenario = BAU_SENARIO
-
-    return controls_div(scenario)
 
 
 # generate callbacks for the mentis drives dcc.Input

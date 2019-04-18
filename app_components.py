@@ -155,24 +155,15 @@ def scenario_div(init_scenario, init_elec_opt):
     return divs
 
 
-def controls_div(scenario):
+def controls_div():
     """Return controls for scenario dependent variables."""
 
-    view_on_se4all = 'none'
-    view_on_prog = 'none'
-    view_on_both = 'none'
-    if scenario == SE4ALL_SHIFT_SENARIO:
-        view_on_se4all = 'flex'
-    if scenario == PROG_SENARIO:
-        view_on_prog = 'flex'
-    if scenario in (SE4ALL_SHIFT_SENARIO, PROG_SENARIO):
-        view_on_both = 'flex'
 
     divs = [
         html.Div(
             id='rise-shs-div',
             className='app__input__slider',
-            style={'display': view_on_se4all},
+            # style={'display': view_on_se4all},
             children=[
                 html.Div(
                     id='rise-shs-label',
@@ -193,7 +184,7 @@ def controls_div(scenario):
         html.Div(
             id='rise-mg-div',
             className='app__input__slider',
-            style={'display': view_on_se4all},
+            # style={'display': view_on_se4all},
             children=[
                 html.Div(
                     id='rise-label',
@@ -214,7 +205,7 @@ def controls_div(scenario):
         html.Div(
             id='framework-div',
             className='app__input__slider',
-            style={'display': view_on_se4all},
+            # style={'display': view_on_se4all},
             children=[
                          html.Div(
                              id='framework-label',
@@ -237,7 +228,7 @@ def controls_div(scenario):
         html.Div(
             id='tier-div',
             className='app__input',
-            style={'display': view_on_both},
+            # style={'display': view_on_se4all},
             children=[
                 html.Div(
                     id='tier-label',
@@ -257,7 +248,7 @@ def controls_div(scenario):
         html.Div(
             id='invest-div',
             className='app__input',
-            style={'display': view_on_both},
+            # style={'display': view_on_se4all},
             children=[
                 html.Div(
                     id='invest-label',
