@@ -46,18 +46,18 @@ GRID = 'grid'
 MG = 'mg'
 SHS = 'shs'
 ELECTRIFICATION_OPTIONS = [GRID, MG, SHS]
-BAU_SENARIO = 'bau'
+BAU_SCENARIO = 'bau'
 SE4ALL_SCENARIO = 'se4all'
 SE4ALL_FLEX_SCENARIO = 'se4all_shift'
-PROG_SENARIO = 'prog'
-SCENARIOS = [BAU_SENARIO, SE4ALL_SCENARIO, SE4ALL_FLEX_SCENARIO, PROG_SENARIO]
+PROG_SCENARIO = 'prog'
+SCENARIOS = [BAU_SCENARIO, SE4ALL_SCENARIO, SE4ALL_FLEX_SCENARIO, PROG_SCENARIO]
 
 # Names for display
 SCENARIOS_DICT = {
-    BAU_SENARIO: 'BaU',
+    BAU_SCENARIO: 'BaU',
     SE4ALL_SCENARIO: 'SE4All',
     SE4ALL_FLEX_SCENARIO: 'SE4All Flex',
-    PROG_SENARIO: 'prOG',
+    PROG_SCENARIO: 'prOG',
 }
 ELECTRIFICATION_DICT = {
     GRID: 'Grid',
@@ -479,11 +479,11 @@ def prepare_scenario_data(df, scenario, prepare_endogenous=False, tier_level=MIN
     if prepare_endogenous:
         df = prepare_endogenous_variables(input_df=df, tier_level=tier_level)
 
-    if scenario == BAU_SENARIO:
+    if scenario == BAU_SCENARIO:
         df = prepare_bau_data(input_df=df)
     elif SE4ALL_SCENARIO in scenario:
         df = prepare_se4all_data(input_df=df)
-    elif scenario == PROG_SENARIO:
+    elif scenario == PROG_SCENARIO:
         df = prepare_prog_data(input_df=df)
     return df
 
@@ -491,7 +491,7 @@ def prepare_scenario_data(df, scenario, prepare_endogenous=False, tier_level=MIN
 def extract_results_scenario(input_df, scenario, regions=None, bau_data=None):
     df = input_df.copy()
 
-    if scenario == BAU_SENARIO:
+    if scenario == BAU_SCENARIO:
         if regions is None:
             regions = ['SSA', 'DA', 'LA']
         if bau_data is None:
@@ -504,7 +504,7 @@ def extract_results_scenario(input_df, scenario, regions=None, bau_data=None):
 
             # predicted number of people getting access to electricity (regional detail level)
             df['pop_get_%s_2030' % opt] = df.bau_pop_newly_electrified * df['temp_%s' % opt]
-    elif scenario in [SE4ALL_SCENARIO, SE4ALL_FLEX_SCENARIO, PROG_SENARIO]:
+    elif scenario in [SE4ALL_SCENARIO, SE4ALL_FLEX_SCENARIO, PROG_SCENARIO]:
         # SUMME(AA4:AB4) --> df.loc[:,['shift_pop_grid_to_mg' 'shift_pop_grid_to_shs']].sum(axis=1)
         # grid =D4-SUMME(AA4:AB4)
         opt = 'grid'

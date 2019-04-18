@@ -7,10 +7,10 @@ import dash_html_components as html
 import plotly.graph_objs as go
 from data_preparation import (
     SCENARIOS,
-    BAU_SENARIO,
+    BAU_SCENARIO,
     SE4ALL_SCENARIO,
     SE4ALL_FLEX_SCENARIO,
-    PROG_SENARIO,
+    PROG_SCENARIO,
     MG,
     GRID,
     SHS,
@@ -451,7 +451,7 @@ def update_country_div_content(
             df = pd.read_json(cur_data[scenario])
             df = df.loc[df.country_iso == country_iso]
 
-            if scenario in [SE4ALL_FLEX_SCENARIO, SE4ALL_SCENARIO, PROG_SENARIO]:
+            if scenario in [SE4ALL_FLEX_SCENARIO, SE4ALL_SCENARIO, PROG_SCENARIO]:
                 # TODO: only recompute the tier if it has changed (with context)
                 if tier_level is not None:
                     df = prepare_endogenous_variables(
@@ -523,7 +523,7 @@ def update_piechart(selected_data, fig, scenario, cur_data):
                 percentage = df[POP_GET].values[0] * 100
                 labels = PIECHART_LABELS
 
-                if scenario == BAU_SENARIO:
+                if scenario == BAU_SCENARIO:
                     diff = 100 - percentage.sum()
                     percentage = np.append(percentage, diff)
                     labels = PIECHART_LABELS + ['no electricity']
