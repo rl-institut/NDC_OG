@@ -15,7 +15,7 @@ from data_preparation import (
     GRID,
     SHS,
     ELECTRIFICATION_DICT,
-MENTI_DRIVES,
+    MENTI_DRIVES,
     POP_GET,
     HH_CAP,
     compute_ndc_results_from_raw_data,
@@ -289,12 +289,13 @@ def update_map(region_id, scenario, elec_opt, fig, cur_data):
 @app.callback(
     Output('view-store', 'data'),
     [
+        Input('scenario-input', 'value'),
         Input('region-input', 'value'),
         Input('country-input', 'value')
     ],
     [State('view-store', 'data')]
 )
-def update_view(region_id, country_sel, cur_view):
+def update_view(scenario, region_id, country_sel, cur_view):
     """Toggle between the different views of the app.
 
     There are currently two views:
@@ -307,6 +308,9 @@ def update_view(region_id, country_sel, cur_view):
 
     The app start in the VIEW_GENERAL. The VIEW_COUNTRY can be accessed by cliking on a
     specific country or selecting it with the country dropdown,
+
+    The controls_display is set to 'flex' only for the se4all+shift scenario and is set to 'none'
+    for the other scenarios (these scenarios do not have variables).
     """
     ctx = dash.callback_context
     if ctx.triggered:
@@ -321,6 +325,14 @@ def update_view(region_id, country_sel, cur_view):
         # trigger comes from selecting a region
         elif 'region-input' in prop_id:
             cur_view.update({'app_view': VIEW_GENERAL})
+
+        # trigger comes selecting a scenario
+        elif 'scenario-input' in prop_id:
+            # only the se4all+shift scenario has controls
+            if scenario == SE4ALL_SHIFT_SENARIO:
+                cur_view.update({'controls_display': 'flex'})
+            else:
+                cur_view.update({'controls_display': 'none'})
     return cur_view
 
 
@@ -371,7 +383,7 @@ def toggle_controls_div_display(cur_view, cur_style):
     if cur_view['app_view'] == VIEW_GENERAL:
         cur_style.update({'display': 'none'})
     elif cur_view['app_view'] == VIEW_COUNTRY:
-        cur_style.update({'display': 'flex'})
+        cur_style.update({'display': cur_view['controls_display']})
     return cur_style
 
 
