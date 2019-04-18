@@ -123,6 +123,8 @@ piechart = go.Figure(data=[go.Pie(labels=PIECHART_LABELS, values=[4500, 2500, 10
 # Initializes dash app
 app = dash.Dash(__name__)
 
+app.title = 'NDC visualisation'
+
 app.layout = html.Div(
     id='app-div',
     className='app',
@@ -144,7 +146,7 @@ app.layout = html.Div(
                 html.Div(
                     id='scenario-div',
                     className='app__options',
-                    children=scenario_div(BAU_SENARIO, GRID)
+                    children=scenario_div(SE4ALL_FLEX_SCENARIO, GRID)
                 ),
                 html.Div(
                     id='controls-div',
