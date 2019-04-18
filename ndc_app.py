@@ -416,6 +416,7 @@ def toggle_general_info_div_display(cur_view, cur_style):
     [
         Input('country-input', 'value'),
         Input('scenario-input', 'value'),
+        Input('mentis-weight-input', 'value'),
         Input('mentis-gdp-input', 'value'),
         Input('mentis-mobile-money-input', 'value'),
         Input('mentis-ease-doing-business-input', 'value'),
@@ -430,6 +431,7 @@ def toggle_general_info_div_display(cur_view, cur_style):
 def update_country_div_content(
         country_sel,
         scenario,
+        weight_mentis,
         gdp_class,
         mm_class,
         edb_class,
@@ -480,7 +482,11 @@ def update_country_div_content(
                     df.loc[:, 'rise_shs'] = rise_shs
 
                 # recompute the results after updating the shift drives
-                df = prepare_se4all_data(input_df=df, fixed_shift_drives=False)
+                df = prepare_se4all_data(
+                    input_df=df,
+                    weight_mentis=weight_mentis,
+                    fixed_shift_drives=False
+                )
                 df = extract_results_scenario(df, scenario)
 
     return country_div(df)

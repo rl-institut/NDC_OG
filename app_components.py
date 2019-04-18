@@ -216,24 +216,27 @@ def controls_div():
             ]
         ),
         html.Div(
-            id='rise-mg-div',
-            className='app__input__slider',
-            # style={'display': view_on_se4all},
+            id='mentis-weight-div',
+            className='app__input',
             children=[
                 html.Div(
-                    id='rise-label',
+                    id='mentis-weight-label',
                     className='app__input__label',
-                    children='RISE-MG'
+                    children='Mentis weight'
                 ),
-                daq.Slider(
-                    id='rise-mg-input',
-                    min=0,
-                    max=100,
-                    value=67,
-                    handleLabel={
-                        "showCurrentValue": True, "label": "VALUE"},
-                    step=1,
-                ),
+                html.Div(
+                    id='mentis-weight-input-div',
+                    title='mentis weight description',
+                    children=dcc.Input(
+                        id='mentis-weight-input',
+                        className='app__input__mentis-weight',
+                        value=0.2,
+                        type='number',
+                        min=0,
+                        max=1,
+                        step=0.01
+                    )
+                )
             ]
         ),
         html.Div(
