@@ -46,16 +46,18 @@ GRID = 'grid'
 MG = 'mg'
 SHS = 'shs'
 ELECTRIFICATION_OPTIONS = [GRID, MG, SHS]
-BAU_SENARIO = 'bau'
-SE4ALL_SHIFT_SENARIO = 'se4all_shift'
-PROG_SENARIO = 'prog'
-SCENARIOS = [BAU_SENARIO, SE4ALL_SHIFT_SENARIO, PROG_SENARIO]
+BAU_SCENARIO = 'bau'
+SE4ALL_SCENARIO = 'se4all'
+SE4ALL_FLEX_SCENARIO = 'se4all_shift'
+PROG_SCENARIO = 'prog'
+SCENARIOS = [BAU_SCENARIO, SE4ALL_SCENARIO, SE4ALL_FLEX_SCENARIO, PROG_SCENARIO]
 
 # Names for display
 SCENARIOS_DICT = {
-    BAU_SENARIO: 'BaU',
-    SE4ALL_SHIFT_SENARIO: 'SE4All',
-    PROG_SENARIO: 'prOG',
+    BAU_SCENARIO: 'BaU',
+    SE4ALL_SCENARIO: 'SE4All',
+    SE4ALL_FLEX_SCENARIO: 'SE4All Flex',
+    PROG_SCENARIO: 'prOG',
 }
 ELECTRIFICATION_DICT = {
     GRID: 'Grid',
@@ -93,8 +95,9 @@ MENTI = MENTI.set_index('labels')
 
 MENTI_DRIVES = ['gdp', 'mobile_money', 'ease_doing_business', 'corruption', 'weak_grid']
 
-WEIGHT_GRID = 0.8  # $RT_shift_factors.$O$2
-WEIGHT = 0.2  # $RT_shift_factors.$P$2
+# $RT_shift_factors.$P$2
+WEIGHT_MENTIS = 0.2
+# -->WEIGHT_GRID = 0.8 ($RT_shift_factors.$O$2)  and  WEIGHT_GRID = 1 - WEIGHT_MENTIS
 RISE_INDICES = ['rise_%s' % opt for opt in ELECTRIFICATION_OPTIONS]
 SHIFT_MENTI = ['shift_menti_mg', 'shift_menti_shs']
 
@@ -362,13 +365,15 @@ def apply_se4all_shift_drives(df, menti=None):
 
 def prepare_se4all_data(
         input_df,
-        weight_grid=WEIGHT_GRID,
-        weight=WEIGHT,
+        weight_mentis=WEIGHT_MENTIS,
         fixed_shift_drives=True
 ):
     # for se4all+SHIFT
 
     df = input_df.copy()
+
+    weight_grid = 1 - weight_mentis
+
     if fixed_shift_drives:
         prepare_se4all_shift_drives(df)
     apply_se4all_shift_drives(df)
@@ -379,7 +384,7 @@ def prepare_se4all_data(
     # to normalize the senarii weigthed sum
     weighted_norm = \
         df.loc[:, RISE_INDICES].sum(axis=1) * weight_grid \
-        + df.loc[:, SHIFT_MENTI].sum(axis=1) * weight
+        + df.loc[:, SHIFT_MENTI].sum(axis=1) * weight_mentis
 
     non_zero_indices = df.loc[:, RISE_INDICES + SHIFT_MENTI].sum(axis=1) != 0
 
@@ -393,11 +398,11 @@ def prepare_se4all_data(
 
     # share of population which will have changed from grid to mg in the se4all+SHIFT scenario
     df.loc[non_zero_indices, 'shift_grid_to_mg_share'] = \
-        (df.rise_mg * weight_grid + df.shift_menti_mg * weight) / weighted_norm
+        (df.rise_mg * weight_grid + df.shift_menti_mg * weight_mentis) / weighted_norm
 
     # share of population which will have changed from grid to shs in the se4all+SHIFT scenario
     df.loc[non_zero_indices, 'shift_grid_to_shs_share'] = \
-        (df.rise_shs * weight_grid + df.shift_menti_shs * weight) / weighted_norm
+        (df.rise_shs * weight_grid + df.shift_menti_shs * weight_mentis) / weighted_norm
 
     # SHARED WITH prOG
     # if the predicted mg share is larger than the predicted grid share, the number of people
@@ -474,11 +479,11 @@ def prepare_scenario_data(df, scenario, prepare_endogenous=False, tier_level=MIN
     if prepare_endogenous:
         df = prepare_endogenous_variables(input_df=df, tier_level=tier_level)
 
-    if scenario == BAU_SENARIO:
+    if scenario == BAU_SCENARIO:
         df = prepare_bau_data(input_df=df)
-    elif scenario == SE4ALL_SHIFT_SENARIO:
+    elif SE4ALL_SCENARIO in scenario:
         df = prepare_se4all_data(input_df=df)
-    elif scenario == PROG_SENARIO:
+    elif scenario == PROG_SCENARIO:
         df = prepare_prog_data(input_df=df)
     return df
 
@@ -486,7 +491,7 @@ def prepare_scenario_data(df, scenario, prepare_endogenous=False, tier_level=MIN
 def extract_results_scenario(input_df, scenario, regions=None, bau_data=None):
     df = input_df.copy()
 
-    if scenario == BAU_SENARIO:
+    if scenario == BAU_SCENARIO:
         if regions is None:
             regions = ['SSA', 'DA', 'LA']
         if bau_data is None:
@@ -499,7 +504,7 @@ def extract_results_scenario(input_df, scenario, regions=None, bau_data=None):
 
             # predicted number of people getting access to electricity (regional detail level)
             df['pop_get_%s_2030' % opt] = df.bau_pop_newly_electrified * df['temp_%s' % opt]
-    elif scenario in [SE4ALL_SHIFT_SENARIO, PROG_SENARIO]:
+    elif scenario in [SE4ALL_SCENARIO, SE4ALL_FLEX_SCENARIO, PROG_SCENARIO]:
         # SUMME(AA4:AB4) --> df.loc[:,['shift_pop_grid_to_mg' 'shift_pop_grid_to_shs']].sum(axis=1)
         # grid =D4-SUMME(AA4:AB4)
         opt = 'grid'

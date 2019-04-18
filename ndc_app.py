@@ -7,22 +7,19 @@ import dash_html_components as html
 import plotly.graph_objs as go
 from data_preparation import (
     SCENARIOS,
-    BAU_SENARIO,
-    SE4ALL_SHIFT_SENARIO,
-    PROG_SENARIO,
-    SCENARIOS_DICT,
+    BAU_SCENARIO,
+    SE4ALL_SCENARIO,
+    SE4ALL_FLEX_SCENARIO,
+    PROG_SCENARIO,
     MG,
     GRID,
     SHS,
     ELECTRIFICATION_DICT,
-MENTI_DRIVES,
+    MENTI_DRIVES,
     POP_GET,
-    HH_CAP,
     compute_ndc_results_from_raw_data,
     prepare_endogenous_variables,
-    prepare_bau_data,
     prepare_se4all_data,
-    prepare_prog_data,
     extract_results_scenario
 )
 
@@ -153,7 +150,7 @@ app.layout = html.Div(
                     id='controls-div',
                     className='app__controls',
                     style={'display': 'none'},
-                    children=controls_div(BAU_SENARIO),
+                    children=controls_div(),
                 ),
                 html.Div(
                     id='general-info-div',
@@ -182,18 +179,18 @@ app.layout = html.Div(
                     className='app__header',
                     children=[
                         html.Div(
-                            id='region-selection-div',
+                            id='region-input-div',
                             className='app__dropdown',
-                            children=[
-                                dcc.Dropdown(
+                            title='region selection description',
+                            children=dcc.Dropdown(
                                     id='region-input',
+                                    className='app__input__dropdown__map',
                                     options=[
                                         {'label': v, 'value': k}
                                         for k, v in REGIONS_GPD.items()
                                     ],
                                     value=WORLD_ID
                                 )
-                            ]
                         ),
                         html.Div(
                             id='logo-div',
@@ -201,16 +198,23 @@ app.layout = html.Div(
                         ),
                     ]
                 ),
-                dcc.Dropdown(
-                    id='country-input',
-                    className='app__input__dropdown',
-                    options=[],
-                    value=None,
-                    multi=False
+                html.Div(
+                    id='country-input-div',
+                    className='app__dropdown',
+                    title='country selection description',
+                    children=dcc.Dropdown(
+                        id='country-input',
+                        className='app__input__dropdown__map',
+                        options=[],
+                        value=None,
+                        multi=False
+                    )
                 ),
                 html.Div(
                     id='map-div',
                     className='app__map',
+                    title='Hover over a country to display information.\n'
+                          + 'Click on it to access detailed report.',
                     children=dcc.Graph(
                         id='map',
                         figure=fig_map,
@@ -282,6 +286,7 @@ def update_map(region_id, scenario, elec_opt, fig, cur_data):
             ),
         }
     )
+
     fig['layout']['geo'].update({'scope': region_name.lower()})
     return fig
 
@@ -289,12 +294,13 @@ def update_map(region_id, scenario, elec_opt, fig, cur_data):
 @app.callback(
     Output('view-store', 'data'),
     [
+        Input('scenario-input', 'value'),
         Input('region-input', 'value'),
         Input('country-input', 'value')
     ],
     [State('view-store', 'data')]
 )
-def update_view(region_id, country_sel, cur_view):
+def update_view(scenario, region_id, country_sel, cur_view):
     """Toggle between the different views of the app.
 
     There are currently two views:
@@ -307,6 +313,9 @@ def update_view(region_id, country_sel, cur_view):
 
     The app start in the VIEW_GENERAL. The VIEW_COUNTRY can be accessed by cliking on a
     specific country or selecting it with the country dropdown,
+
+    The controls_display is set to 'flex' only for the se4all+shift scenario and is set to 'none'
+    for the other scenarios (these scenarios do not have variables).
     """
     ctx = dash.callback_context
     if ctx.triggered:
@@ -321,6 +330,11 @@ def update_view(region_id, country_sel, cur_view):
         # trigger comes from selecting a region
         elif 'region-input' in prop_id:
             cur_view.update({'app_view': VIEW_GENERAL})
+
+    if scenario == SE4ALL_FLEX_SCENARIO:
+        cur_view.update({'controls_display': 'flex'})
+    else:
+        cur_view.update({'controls_display': 'none'})
     return cur_view
 
 
@@ -371,7 +385,7 @@ def toggle_controls_div_display(cur_view, cur_style):
     if cur_view['app_view'] == VIEW_GENERAL:
         cur_style.update({'display': 'none'})
     elif cur_view['app_view'] == VIEW_COUNTRY:
-        cur_style.update({'display': 'flex'})
+        cur_style.update({'display': cur_view['controls_display']})
     return cur_style
 
 
@@ -397,6 +411,7 @@ def toggle_general_info_div_display(cur_view, cur_style):
     [
         Input('country-input', 'value'),
         Input('scenario-input', 'value'),
+        Input('mentis-weight-input', 'value'),
         Input('mentis-gdp-input', 'value'),
         Input('mentis-mobile-money-input', 'value'),
         Input('mentis-ease-doing-business-input', 'value'),
@@ -411,6 +426,7 @@ def toggle_general_info_div_display(cur_view, cur_style):
 def update_country_div_content(
         country_sel,
         scenario,
+        weight_mentis,
         gdp_class,
         mm_class,
         edb_class,
@@ -435,7 +451,7 @@ def update_country_div_content(
             df = pd.read_json(cur_data[scenario])
             df = df.loc[df.country_iso == country_iso]
 
-            if scenario in [SE4ALL_SHIFT_SENARIO, PROG_SENARIO]:
+            if scenario in [SE4ALL_FLEX_SCENARIO, SE4ALL_SCENARIO, PROG_SCENARIO]:
                 # TODO: only recompute the tier if it has changed (with context)
                 if tier_level is not None:
                     df = prepare_endogenous_variables(
@@ -443,7 +459,7 @@ def update_country_div_content(
                         tier_level=tier_level
                     )
 
-            if scenario == SE4ALL_SHIFT_SENARIO:
+            if scenario == SE4ALL_FLEX_SCENARIO:
 
                 if gdp_class is not None:
                     df.loc[:, 'gdp_class'] = gdp_class
@@ -461,23 +477,14 @@ def update_country_div_content(
                     df.loc[:, 'rise_shs'] = rise_shs
 
                 # recompute the results after updating the shift drives
-                df = prepare_se4all_data(input_df=df, fixed_shift_drives=False)
+                df = prepare_se4all_data(
+                    input_df=df,
+                    weight_mentis=weight_mentis,
+                    fixed_shift_drives=False
+                )
                 df = extract_results_scenario(df, scenario)
 
     return country_div(df)
-
-
-@app.callback(
-    Output('controls-div', 'children'),
-    [Input('scenario-input', 'value')]
-)
-def update_controls_div_content(scenario):
-    """Display information and study's results for a country."""
-
-    if scenario is None:
-        scenario = BAU_SENARIO
-
-    return controls_div(scenario)
 
 
 # generate callbacks for the mentis drives dcc.Input
@@ -516,7 +523,7 @@ def update_piechart(selected_data, fig, scenario, cur_data):
                 percentage = df[POP_GET].values[0] * 100
                 labels = PIECHART_LABELS
 
-                if scenario == BAU_SENARIO:
+                if scenario == BAU_SCENARIO:
                     diff = 100 - percentage.sum()
                     percentage = np.append(percentage, diff)
                     labels = PIECHART_LABELS + ['no electricity']
