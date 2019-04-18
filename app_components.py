@@ -128,28 +128,36 @@ def scenario_div(init_scenario, init_elec_opt):
             className='app__input__label',
             children='Scenario'
         ),
-        dcc.Dropdown(
-            id='scenario-input',
-            className='app__input__dropdown',
-            options=[
-                {'label': v, 'value': k}
-                for k, v in SCENARIOS_DICT.items()
-            ],
-            value=init_scenario,
+        html.Div(
+            id='scenario-input-div',
+            title='scenarios description',
+            children=dcc.Dropdown(
+                id='scenario-input',
+                className='app__input__dropdown',
+                options=[
+                    {'label': v, 'value': k}
+                    for k, v in SCENARIOS_DICT.items()
+                ],
+                value=init_scenario,
+            )
         ),
         html.Div(
             id='elec-label',
             className='app__input__label',
             children='Electrification option'
         ),
-        dcc.Dropdown(
-            id='electrification-input',
-            className='app__input__dropdown',
-            options=[
-                {'label': v, 'value': k}
-                for k, v in ELECTRIFICATION_DICT.items()
-            ],
-            value=init_elec_opt,
+        html.Div(
+            id='electrification-input-div',
+            title='electrification option description',
+            children=dcc.Dropdown(
+                id='electrification-input',
+                className='app__input__dropdown',
+                options=[
+                    {'label': v, 'value': k}
+                    for k, v in ELECTRIFICATION_DICT.items()
+                ],
+                value=init_elec_opt,
+            )
         ),
     ]
     return divs
@@ -158,27 +166,53 @@ def scenario_div(init_scenario, init_elec_opt):
 def controls_div():
     """Return controls for scenario dependent variables."""
 
-
     divs = [
         html.Div(
-            id='rise-shs-div',
-            className='app__input__slider',
-            # style={'display': view_on_se4all},
+            id='rise-div',
+            className='app__input',
             children=[
                 html.Div(
-                    id='rise-shs-label',
-                    className='app__input__label',
-                    children='RISE-SHS'
+                    id='rise-shs-div',
+                    className='app__input__slider',
+                    title='rise shs description',
+                    children=[
+                        html.Div(
+                            id='rise-shs-label',
+                            className='app__input__label',
+                            children='RISE-SHS'
+                        ),
+                        daq.Slider(
+                            id='rise-shs-input',
+                            min=0,
+                            max=100,
+                            value=14,
+                            handleLabel={
+                                "showCurrentValue": True, "label": "VALUE"},
+                            step=1,
+                        ),
+                    ]
                 ),
-                daq.Slider(
-                    id='rise-shs-input',
-                    min=0,
-                    max=100,
-                    value=14,
-                    handleLabel={
-                        "showCurrentValue": True, "label": "VALUE"},
-                    step=1,
-                ),
+                html.Div(
+                    id='rise-mg-div',
+                    className='app__input__slider',
+                    title='rise mg description',
+                    children=[
+                        html.Div(
+                            id='rise-label',
+                            className='app__input__label',
+                            children='RISE-MG'
+                        ),
+                        daq.Slider(
+                            id='rise-mg-input',
+                            min=0,
+                            max=100,
+                            value=67,
+                            handleLabel={
+                                "showCurrentValue": True, "label": "VALUE"},
+                            step=1,
+                        ),
+                    ]
+                )
             ]
         ),
         html.Div(
@@ -203,24 +237,33 @@ def controls_div():
             ]
         ),
         html.Div(
-            id='framework-div',
-            className='app__input__slider',
-            # style={'display': view_on_se4all},
+            id='mentis-drives-div',
+            className='app__input',
             children=[
                          html.Div(
-                             id='framework-label',
+                             id='mentis-label',
                              className='app__input__label',
-                             children='Framework'
+                             children='Mentis drives'
                          )
                      ] + [
-                         dcc.Input(
-                             id='mentis-%s-input' % input_name.replace('_', '-'),
-                             className='app__input__num',
-                             value=0,
-                             type='number',
-                             min=0,
-                             max=1,
-                             step=0.5
+                         html.Div(
+                             id='mentis-%s-input-div' % input_name.replace('_', '-'),
+                             title='%s description' % input_name.replace('_', ' '),
+                             children=[
+                                 html.Div(
+                                     id='mentis-%s-input_label' % input_name.replace('_', '-'),
+                                     children=input_name.replace('_', ' ')
+                                 ),
+                                 dcc.Input(
+                                     id='mentis-%s-input' % input_name.replace('_', '-'),
+                                     className='app__input__mentis-drives',
+                                     value=0,
+                                     type='number',
+                                     min=0,
+                                     max=1,
+                                     step=0.5
+                                 ),
+                             ]
                          )
                          for input_name in MENTI_DRIVES
                      ]
@@ -228,40 +271,48 @@ def controls_div():
         html.Div(
             id='tier-div',
             className='app__input',
-            # style={'display': view_on_se4all},
             children=[
                 html.Div(
                     id='tier-label',
                     className='app__input__label',
-                    children='TIER'
+                    children='Min TIER level'
                 ),
-                dcc.Input(
-                    id='tier-input',
-                    value=2,
-                    type='number',
-                    min=1,
-                    max=5,
-                    step=1
+                html.Div(
+                    id='tier-input-div',
+                    title='min tier level description',
+                    children=dcc.Input(
+                        id='tier-input',
+                        className='app__input__tier',
+                        value=2,
+                        type='number',
+                        min=1,
+                        max=5,
+                        step=1
+                    )
                 ),
             ]
         ),
         html.Div(
             id='invest-div',
             className='app__input',
-            # style={'display': view_on_se4all},
             children=[
                 html.Div(
                     id='invest-label',
-                    className='app__input__label',
+                    className='app__input',
                     children='Invest'
                 ),
-                dcc.Input(
-                    id='invest-input',
-                    type='number',
+                html.Div(
+                    id='invest-input-div',
+                    title='invest description',
+                    children=dcc.Input(
+                        id='invest-input',
+                        className='app__input__invest',
+                        type='number',
+                    )
                 ),
                 html.Div(
                     id='invest-unit',
-                    className='app__input__label',
+                    className='app__input__unit',
                     children='USD/kW'
                 ),
             ]

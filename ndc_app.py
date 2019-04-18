@@ -182,18 +182,18 @@ app.layout = html.Div(
                     className='app__header',
                     children=[
                         html.Div(
-                            id='region-selection-div',
+                            id='region-input-div',
                             className='app__dropdown',
-                            children=[
-                                dcc.Dropdown(
+                            title='region selection description',
+                            children=dcc.Dropdown(
                                     id='region-input',
+                                    className='app__input__dropdown__map',
                                     options=[
                                         {'label': v, 'value': k}
                                         for k, v in REGIONS_GPD.items()
                                     ],
                                     value=WORLD_ID
                                 )
-                            ]
                         ),
                         html.Div(
                             id='logo-div',
@@ -201,16 +201,23 @@ app.layout = html.Div(
                         ),
                     ]
                 ),
-                dcc.Dropdown(
-                    id='country-input',
-                    className='app__input__dropdown',
-                    options=[],
-                    value=None,
-                    multi=False
+                html.Div(
+                    id='country-input-div',
+                    className='app__dropdown',
+                    title='country selection description',
+                    children=dcc.Dropdown(
+                        id='country-input',
+                        className='app__input__dropdown__map',
+                        options=[],
+                        value=None,
+                        multi=False
+                    )
                 ),
                 html.Div(
                     id='map-div',
                     className='app__map',
+                    title='Hover over a country to display information.\n'
+                          + 'Click on it to access detailed report.',
                     children=dcc.Graph(
                         id='map',
                         figure=fig_map,
