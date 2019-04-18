@@ -8,8 +8,7 @@ from data_preparation import (
     ELECTRIFICATION_OPTIONS,
     ELECTRIFICATION_DICT,
     SCENARIOS_DICT,
-    SE4ALL_SHIFT_SENARIO,
-    PROG_SENARIO,
+    SE4ALL_FLEX_SCENARIO,
     POP_GET,
     HH_CAP,
     MENTI_DRIVES
@@ -37,7 +36,7 @@ def callback_generator(app, input_name, df_name):
 
         # extract the data from the selected scenario if a country was selected
         if country_iso is not None:
-            if scenario == SE4ALL_SHIFT_SENARIO:
+            if scenario == SE4ALL_FLEX_SCENARIO:
                 df = pd.read_json(cur_data[scenario]).set_index('country_iso')
                 answer = df.loc[country_iso, '%s' % df_name]
         return answer

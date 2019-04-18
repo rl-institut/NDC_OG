@@ -8,21 +8,18 @@ import plotly.graph_objs as go
 from data_preparation import (
     SCENARIOS,
     BAU_SENARIO,
-    SE4ALL_SHIFT_SENARIO,
+    SE4ALL_SCENARIO,
+    SE4ALL_FLEX_SCENARIO,
     PROG_SENARIO,
-    SCENARIOS_DICT,
     MG,
     GRID,
     SHS,
     ELECTRIFICATION_DICT,
     MENTI_DRIVES,
     POP_GET,
-    HH_CAP,
     compute_ndc_results_from_raw_data,
     prepare_endogenous_variables,
-    prepare_bau_data,
     prepare_se4all_data,
-    prepare_prog_data,
     extract_results_scenario
 )
 
@@ -289,6 +286,7 @@ def update_map(region_id, scenario, elec_opt, fig, cur_data):
             ),
         }
     )
+
     fig['layout']['geo'].update({'scope': region_name.lower()})
     return fig
 
@@ -333,13 +331,10 @@ def update_view(scenario, region_id, country_sel, cur_view):
         elif 'region-input' in prop_id:
             cur_view.update({'app_view': VIEW_GENERAL})
 
-        # trigger comes selecting a scenario
-        elif 'scenario-input' in prop_id:
-            # only the se4all+shift scenario has controls
-            if scenario == SE4ALL_SHIFT_SENARIO:
-                cur_view.update({'controls_display': 'flex'})
-            else:
-                cur_view.update({'controls_display': 'none'})
+    if scenario == SE4ALL_FLEX_SCENARIO:
+        cur_view.update({'controls_display': 'flex'})
+    else:
+        cur_view.update({'controls_display': 'none'})
     return cur_view
 
 
@@ -456,7 +451,7 @@ def update_country_div_content(
             df = pd.read_json(cur_data[scenario])
             df = df.loc[df.country_iso == country_iso]
 
-            if scenario in [SE4ALL_SHIFT_SENARIO, PROG_SENARIO]:
+            if scenario in [SE4ALL_FLEX_SCENARIO, SE4ALL_SCENARIO, PROG_SENARIO]:
                 # TODO: only recompute the tier if it has changed (with context)
                 if tier_level is not None:
                     df = prepare_endogenous_variables(
@@ -464,7 +459,7 @@ def update_country_div_content(
                         tier_level=tier_level
                     )
 
-            if scenario == SE4ALL_SHIFT_SENARIO:
+            if scenario == SE4ALL_FLEX_SCENARIO:
 
                 if gdp_class is not None:
                     df.loc[:, 'gdp_class'] = gdp_class

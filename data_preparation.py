@@ -47,14 +47,16 @@ MG = 'mg'
 SHS = 'shs'
 ELECTRIFICATION_OPTIONS = [GRID, MG, SHS]
 BAU_SENARIO = 'bau'
-SE4ALL_SHIFT_SENARIO = 'se4all_shift'
+SE4ALL_SCENARIO = 'se4all'
+SE4ALL_FLEX_SCENARIO = 'se4all_shift'
 PROG_SENARIO = 'prog'
-SCENARIOS = [BAU_SENARIO, SE4ALL_SHIFT_SENARIO, PROG_SENARIO]
+SCENARIOS = [BAU_SENARIO, SE4ALL_SCENARIO, SE4ALL_FLEX_SCENARIO, PROG_SENARIO]
 
 # Names for display
 SCENARIOS_DICT = {
     BAU_SENARIO: 'BaU',
-    SE4ALL_SHIFT_SENARIO: 'SE4All',
+    SE4ALL_SCENARIO: 'SE4All',
+    SE4ALL_FLEX_SCENARIO: 'SE4All Flex',
     PROG_SENARIO: 'prOG',
 }
 ELECTRIFICATION_DICT = {
@@ -479,7 +481,7 @@ def prepare_scenario_data(df, scenario, prepare_endogenous=False, tier_level=MIN
 
     if scenario == BAU_SENARIO:
         df = prepare_bau_data(input_df=df)
-    elif scenario == SE4ALL_SHIFT_SENARIO:
+    elif SE4ALL_SCENARIO in scenario:
         df = prepare_se4all_data(input_df=df)
     elif scenario == PROG_SENARIO:
         df = prepare_prog_data(input_df=df)
@@ -502,7 +504,7 @@ def extract_results_scenario(input_df, scenario, regions=None, bau_data=None):
 
             # predicted number of people getting access to electricity (regional detail level)
             df['pop_get_%s_2030' % opt] = df.bau_pop_newly_electrified * df['temp_%s' % opt]
-    elif scenario in [SE4ALL_SHIFT_SENARIO, PROG_SENARIO]:
+    elif scenario in [SE4ALL_SCENARIO, SE4ALL_FLEX_SCENARIO, PROG_SENARIO]:
         # SUMME(AA4:AB4) --> df.loc[:,['shift_pop_grid_to_mg' 'shift_pop_grid_to_shs']].sum(axis=1)
         # grid =D4-SUMME(AA4:AB4)
         opt = 'grid'
