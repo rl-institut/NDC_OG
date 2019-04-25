@@ -144,7 +144,7 @@ def _find_tier_level(yearly_consumption):
 
 
 def get_peak_capacity_from_yearly_consumption(yearly_consumption):
-    """Use linear interpolation of the minimum values of capacity and consumption
+    """Use linear interpolation of the minimum values of capacity and consumption.
 
     :param yearly_consumption: yearly consumption per household in kWh/year
     :return: peak capacity in kW
@@ -160,7 +160,7 @@ def get_peak_capacity_from_yearly_consumption(yearly_consumption):
 
 
 def map_gdp_class(gdp_per_capita):
-    """Assign an index value to differentiate gdp per capita"""
+    """Assign an index value to differentiate gdp per capita."""
     answer = 1
     if gdp_per_capita < 1500:
         answer = 0.5
@@ -170,7 +170,7 @@ def map_gdp_class(gdp_per_capita):
 
 
 def map_mobile_money_class(mobile_money):
-    """Assign an index value to differentiate mobile_money"""
+    """Assign an index value to differentiate mobile_money."""
     answer = 1
     if mobile_money <= 0.21:
         answer = 0.5
@@ -180,7 +180,7 @@ def map_mobile_money_class(mobile_money):
 
 
 def map_ease_doing_business_class(business_ease):
-    """Assign an index value to differentiate ease of doing business"""
+    """Assign an index value to differentiate ease of doing business."""
     answer = 1
     if business_ease <= 164:
         answer = 0.5
@@ -190,7 +190,7 @@ def map_ease_doing_business_class(business_ease):
 
 
 def map_corruption_class(corruption_idx):
-    """Assign an index value to differentiate corruption"""
+    """Assign an index value to differentiate corruption."""
     answer = 1
     if corruption_idx <= 33:
         answer = 0.5
@@ -200,7 +200,7 @@ def map_corruption_class(corruption_idx):
 
 
 def map_weak_grid_class(weak_grid_idx):
-    """Assign an index value to differentiate weak grid"""
+    """Assign an index value to differentiate weak grid."""
     answer = 1
     if weak_grid_idx <= 9:
         answer = 0.5
@@ -214,7 +214,7 @@ def map_tier_yearly_consumption(
         electrification_option_share,
         tier_level=MIN_TIER_LEVEL
 ):
-    """Assign yearly consumption adjusted for tier level"""
+    """Assign yearly consumption adjusted for tier level."""
     if yearly_consumption < MIN_ANNUAL_CONSUMPTION[tier_level] / electrification_option_share:
         answer = MIN_ANNUAL_CONSUMPTION[tier_level]
     else:
@@ -501,7 +501,7 @@ def prepare_scenario_data(df, scenario, prepare_endogenous=False, tier_level=MIN
 
 
 def _compute_ghg_emissions(df):
-    """Compute green house gases emissions in `extract_results_scenario`."""
+    """Compute green house gases emissions in `extract_results_scenario."""
 
     # source : ???
     df['hh_no_access_consumption'] = 55
