@@ -222,6 +222,18 @@ def map_tier_yearly_consumption(
     return answer
 
 
+def map_capped_tier_yearly_consumption(
+        yearly_consumption,
+        tier_level=4
+):
+    """Assign yearly consumption from the upper tier level bound."""
+    if yearly_consumption >= MIN_ANNUAL_CONSUMPTION[tier_level]:
+        answer = MIN_ANNUAL_CONSUMPTION[tier_level + 1]
+    else:
+        answer = MIN_ANNUAL_CONSUMPTION[tier_level]
+    return answer
+
+
 def prepare_shs_power_and_sales_volumes():
     shs_sales_volumes = pd.read_csv('data/shs_sales_volumes.csv', comment='#')
     # compute the average of the product categories 5 to 7
@@ -488,6 +500,61 @@ def prepare_scenario_data(df, scenario, prepare_endogenous=False, tier_level=MIN
     return df
 
 
+def _compute_ghg_emissions(df):
+    """Compute green house gases emissions in `extract_results_scenario`."""
+
+    # source : ???
+    df['hh_no_access_consumption'] = 55
+    # source : ???
+    df['grid_emission_factor'] = df.emission_factor / 1000
+    df['mg_emission_factor'] = 0.2
+    df['shs_emission_factor'] = 0
+    df['no_access_emission_factor'] = 6.8
+
+    df['pop_no_access_2030'] = df.pop_newly_electrified_2030 - df[
+        ['pop_get_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS]].sum(axis=1)
+    # negative values are replaced by zero
+    df.loc[df.pop_no_access_2030 < 0, 'pop_no_access_2030'] = 0
+
+    df['ghg_grid_2030'] = \
+        (df.pop_get_grid_2030 / df.hh_av_size) \
+        * df.hh_grid_tier_yearly_electricity_consumption\
+        * (df.grid_emission_factor / 1000)
+
+    df['ghg_mg_2030'] = \
+        (df.pop_get_mg_2030 / df.hh_av_size) \
+        * df.hh_mg_tier_yearly_electricity_consumption \
+        * (df.mg_emission_factor / 1000)
+
+    df['ghg_shs_2030'] = df.pop_get_shs_2030 * df.shs_emission_factor
+
+    df['ghg_no_access_2030'] = \
+        (df.pop_no_access_2030 / df.hh_av_size) \
+        * df.hh_no_access_consumption \
+        * (df.no_access_emission_factor / 1000)
+
+    # consider the upper tier level minimal consumption value instead of the actual value
+    df['hh_grid_tier_cap_yearly_electricity_consumption'] = \
+        df.hh_grid_tier_yearly_electricity_consumption.map(map_capped_tier_yearly_consumption)
+
+    df['hh_mg_tier_cap_yearly_electricity_consumption'] = \
+        df.hh_grid_tier_cap_yearly_electricity_consumption * 0.8
+
+    df['tier_capped_ghg_grid_2030'] = \
+        (df.pop_get_grid_2030 / df.hh_av_size) \
+        * df.hh_grid_tier_cap_yearly_electricity_consumption\
+        * (df.grid_emission_factor / 1000)
+
+    df['tier_capped_ghg_mg_2030'] = \
+        (df.pop_get_mg_2030 / df.hh_av_size) \
+        * df.hh_mg_tier_cap_yearly_electricity_consumption \
+        * (df.mg_emission_factor / 1000)
+
+    df['tier_capped_ghg_shs_2030'] = df.ghg_shs_2030
+
+    df['tier_capped_ghg_no_access_2030'] = df.ghg_no_access_2030
+
+
 def extract_results_scenario(input_df, scenario, regions=None, bau_data=None):
     df = input_df.copy()
 
@@ -545,6 +612,8 @@ def extract_results_scenario(input_df, scenario, regions=None, bau_data=None):
                 'shs_unit_av_capacity'] / 1000
             df['hh_cap_scn2_%s_capacity' % opt] = df['hh_get_%s_2030' % opt] * df[
                 'cap_sn2_%s_tier_up' % opt] / 1000
+
+    _compute_ghg_emissions(df)
 
     return df
 
