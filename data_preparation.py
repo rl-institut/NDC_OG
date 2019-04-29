@@ -80,6 +80,15 @@ MIN_RATED_CAPACITY = {1: 3, 2: 50, 3: 200, 4: 800, 5: 2000}  # index is TIER lev
 MIN_ANNUAL_CONSUMPTION = {1: 4.5, 2: 73, 3: 365, 4: 1250, 5: 3000}  # index is TIER level [kWh/a]
 RATIO_CAP_CONSUMPTION = {}
 
+# Investment Cost Source: Arranz and Worldbank,
+# BENCHMARKING STUDY OF SOLAR PV MINIGRIDS INVESTMENT COSTS, 2017 (Jabref)
+# unit is USD per household
+MEDIAN_INVESTMENT_COST = {1: 742, 2: 1273, 3: 2516, 4: 5277, 5: 5492}
+
+# Currency conversion
+USD_TO_EUR = 0.87
+FCFA_TO_EUR = 0.0015
+
 # drives for the socio-economic model
 MENTI = pd.DataFrame({MG: [3, 13. / 6, 19. / 6, 3.25, 11. / 3],
                       SHS: [23. / 12, 4.5, 37. / 12, 17. / 6, 41. / 12],
@@ -115,6 +124,24 @@ def _slope_capacity_vs_yearly_consumption(tier_level):
     m = (MIN_RATED_CAPACITY[tier_level + 1] - MIN_RATED_CAPACITY[tier_level]) \
         / (MIN_ANNUAL_CONSUMPTION[tier_level + 1] - MIN_ANNUAL_CONSUMPTION[tier_level])
     return m
+
+
+def _linear_investment_cost():
+    """Linearize the relation between averaged min rated capacity and median investment cost
+
+    y = m*x +h, the function returns m for the interval corresponding
+    to [tier_level=3, tier_level=4]
+    :return: m and h of the linear relation
+    """
+    cost_tier = {}
+    for tier_level in [3, 4]:
+        mean_capacity = (MIN_RATED_CAPACITY[tier_level + 1] + MIN_RATED_CAPACITY[tier_level]) / 2.
+        # mean cost for a given tier level in USD / kW
+        cost_tier[tier_level] = 1000 * MEDIAN_INVESTMENT_COST[tier_level] / mean_capacity
+
+    m = 1000 * (cost_tier[4] - cost_tier[3]) / (MIN_RATED_CAPACITY[4] - MIN_RATED_CAPACITY[3])
+    h = cost_tier[3] - m * (MIN_RATED_CAPACITY[3] / 1000)
+    return m, h
 
 
 for tier_lvl in [1, 2, 3, 4]:
@@ -260,7 +287,16 @@ def prepare_shs_power_and_sales_volumes():
     return shs_power_categories.set_index('category'), shs_sales_volumes.set_index('region')
 
 
+def prepare_shs_investment_cost():
+    """Compute the average cost of shs in EUR per kW."""
+    shs_costs = pd.read_csv('data/shs_power_investment_cost.csv', comment='#')
+    shs_costs['cost_per_kW'] = 1000 * shs_costs.investment / shs_costs.power
+    # take the mean value of the mean cost per kW for each category
+    return np.mean([shs_costs[shs_costs.category == idx].cost_per_kW.mean() for idx in [5, 6, 7]])
+
+
 SHS_POWER_CATEGORIES, SHS_SALES_VOLUMES = prepare_shs_power_and_sales_volumes()
+SHS_AVERAGE_INVESTMENT_COST = prepare_shs_investment_cost()
 
 
 def extract_bau_data(fname='data/bau.csv'):
@@ -555,6 +591,20 @@ def _compute_ghg_emissions(df):
     df['tier_capped_ghg_no_access_2030'] = df.ghg_no_access_2030
 
 
+def _compute_investment_cost(df):
+    """Compute investment costs in EUR in `extract_results_scenario."""
+    m, h = _linear_investment_cost()
+
+    df['mg_investment_cost_per_kW'] = (df.hh_mg_tier_peak_demand * m + h) * USD_TO_EUR
+    df['mg_investment_cost'] = df.mg_investment_cost_per_kW * df.hh_mg_capacity
+    df['shs_investment_cost'] = df.hh_shs_capacity * SHS_AVERAGE_INVESTMENT_COST
+    df['tier_capped_mg_investment_cost'] = \
+        df.mg_investment_cost_per_kW * df.hh_cap_scn2_mg_capacity
+    df['tier_capped_shs_investment_cost'] = \
+        df.hh_cap_scn2_shs_capacity * SHS_AVERAGE_INVESTMENT_COST
+
+
+
 def extract_results_scenario(input_df, scenario, regions=None, bau_data=None):
     df = input_df.copy()
 
@@ -614,6 +664,7 @@ def extract_results_scenario(input_df, scenario, regions=None, bau_data=None):
                 'cap_sn2_%s_tier_up' % opt] / 1000
 
     _compute_ghg_emissions(df)
+    _compute_investment_cost(df)
 
     return df
 
