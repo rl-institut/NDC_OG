@@ -80,6 +80,15 @@ MIN_RATED_CAPACITY = {1: 3, 2: 50, 3: 200, 4: 800, 5: 2000}  # index is TIER lev
 MIN_ANNUAL_CONSUMPTION = {1: 4.5, 2: 73, 3: 365, 4: 1250, 5: 3000}  # index is TIER level [kWh/a]
 RATIO_CAP_CONSUMPTION = {}
 
+# Investment Cost Source: Arranz and Worldbank,
+# BENCHMARKING STUDY OF SOLAR PV MINIGRIDS INVESTMENT COSTS, 2017 (Jabref)
+# unit is USD per household
+MEDIAN_INVESTMENT_COST = {1: 742, 2: 1273, 3: 2516, 4: 5277, 5: 5492}
+
+# Currency conversion
+USD_TO_EUR = 0.87
+FCFA_TO_EUR = 0.0015
+
 # drives for the socio-economic model
 MENTI = pd.DataFrame({MG: [3, 13. / 6, 19. / 6, 3.25, 11. / 3],
                       SHS: [23. / 12, 4.5, 37. / 12, 17. / 6, 41. / 12],
@@ -117,6 +126,24 @@ def _slope_capacity_vs_yearly_consumption(tier_level):
     return m
 
 
+def _linear_investment_cost():
+    """Linearize the relation between averaged min rated capacity and median investment cost
+
+    y = m*x +h, the function returns m for the interval corresponding
+    to [tier_level=3, tier_level=4]
+    :return: m and h of the linear relation
+    """
+    cost_tier = {}
+    for tier_level in [3, 4]:
+        mean_capacity = (MIN_RATED_CAPACITY[tier_level + 1] + MIN_RATED_CAPACITY[tier_level]) / 2.
+        # mean cost for a given tier level in USD / kW
+        cost_tier[tier_level] = 1000 * MEDIAN_INVESTMENT_COST[tier_level] / mean_capacity
+
+    m = 1000 * (cost_tier[4] - cost_tier[3]) / (MIN_RATED_CAPACITY[4] - MIN_RATED_CAPACITY[3])
+    h = cost_tier[3] - m * (MIN_RATED_CAPACITY[3] / 1000)
+    return m, h
+
+
 for tier_lvl in [1, 2, 3, 4]:
     RATIO_CAP_CONSUMPTION[tier_lvl] = _slope_capacity_vs_yearly_consumption(tier_lvl)
 
@@ -144,7 +171,7 @@ def _find_tier_level(yearly_consumption):
 
 
 def get_peak_capacity_from_yearly_consumption(yearly_consumption):
-    """Use linear interpolation of the minimum values of capacity and consumption
+    """Use linear interpolation of the minimum values of capacity and consumption.
 
     :param yearly_consumption: yearly consumption per household in kWh/year
     :return: peak capacity in kW
@@ -160,7 +187,7 @@ def get_peak_capacity_from_yearly_consumption(yearly_consumption):
 
 
 def map_gdp_class(gdp_per_capita):
-    """Assign an index value to differentiate gdp per capita"""
+    """Assign an index value to differentiate gdp per capita."""
     answer = 1
     if gdp_per_capita < 1500:
         answer = 0.5
@@ -170,7 +197,7 @@ def map_gdp_class(gdp_per_capita):
 
 
 def map_mobile_money_class(mobile_money):
-    """Assign an index value to differentiate mobile_money"""
+    """Assign an index value to differentiate mobile_money."""
     answer = 1
     if mobile_money <= 0.21:
         answer = 0.5
@@ -180,7 +207,7 @@ def map_mobile_money_class(mobile_money):
 
 
 def map_ease_doing_business_class(business_ease):
-    """Assign an index value to differentiate ease of doing business"""
+    """Assign an index value to differentiate ease of doing business."""
     answer = 1
     if business_ease <= 164:
         answer = 0.5
@@ -190,7 +217,7 @@ def map_ease_doing_business_class(business_ease):
 
 
 def map_corruption_class(corruption_idx):
-    """Assign an index value to differentiate corruption"""
+    """Assign an index value to differentiate corruption."""
     answer = 1
     if corruption_idx <= 33:
         answer = 0.5
@@ -200,7 +227,7 @@ def map_corruption_class(corruption_idx):
 
 
 def map_weak_grid_class(weak_grid_idx):
-    """Assign an index value to differentiate weak grid"""
+    """Assign an index value to differentiate weak grid."""
     answer = 1
     if weak_grid_idx <= 9:
         answer = 0.5
@@ -214,11 +241,23 @@ def map_tier_yearly_consumption(
         electrification_option_share,
         tier_level=MIN_TIER_LEVEL
 ):
-    """Assign yearly consumption adjusted for tier level"""
+    """Assign yearly consumption adjusted for tier level."""
     if yearly_consumption < MIN_ANNUAL_CONSUMPTION[tier_level] / electrification_option_share:
         answer = MIN_ANNUAL_CONSUMPTION[tier_level]
     else:
         answer = yearly_consumption * electrification_option_share
+    return answer
+
+
+def map_capped_tier_yearly_consumption(
+        yearly_consumption,
+        tier_level=4
+):
+    """Assign yearly consumption from the upper tier level bound."""
+    if yearly_consumption >= MIN_ANNUAL_CONSUMPTION[tier_level]:
+        answer = MIN_ANNUAL_CONSUMPTION[tier_level + 1]
+    else:
+        answer = MIN_ANNUAL_CONSUMPTION[tier_level]
     return answer
 
 
@@ -248,7 +287,16 @@ def prepare_shs_power_and_sales_volumes():
     return shs_power_categories.set_index('category'), shs_sales_volumes.set_index('region')
 
 
+def prepare_shs_investment_cost():
+    """Compute the average cost of shs in EUR per kW."""
+    shs_costs = pd.read_csv('data/shs_power_investment_cost.csv', comment='#')
+    shs_costs['cost_per_kW'] = 1000 * shs_costs.investment / shs_costs.power
+    # take the mean value of the mean cost per kW for each category
+    return np.mean([shs_costs[shs_costs.category == idx].cost_per_kW.mean() for idx in [5, 6, 7]])
+
+
 SHS_POWER_CATEGORIES, SHS_SALES_VOLUMES = prepare_shs_power_and_sales_volumes()
+SHS_AVERAGE_INVESTMENT_COST = prepare_shs_investment_cost()
 
 
 def extract_bau_data(fname='data/bau.csv'):
@@ -488,6 +536,75 @@ def prepare_scenario_data(df, scenario, prepare_endogenous=False, tier_level=MIN
     return df
 
 
+def _compute_ghg_emissions(df):
+    """Compute green house gases emissions in `extract_results_scenario."""
+
+    # source : ???
+    df['hh_no_access_consumption'] = 55
+    # source : ???
+    df['grid_emission_factor'] = df.emission_factor / 1000
+    df['mg_emission_factor'] = 0.2
+    df['shs_emission_factor'] = 0
+    df['no_access_emission_factor'] = 6.8
+
+    df['pop_no_access_2030'] = df.pop_newly_electrified_2030 - df[
+        ['pop_get_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS]].sum(axis=1)
+    # negative values are replaced by zero
+    df.loc[df.pop_no_access_2030 < 0, 'pop_no_access_2030'] = 0
+
+    df['ghg_grid_2030'] = \
+        (df.pop_get_grid_2030 / df.hh_av_size) \
+        * df.hh_grid_tier_yearly_electricity_consumption\
+        * (df.grid_emission_factor / 1000)
+
+    df['ghg_mg_2030'] = \
+        (df.pop_get_mg_2030 / df.hh_av_size) \
+        * df.hh_mg_tier_yearly_electricity_consumption \
+        * (df.mg_emission_factor / 1000)
+
+    df['ghg_shs_2030'] = df.pop_get_shs_2030 * df.shs_emission_factor
+
+    df['ghg_no_access_2030'] = \
+        (df.pop_no_access_2030 / df.hh_av_size) \
+        * df.hh_no_access_consumption \
+        * (df.no_access_emission_factor / 1000)
+
+    # consider the upper tier level minimal consumption value instead of the actual value
+    df['hh_grid_tier_cap_yearly_electricity_consumption'] = \
+        df.hh_grid_tier_yearly_electricity_consumption.map(map_capped_tier_yearly_consumption)
+
+    df['hh_mg_tier_cap_yearly_electricity_consumption'] = \
+        df.hh_grid_tier_cap_yearly_electricity_consumption * 0.8
+
+    df['tier_capped_ghg_grid_2030'] = \
+        (df.pop_get_grid_2030 / df.hh_av_size) \
+        * df.hh_grid_tier_cap_yearly_electricity_consumption\
+        * (df.grid_emission_factor / 1000)
+
+    df['tier_capped_ghg_mg_2030'] = \
+        (df.pop_get_mg_2030 / df.hh_av_size) \
+        * df.hh_mg_tier_cap_yearly_electricity_consumption \
+        * (df.mg_emission_factor / 1000)
+
+    df['tier_capped_ghg_shs_2030'] = df.ghg_shs_2030
+
+    df['tier_capped_ghg_no_access_2030'] = df.ghg_no_access_2030
+
+
+def _compute_investment_cost(df):
+    """Compute investment costs in EUR in `extract_results_scenario."""
+    m, h = _linear_investment_cost()
+
+    df['mg_investment_cost_per_kW'] = (df.hh_mg_tier_peak_demand * m + h) * USD_TO_EUR
+    df['mg_investment_cost'] = df.mg_investment_cost_per_kW * df.hh_mg_capacity
+    df['shs_investment_cost'] = df.hh_shs_capacity * SHS_AVERAGE_INVESTMENT_COST
+    df['tier_capped_mg_investment_cost'] = \
+        df.mg_investment_cost_per_kW * df.hh_cap_scn2_mg_capacity
+    df['tier_capped_shs_investment_cost'] = \
+        df.hh_cap_scn2_shs_capacity * SHS_AVERAGE_INVESTMENT_COST
+
+
+
 def extract_results_scenario(input_df, scenario, regions=None, bau_data=None):
     df = input_df.copy()
 
@@ -545,6 +662,9 @@ def extract_results_scenario(input_df, scenario, regions=None, bau_data=None):
                 'shs_unit_av_capacity'] / 1000
             df['hh_cap_scn2_%s_capacity' % opt] = df['hh_get_%s_2030' % opt] * df[
                 'cap_sn2_%s_tier_up' % opt] / 1000
+
+    _compute_ghg_emissions(df)
+    _compute_investment_cost(df)
 
     return df
 
