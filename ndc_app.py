@@ -32,10 +32,14 @@ from app_components import (
 )
 
 
-# A dict with the data for each scenario in json format
-SCENARIOS_DATA = {
-    sce: compute_ndc_results_from_raw_data(sce).to_json() for sce in SCENARIOS
-}
+def extract_centroids(reg):
+    """Load the longitude and latitude of countries per region."""
+    if not isinstance(reg, list):
+        reg = [reg]
+    centroids = pd.read_csv('data/centroid.csv')
+    return centroids.loc[centroids.region.isin(reg)].copy()
+
+
 WORLD_ID = 'WD'
 REGIONS_GPD = dict(WD='World', SA='South America', AF='Africa', AS='Asia')
 
@@ -43,6 +47,15 @@ REGIONS_NDC = dict(WD=['LA', 'SSA', 'DA'], SA='LA', AF='SSA', AS='DA')
 
 VIEW_GENERAL = 'general'
 VIEW_COUNTRY = 'specific'
+
+# A dict with the data for each scenario in json format
+SCENARIOS_DATA = {
+    sce: compute_ndc_results_from_raw_data(sce).to_json() for sce in SCENARIOS
+}
+
+SCENARIOS_DATA.update(
+    {reg: extract_centroids(REGIONS_NDC[reg]).to_json() for reg in REGIONS_NDC}
+)
 
 
 def country_hover_text(input_df):
@@ -89,7 +102,23 @@ data = [
             )),
         colorbar=go.choropleth.ColorBar(title="Pop."),
 
-    ),
+    )
+]
+
+
+centroid = pd.read_csv('data/centroid.csv')
+
+points = [
+    go.Scattergeo(
+        lon=centroid['Longitude'],
+        lat=centroid['Latitude'],
+        text=centroid['country_iso'],
+        marker=go.scattergeo.Marker(
+            size=25,
+            color='black',
+            line=go.scattergeo.marker.Line(width=0)
+        ),
+    )
 ]
 
 layout = go.Layout(
@@ -113,7 +142,7 @@ layout = go.Layout(
 )
 
 
-fig_map = go.Figure(data=data, layout=layout)
+fig_map = go.Figure(data=data + points, layout=layout)
 
 
 PIECHART_LABELS = list(ELECTRIFICATION_DICT.values())
@@ -253,6 +282,8 @@ def update_map(region_id, scenario, elec_opt, fig, cur_data):
     # load the data of the scenario
     df = pd.read_json(cur_data[scenario])
 
+    centroids = pd.read_json(cur_data[region_id])
+
     if region_id != WORLD_ID:
         # narrow to the region if the scope is not on the whole world
         df = df.loc[df.region == REGIONS_NDC[region_id]]
@@ -267,6 +298,7 @@ def update_map(region_id, scenario, elec_opt, fig, cur_data):
 
     if region_id == 'SA':
         region_name = REGIONS_GPD[WORLD_ID]
+
         geo = 'geo2'
     else:
         region_name = REGIONS_GPD[region_id]
@@ -286,6 +318,15 @@ def update_map(region_id, scenario, elec_opt, fig, cur_data):
                 tickmode="array",
                 tickvals=[10 * i for i in range(11)]
             ),
+        }
+    )
+
+    fig['data'][1].update(
+        {
+            'lon': centroids['Longitude'],
+            'lat': centroids['Latitude'],
+            'text': centroids['country_iso'],
+            'geo': geo
         }
     )
 
