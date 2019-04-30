@@ -59,12 +59,55 @@ SCENARIOS_DICT = {
     SE4ALL_FLEX_SCENARIO: 'SE4All Flex',
     PROG_SCENARIO: 'prOG',
 }
+SCENARIOS_DESCRIPTIONS = {
+    BAU_SCENARIO:
+        'The Business-as-Usual (BaU) scenario is based on the International Energy Agency''s \
+"New Policies" Scenario. Regional projections of electrification rates and technologies \
+are applied to the country-level to derive country-specific values. It quantifies new \
+electrification until 2030.' + '\n'
+        + 'In this scenario Sustainable Development Goal 7 is not reached.',
+    SE4ALL_SCENARIO:
+        'The Sustainable-Energy-for-all (Se4all) scenario is based on a geospatial infrastructure \
+analysis (GIS) combined with country-specific frameworks and game-changers currently \
+(between 2014 and 2018) in place. The game-changers are derived from RISE factors, \
+plus the following indicators: Mobile Money Availability, GDP, Corruption Perception \
+Index, Ease of Doing Business Index, Number of power outages in a typical month. \
+The game-changers result in a shift from grid electrification to the other \
+electrification options (MG, SHS).' + '\n'
+        + ' In this scenario Sustainable Development Goal 7 is reached.',
+    SE4ALL_FLEX_SCENARIO:
+        'The Flexible-Sustainable-Energy-for-all (Se4all-flex) scenario is based on a geospatial \
+infrastructure analysis (GIS) combined with country-specific \
+frameworks and game-changers currently (between 2014 and 2018) in place. The game-changers are \
+derived from RISE factors, plus the following indicators: Mobile Money Availability, GDP, \
+Corruption Perception Index, Ease of Doing Business Index, Number of power outages in a typical \
+month.The indicator values as well as the shift weighting can be adjusted by the user.' + '\n'
+        + 'In this scenario Sustainable Development Goal 7 is reached.' + '\n'
+        + 'In this scenario the indicator values can be changed to see how they affect the \
+final results',
+    PROG_SCENARIO:
+        'The Progressive-Off-Grid (prOG) scenario is based on a geospatial infrastructure \
+analysis (GIS) combined with country-specific frameworks and game-changers currently \
+(between 2014 and 2018) in place. The game-changers are derived from RISE factors, assuming \
+that the frameworks for MG and SHS are 100 (highest possible RISE score).' + '\n'
+        + 'In this scenario Sustainable Development Goal 7 is reached.'
+}
+
+
 ELECTRIFICATION_DICT = {
     GRID: 'Grid',
     MG: 'Mini Grid',
     SHS: 'Solar Home System'
 }
 
+ELECTRIFICATION_DESCRIPTIONS = {
+    GRID: 'Grid: Electrification is achieved by extension of the existing electricity \
+grid network',
+    MG: 'Mini Grid: Electrification is achieved via a set of electricity generators and possibly \
+energy storage systems interconnected to a distribution network that supplies electricity \
+to a localized group of customers',
+    SHS: 'Solar Home System: Electrification is achieved for a single household via solar panels.'
+}
 
 # column names of the exogenous results
 POP_GET = ['pop_get_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS]

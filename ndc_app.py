@@ -11,10 +11,12 @@ from data_preparation import (
     SE4ALL_SCENARIO,
     SE4ALL_FLEX_SCENARIO,
     PROG_SCENARIO,
+    SCENARIOS_DESCRIPTIONS,
     MG,
     GRID,
     SHS,
     ELECTRIFICATION_DICT,
+    ELECTRIFICATION_DESCRIPTIONS,
     MENTI_DRIVES,
     POP_GET,
     compute_ndc_results_from_raw_data,
@@ -126,114 +128,124 @@ app = dash.Dash(__name__)
 app.title = 'NDC visualisation'
 
 app.layout = html.Div(
-    id='app-div',
-    className='app',
+    id='main-div',
     children=[
-        dcc.Store(
-            id='data-store',
-            storage_type='session',
-            data=SCENARIOS_DATA.copy()
-        ),
-        dcc.Store(
-            id='view-store',
-            storage_type='session',
-            data={'app_view': VIEW_GENERAL}
+        html.Div(
+            id='app-title',
+            className='title',
+            children='Visualization of New Electrification Scenarios by 2030 and the'
+                     ' Relevance of Off-Grid Components in the NDCs'
         ),
         html.Div(
-            id='left-panel-div',
-            className='app__container',
+            id='app-div',
+            className='app',
             children=[
-                html.Div(
-                    id='scenario-div',
-                    className='app__options',
-                    children=scenario_div(SE4ALL_FLEX_SCENARIO, GRID)
+                dcc.Store(
+                    id='data-store',
+                    storage_type='session',
+                    data=SCENARIOS_DATA.copy()
+                ),
+                dcc.Store(
+                    id='view-store',
+                    storage_type='session',
+                    data={'app_view': VIEW_GENERAL}
                 ),
                 html.Div(
-                    id='controls-div',
-                    className='app__controls',
-                    style={'display': 'none'},
-                    children=controls_div(),
-                ),
-                html.Div(
-                    id='general-info-div',
-                    className='app__info',
-                    children=general_info_div()
-                ),
-                html.Div(
-                    id='piechart-div',
-                    className='app__piechart',
-                    children=dcc.Graph(
-                        id='piechart',
-                        figure=piechart,
-                        style={
-                            'height': '55vh',
-                        }
-                    ),
-                )
-            ]
-        ),
-        html.Div(
-            id='right-panel-div',
-            className='app__container',
-            children=[
-                html.Div(
-                    id='header-div',
-                    className='app__header',
+                    id='left-panel-div',
+                    className='app__container',
                     children=[
                         html.Div(
-                            id='region-input-div',
-                            className='app__dropdown',
-                            title='region selection description',
-                            children=dcc.Dropdown(
-                                    id='region-input',
-                                    className='app__input__dropdown__map',
-                                    options=[
-                                        {'label': v, 'value': k}
-                                        for k, v in REGIONS_GPD.items()
-                                    ],
-                                    value=WORLD_ID
-                                )
+                            id='scenario-div',
+                            className='app__options',
+                            children=scenario_div(SE4ALL_FLEX_SCENARIO, GRID)
                         ),
                         html.Div(
-                            id='logo-div',
-                            className='app__logo',
+                            id='controls-div',
+                            className='app__controls',
+                            style={'display': 'none'},
+                            children=controls_div(),
                         ),
+                        html.Div(
+                            id='general-info-div',
+                            className='app__info',
+                            children=general_info_div()
+                        ),
+                        html.Div(
+                            id='piechart-div',
+                            className='app__piechart',
+                            children=dcc.Graph(
+                                id='piechart',
+                                figure=piechart,
+                                style={
+                                    'height': '55vh',
+                                }
+                            ),
+                        )
                     ]
                 ),
                 html.Div(
-                    id='country-input-div',
-                    className='app__dropdown',
-                    title='country selection description',
-                    children=dcc.Dropdown(
-                        id='country-input',
-                        className='app__input__dropdown__map',
-                        options=[],
-                        value=None,
-                        multi=False
-                    )
-                ),
-                html.Div(
-                    id='map-div',
-                    className='app__map',
-                    title='Hover over a country to display information.\n'
-                          + 'Click on it to access detailed report.',
-                    children=dcc.Graph(
-                        id='map',
-                        figure=fig_map,
-                        style={'width': '90vh', 'height': '90vh'}
-                    ),
-                ),
-                html.Div(
-                    id='country-div',
-                    className='app__country',
-                    children=country_div(),
+                    id='right-panel-div',
+                    className='app__container',
+                    children=[
+                        html.Div(
+                            id='header-div',
+                            className='app__header',
+                            children=[
+                                html.Div(
+                                    id='region-input-div',
+                                    className='app__dropdown',
+                                    title='region selection description',
+                                    children=dcc.Dropdown(
+                                        id='region-input',
+                                        className='app__input__dropdown__map',
+                                        options=[
+                                            {'label': v, 'value': k}
+                                            for k, v in REGIONS_GPD.items()
+                                        ],
+                                        value=WORLD_ID
+                                    )
+                                ),
+                                html.Div(
+                                    id='logo-div',
+                                    className='app__logo',
+                                ),
+                            ]
+                        ),
+                        html.Div(
+                            id='country-input-div',
+                            className='app__dropdown',
+                            title='country selection description',
+                            children=dcc.Dropdown(
+                                id='country-input',
+                                className='app__input__dropdown__map',
+                                options=[],
+                                value=None,
+                                multi=False
+                            )
+                        ),
+                        html.Div(
+                            id='map-div',
+                            className='app__map',
+                            title='Hover over a country to display information.\n'
+                                  + 'Click on it to access detailed report.',
+                            children=dcc.Graph(
+                                id='map',
+                                figure=fig_map,
+                                style={'width': '90vh', 'height': '90vh'}
+                            ),
+                        ),
+                        html.Div(
+                            id='country-div',
+                            className='app__country',
+                            children=country_div(),
+                        )
+                    ]
+
                 )
-            ]
-
+            ],
         )
-    ],
+    ]
 )
-
 
 @app.callback(
     Output('map', 'figure'),
@@ -589,6 +601,22 @@ def update_data_store(clicked_data, cur_data):
         country_iso = clicked_data['points'][0]['location']
         cur_data.update({'selected_country': country_iso})
     return cur_data
+
+
+@app.callback(
+    Output('scenario-input-div', 'title'),
+    [Input('scenario-input', 'value')]
+)
+def update_scenario_description(scenario):
+    return SCENARIOS_DESCRIPTIONS[scenario]
+
+
+@app.callback(
+    Output('electrification-input-div', 'title'),
+    [Input('electrification-input', 'value')]
+)
+def update_electrification_description(elec_opt):
+    return ELECTRIFICATION_DESCRIPTIONS[elec_opt]
 
 
 if __name__ == '__main__':
