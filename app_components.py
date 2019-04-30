@@ -5,6 +5,7 @@ import dash_core_components as dcc
 from dash.dependencies import Output, Input, State
 import dash_daq as daq
 import dash_table
+import plotly.graph_objs as go
 from data_preparation import (
     ELECTRIFICATION_OPTIONS,
     ELECTRIFICATION_DICT,
@@ -108,13 +109,12 @@ def results_div(df=None, df_comp=None, aggregate=False):
 
         df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
 
-        if aggregate:
+        if aggregate is True:
             pop_2017 = df.pop_2017.sum(axis=0)
             country = 'selected region'
             df = df[EXO_RESULTS].sum(axis=0)
             if df_comp is not None:
                 df_comp = df_comp[EXO_RESULTS].sum(axis=0)
-
         else:
             pop_2017 = df.pop_2017
             country = df.country.values[0]
@@ -129,10 +129,6 @@ def results_div(df=None, df_comp=None, aggregate=False):
         invest2_res = np.append(np.NaN, invest2_res)
         ghg_res = np.squeeze(df[GHG].values)
         ghg2_res = np.squeeze(df[GHG_CAP].values)
-
-        for a in [pop_res, hh_res, cap_res, cap2_res, invest_res, invest2_res]:
-            print(np.size(a))
-            print(np.shape(a))
 
         basic_results_data = np.vstack(
             [pop_res, hh_res, cap_res, cap2_res, invest_res, invest2_res]
@@ -155,10 +151,57 @@ def results_div(df=None, df_comp=None, aggregate=False):
         ghg_columns = ['labels'] + ELECTRIFICATION_OPTIONS
         ghg_results_data = ghg_results_data[ghg_columns].to_dict('records')
 
-    if aggregate:
+    if aggregate is True:
         id_name = 'aggregate'
     else:
         id_name = 'country'
+
+    # tables containing the results
+    results_divs = [
+        html.Div(
+            id='{}-basic-results-div'.format(id_name),
+            className='{}__results__basic'.format(id_name),
+            children=[
+                html.H4('Results for {}'.format(country)),
+                dash_table.DataTable(
+                    id='{}-basic-results-table'.format(id_name),
+                    columns=[
+                        {'name': labels_dict[col], 'id': col} for col in basic_columns
+                    ],
+                    data=basic_results_data
+                )
+            ]
+        ),
+        html.Div(
+            id='{}-ghg-results-div'.format(id_name),
+            className='{}__results'.format(id_name),
+            children=[
+                html.H4('Greenhouse Gases emissions'),
+                dash_table.DataTable(
+                    id='{}-ghg-results-table'.format(id_name),
+                    columns=[
+                        {'name': labels_dict[col], 'id': col}
+                        for col in ghg_columns
+                    ],
+                    data=ghg_results_data
+                )
+            ]
+        ),
+    ]
+    if aggregate is False:
+        # add a barplot below the tables with the results
+        barplot = html.Div(
+            id='barplot-div',
+            className='app__{}__barplot'.format(id_name),
+            title='Description',
+            children=dcc.Graph(
+                id='barplot',
+                figure=go.Figure(data=[go.Bar(x=ELECTRIFICATION_OPTIONS, y=[20, 14, 23])]),
+                style={'height': '200px'}
+            ),
+        )
+
+        results_divs = results_divs + [barplot]
 
     divs = [
         html.Div(
@@ -169,39 +212,10 @@ def results_div(df=None, df_comp=None, aggregate=False):
         html.Div(
             id='{}-results-div'.format(id_name),
             className='{}__results'.format(id_name),
-            children=[
-                html.Div(
-                    id='{}-basic-results-div'.format(id_name),
-                    className='{}__results__basic'.format(id_name),
-                    children=[
-                        html.H4('Results for {}'.format(country)),
-                        dash_table.DataTable(
-                            id='{}-basic-results-table'.format(id_name),
-                            columns=[
-                                {'name': labels_dict[col], 'id': col} for col in basic_columns
-                            ],
-                            data=basic_results_data
-                        )
-                    ]
-                ),
-                html.Div(
-                    id='{}-ghg-results-div'.format(id_name),
-                    className='{}__results'.format(id_name),
-                    children=[
-                        html.H4('Greenhouse Gases emissions'),
-                        dash_table.DataTable(
-                            id='{}-ghg-results-table'.format(id_name),
-                            columns=[
-                                {'name': labels_dict[col], 'id': col}
-                                for col in ghg_columns
-                            ],
-                            data=ghg_results_data
-                        )
-                    ]
-                ),
-            ],
+            children=results_divs
         ),
     ]
+
     return divs
 
 
