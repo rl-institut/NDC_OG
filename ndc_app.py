@@ -238,6 +238,11 @@ app.layout = html.Div(
                             id='country-div',
                             className='app__country',
                             children=country_div(),
+                        ),
+                        html.Div(
+                            id='aggregate-results-div',
+                            className='app__aggregate_results',
+                            children='Aggregated results'
                         )
                     ]
 
@@ -417,6 +422,30 @@ def toggle_general_info_div_display(cur_view, cur_style):
         cur_style.update({'display': 'flex'})
     elif cur_view['app_view'] == VIEW_COUNTRY:
         cur_style.update({'display': 'none'})
+    return cur_style
+
+
+@app.callback(
+    Output('aggregate-results-div', 'style'),
+    [
+        Input('view-store', 'data'),
+        Input('scenario-input', 'value'),
+    ],
+    [State('aggregate-results-div', 'style')]
+)
+def toggle_aggregate_results_div_display(cur_view, scenario, cur_style):
+    """Change the display of aggregate-results-div between the app's views."""
+    if cur_style is None:
+        cur_style = {'app_view': VIEW_GENERAL}
+
+    if cur_view['app_view'] == VIEW_GENERAL:
+        if scenario == SE4ALL_FLEX_SCENARIO:
+            cur_style.update({'display': 'flex'})
+        else:
+            cur_style.update({'display': 'none'})
+    elif cur_view['app_view'] == VIEW_COUNTRY:
+        cur_style.update({'display': 'none'})
+    print(scenario, cur_style)
     return cur_style
 
 
