@@ -483,6 +483,7 @@ def update_country_div_content(
     """Display information and study's results for a country."""
 
     df = None
+    df_comp = None
     country_iso = country_sel
     # in case of country_iso is a list of one element
     if np.shape(country_iso) and len(country_iso) == 1:
@@ -495,6 +496,11 @@ def update_country_div_content(
             df = df.loc[df.country_iso == country_iso]
 
             if scenario in [SE4ALL_FLEX_SCENARIO, SE4ALL_SCENARIO, PROG_SCENARIO]:
+
+                # to compare greenhouse gas emissions with BaU scenario
+                df_comp = pd.read_json(cur_data[BAU_SCENARIO])
+                df_comp = df_comp.loc[df_comp.country_iso == country_iso]
+
                 # TODO: only recompute the tier if it has changed (with context)
                 if tier_level is not None:
                     df = prepare_endogenous_variables(
@@ -527,7 +533,7 @@ def update_country_div_content(
                 )
                 df = extract_results_scenario(df, scenario)
 
-    return country_div(df)
+    return country_div(df, df_comp)
 
 
 # generate callbacks for the mentis drives dcc.Input

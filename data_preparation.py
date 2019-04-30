@@ -114,6 +114,10 @@ POP_GET = ['pop_get_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS]
 HH_GET = ['hh_get_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS]
 HH_CAP = ['hh_%s_capacity' % opt for opt in ELECTRIFICATION_OPTIONS]
 HH_SCN2 = ['hh_cap_scn2_%s_capacity' % opt for opt in ELECTRIFICATION_OPTIONS]
+INVEST = ['%s_investment_cost' % opt for opt in [MG, SHS]]
+INVEST_CAP = ['tier_capped_%s_investment_cost' % opt for opt in [MG, SHS]]
+GHG = ['ghg_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS]
+GHG_CAP = ['tier_capped_ghg_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS]
 EXO_RESULTS = POP_GET + HH_GET + HH_CAP + HH_SCN2
 
 # source http://www.worldbank.org/content/dam/Worldbank/Topics/Energy%20and%20Extract/

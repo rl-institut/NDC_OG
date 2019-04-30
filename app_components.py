@@ -4,13 +4,21 @@ import dash_html_components as html
 import dash_core_components as dcc
 from dash.dependencies import Output, Input, State
 import dash_daq as daq
+import dash_table
 from data_preparation import (
     ELECTRIFICATION_OPTIONS,
     ELECTRIFICATION_DICT,
+    BAU_SCENARIO,
     SCENARIOS_DICT,
     SE4ALL_FLEX_SCENARIO,
     POP_GET,
+    HH_GET,
     HH_CAP,
+    HH_SCN2,
+    INVEST,
+    INVEST_CAP,
+    GHG,
+    GHG_CAP,
     MENTI_DRIVES
 )
 
@@ -46,23 +54,91 @@ def callback_generator(app, input_name, df_name):
     return update_drive_input
 
 
-def country_div(df=None):
+def country_div(df=None, df_comp=None):
     """Fill and return a specific country exogenous results and information.
 
     :param df: a single line of the dataframe corresponding to the results of a country
+    :param df_comp: a single line of the dataframe corresponding to the BaU results of a country
     :return: the content of the country-div
     """
 
     # variables used in the div
     pop_2017 = 0
-    country_pop_res = []
-    country_cap_res = []
+    country = ''
+
+    basic_results_data = []
+    ghg_results_data = []
+    basic_columns = []
+    ghg_columns = []
+
+    # labels of the table columns
+    labels_dict = ELECTRIFICATION_DICT.copy()
+    # a column for the row labels
+    labels_dict['labels'] = ''
+    # a column for comparison of greenhouse gases emission
+    labels_dict['comp'] = 'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO])
+
+    # label of the table rows
+    basic_rows = [
+        '% population newly electrified in 2030',
+        '# household newly electrified in 2030',
+        'MW household capacity',
+        'MW household capacity (TIER capped)',
+        'Total investment (case 1) EUR',
+        'Total investment (case 2) EUR',
+    ]
+
+    if df_comp is None:
+        ghg_rows = [
+            'GHG (case 1)',
+            'GHG (case 2)',
+            # 'GHG CUMUL'
+        ]
+    else:
+        ghg_rows = [
+            'GHG (case 1)',
+            'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
+            'GHG (case 2)',
+            'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
+        ]
 
     if df is not None:
         df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
         pop_2017 = df.pop_2017
-        country_pop_res = np.squeeze(df[POP_GET].values)
-        country_cap_res = np.squeeze(df[HH_CAP].values) * 1e-3
+        country = df.country.values[0]
+        pop_res = np.squeeze(df[POP_GET].values) * 100
+        hh_res = np.squeeze(df[HH_GET].values) * 100
+        cap_res = np.squeeze(df[HH_CAP].values) * 1e-3
+        cap2_res = np.squeeze(df[HH_SCN2].values) * 1e-3
+        invest_res = np.squeeze(df[INVEST].values)
+        invest_res = np.append(np.NaN, invest_res)
+        invest2_res = np.squeeze(df[INVEST_CAP].values)
+        invest2_res = np.append(np.NaN, invest2_res)
+        ghg_res = np.squeeze(df[GHG].values)
+        ghg2_res = np.squeeze(df[GHG_CAP].values)
+
+        basic_results_data = np.vstack(
+            [pop_res, hh_res, cap_res, cap2_res, invest_res, invest2_res]
+        )
+
+        basic_results_data = pd.DataFrame(data=basic_results_data, columns=ELECTRIFICATION_OPTIONS)
+        basic_results_data['labels'] = pd.Series(basic_rows)
+        basic_columns = ['labels'] + ELECTRIFICATION_OPTIONS
+        basic_results_data = basic_results_data[basic_columns].to_dict('records')
+
+        if df_comp is not None:
+            ghg_comp_res = ghg_res - np.squeeze(df_comp[GHG].values)
+            ghg2_comp_res = ghg2_res - np.squeeze(df_comp[GHG_CAP].values)
+            ghg_results_data = np.vstack([ghg_res, ghg_comp_res, ghg2_res, ghg2_comp_res])
+        else:
+            ghg_results_data = np.vstack([ghg_res, ghg2_res])
+
+        ghg_results_data = pd.DataFrame(data=ghg_results_data, columns=ELECTRIFICATION_OPTIONS)
+        ghg_results_data['labels'] = pd.Series(ghg_rows)
+        ghg_columns = ['labels'] + ELECTRIFICATION_OPTIONS
+        ghg_results_data = ghg_results_data[ghg_columns].to_dict('records')
+
+        print(df.columns)
 
     divs = [
         html.Div(
@@ -75,41 +151,32 @@ def country_div(df=None):
             className='country__results',
             children=[
                 html.Div(
-                    id='country-pop-results-div',
-                    className='country__results__pop',
+                    id='country-basic-results-div',
+                    className='country__results__basic',
                     children=[
-                        html.H4('% POPULATION NEWLY ELECTRIFIED in 2030'),
-                        html.Div(
-                            className='country__results__pop__hdr',
-                            children=[
-                                html.P(str(opt)) for opt in ELECTRIFICATION_OPTIONS
-                            ]
-                        ),
-                        html.Div(
-                            className='country__results__pop__line',
-                            children=[
-                                html.P('{:.1f}'.format(res * 100)) for res in country_pop_res
-                            ]
-                        ),
+                        html.H4('Results for {}'.format(country)),
+                        dash_table.DataTable(
+                            id='country-basic-results-table',
+                            columns=[
+                                {'name': labels_dict[col], 'id': col} for col in basic_columns
+                            ],
+                            data=basic_results_data
+                        )
                     ]
                 ),
                 html.Div(
-                    id='country-cap-results-div',
-                    className='country__results__cap',
+                    id='country-ghg-results-div',
+                    className='country__results',
                     children=[
-                        html.H4('MW household capacity'),
-                        html.Div(
-                            className='country__results__cap__hdr',
-                            children=[
-                                html.P(str(opt)) for opt in ELECTRIFICATION_OPTIONS
-                            ]
-                        ),
-                        html.Div(
-                            className='country__results__cap__line',
-                            children=[
-                                html.P('{:.1f}'.format(res)) for res in country_cap_res
-                            ]
-                        ),
+                        html.H4('Greenhouse Gases emissions'),
+                        dash_table.DataTable(
+                            id='country-ghg-results-table',
+                            columns=[
+                                {'name': labels_dict[col], 'id': col}
+                                for col in ghg_columns
+                            ],
+                            data=ghg_results_data
+                        )
                     ]
                 ),
             ],
