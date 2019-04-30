@@ -380,7 +380,7 @@ def toggle_map_div_display(cur_view, cur_style):
     [Input('view-store', 'data')],
     [State('country-div', 'style')]
 )
-def toggle_country_div_display(cur_view, cur_style):
+def toggle_results_div_display(cur_view, cur_style):
     """Change the display of country-div between the app's views."""
     if cur_style is None:
         cur_style = {'app_view': VIEW_GENERAL}
@@ -427,26 +427,48 @@ def toggle_general_info_div_display(cur_view, cur_style):
 
 
 @app.callback(
-    Output('aggregate-results-div', 'style'),
+    Output('aggregate-div', 'style'),
     [
         Input('view-store', 'data'),
-        Input('scenario-input', 'value'),
+        Input('aggregate-input', 'values'),
     ],
-    [State('aggregate-results-div', 'style')]
+    [State('aggregate-div', 'style')]
 )
-def toggle_aggregate_results_div_display(cur_view, scenario, cur_style):
-    """Change the display of aggregate-results-div between the app's views."""
+def toggle_aggregate_div_display(cur_view, aggregate, cur_style):
+    """Change the display of aggregate-div between the app's views."""
     if cur_style is None:
         cur_style = {'app_view': VIEW_GENERAL}
 
     if cur_view['app_view'] == VIEW_GENERAL:
-        if scenario == SE4ALL_FLEX_SCENARIO:
+        if aggregate:
             cur_style.update({'display': 'flex'})
         else:
             cur_style.update({'display': 'none'})
     elif cur_view['app_view'] == VIEW_COUNTRY:
         cur_style.update({'display': 'none'})
-    print(scenario, cur_style)
+    return cur_style
+
+
+@app.callback(
+    Output('piechart-div', 'style'),
+    [
+        Input('view-store', 'data'),
+        Input('aggregate-input', 'values'),
+    ],
+    [State('piechart-div', 'style')]
+)
+def toggle_piechart_div_display(cur_view, aggregate, cur_style):
+    """Change the display of piechart-div between the app's views."""
+    if cur_style is None:
+        cur_style = {'app_view': VIEW_GENERAL}
+
+    if cur_view['app_view'] == VIEW_GENERAL:
+        if aggregate:
+            cur_style.update({'display': 'none'})
+        else:
+            cur_style.update({'display': 'flex'})
+    elif cur_view['app_view'] == VIEW_COUNTRY:
+        cur_style.update({'display': 'flex'})
     return cur_style
 
 
@@ -467,7 +489,7 @@ def toggle_aggregate_results_div_display(cur_view, scenario, cur_style):
     ],
     [State('data-store', 'data')]
 )
-def update_country_div_content(
+def update_country_results_div_content(
         country_sel,
         scenario,
         weight_mentis,
@@ -534,7 +556,94 @@ def update_country_div_content(
                 )
                 df = extract_results_scenario(df, scenario)
 
-    return country_div(df, df_comp)
+    return results_div(df, df_comp)
+
+
+@app.callback(
+    Output('aggregate-div', 'children'),
+    [
+        Input('region-input', 'value'),
+        Input('scenario-input', 'value'),
+        Input('mentis-weight-input', 'value'),
+        Input('mentis-gdp-input', 'value'),
+        Input('mentis-mobile-money-input', 'value'),
+        Input('mentis-ease-doing-business-input', 'value'),
+        Input('mentis-corruption-input', 'value'),
+        Input('mentis-weak-grid-input', 'value'),
+        Input('rise-mg-input', 'value'),
+        Input('rise-shs-input', 'value'),
+        Input('tier-input', 'value')
+    ],
+    [State('data-store', 'data')]
+)
+def update_aggregate_results_div_content(
+        region_id,
+        scenario,
+        weight_mentis,
+        gdp_class,
+        mm_class,
+        edb_class,
+        corruption_class,
+        weak_grid_class,
+        rise_mg,
+        rise_shs,
+        tier_level,
+        cur_data
+):
+    """Display information and study's aggregated results for a country."""
+
+    df = None
+    df_comp = None
+
+    # extract the data from the selected scenario if a country was selected
+    if region_id is not None:
+        if scenario in SCENARIOS:
+            df = pd.read_json(cur_data[scenario])
+            if region_id != WORLD_ID:
+                # narrow to the region if the scope is not on the whole world
+                df = df.loc[df.region == REGIONS_NDC[region_id]]
+
+            if scenario in [SE4ALL_FLEX_SCENARIO, SE4ALL_SCENARIO, PROG_SCENARIO]:
+
+                # to compare greenhouse gas emissions with BaU scenario
+                df_comp = pd.read_json(cur_data[BAU_SCENARIO])
+                if region_id != WORLD_ID:
+                    # narrow to the region if the scope is not on the whole world
+                    df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[region_id]]
+
+                # TODO: only recompute the tier if it has changed (with context)
+                if tier_level is not None:
+                    df = prepare_endogenous_variables(
+                        input_df=df,
+                        tier_level=tier_level
+                    )
+
+            if scenario == SE4ALL_FLEX_SCENARIO:
+
+                if gdp_class is not None:
+                    df.loc[:, 'gdp_class'] = gdp_class
+                if mm_class is not None:
+                    df.loc[:, 'mobile_money_class'] = mm_class
+                if edb_class is not None:
+                    df.loc[:, 'ease_doing_business_class'] = edb_class
+                if corruption_class is not None:
+                    df.loc[:, 'corruption_class'] = corruption_class
+                if weak_grid_class is not None:
+                    df.loc[:, 'weak_grid_class'] = weak_grid_class
+                if rise_mg is not None:
+                    df.loc[:, 'rise_mg'] = rise_mg
+                if rise_shs is not None:
+                    df.loc[:, 'rise_shs'] = rise_shs
+
+                # recompute the results after updating the shift drives
+                df = prepare_se4all_data(
+                    input_df=df,
+                    weight_mentis=weight_mentis,
+                    fixed_shift_drives=False
+                )
+                df = extract_results_scenario(df, scenario)
+
+    return results_div(df, df_comp, aggregate=True)
 
 
 # generate callbacks for the mentis drives dcc.Input

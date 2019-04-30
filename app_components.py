@@ -19,6 +19,7 @@ from data_preparation import (
     INVEST_CAP,
     GHG,
     GHG_CAP,
+    EXO_RESULTS,
     MENTI_DRIVES
 )
 
@@ -104,9 +105,20 @@ def results_div(df=None, df_comp=None, aggregate=False):
         ]
 
     if df is not None:
+
         df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
-        pop_2017 = df.pop_2017
-        country = df.country.values[0]
+
+        if aggregate:
+            pop_2017 = df.pop_2017.sum(axis=0)
+            country = 'selected region'
+            df = df[EXO_RESULTS].sum(axis=0)
+            if df_comp is not None:
+                df_comp = df_comp[EXO_RESULTS].sum(axis=0)
+
+        else:
+            pop_2017 = df.pop_2017
+            country = df.country.values[0]
+
         pop_res = np.squeeze(df[POP_GET].values) * 100
         hh_res = np.squeeze(df[HH_GET].values) * 100
         cap_res = np.squeeze(df[HH_CAP].values) * 1e-3
@@ -117,6 +129,10 @@ def results_div(df=None, df_comp=None, aggregate=False):
         invest2_res = np.append(np.NaN, invest2_res)
         ghg_res = np.squeeze(df[GHG].values)
         ghg2_res = np.squeeze(df[GHG_CAP].values)
+
+        for a in [pop_res, hh_res, cap_res, cap2_res, invest_res, invest2_res]:
+            print(np.size(a))
+            print(np.shape(a))
 
         basic_results_data = np.vstack(
             [pop_res, hh_res, cap_res, cap2_res, invest_res, invest2_res]
@@ -139,25 +155,28 @@ def results_div(df=None, df_comp=None, aggregate=False):
         ghg_columns = ['labels'] + ELECTRIFICATION_OPTIONS
         ghg_results_data = ghg_results_data[ghg_columns].to_dict('records')
 
-        print(df.columns)
+    if aggregate:
+        id_name = 'aggregate'
+    else:
+        id_name = 'country'
 
     divs = [
         html.Div(
-            id='country-info-div',
-            className='country__info',
+            id='{}-info-div'.format(id_name),
+            className='{}__info'.format(id_name),
             children='Population (2017) %i' % pop_2017
         ),
         html.Div(
-            id='country-results-div',
-            className='country__results',
+            id='{}-results-div'.format(id_name),
+            className='{}__results'.format(id_name),
             children=[
                 html.Div(
-                    id='country-basic-results-div',
-                    className='country__results__basic',
+                    id='{}-basic-results-div'.format(id_name),
+                    className='{}__results__basic'.format(id_name),
                     children=[
                         html.H4('Results for {}'.format(country)),
                         dash_table.DataTable(
-                            id='country-basic-results-table',
+                            id='{}-basic-results-table'.format(id_name),
                             columns=[
                                 {'name': labels_dict[col], 'id': col} for col in basic_columns
                             ],
@@ -166,12 +185,12 @@ def results_div(df=None, df_comp=None, aggregate=False):
                     ]
                 ),
                 html.Div(
-                    id='country-ghg-results-div',
-                    className='country__results',
+                    id='{}-ghg-results-div'.format(id_name),
+                    className='{}__results'.format(id_name),
                     children=[
                         html.H4('Greenhouse Gases emissions'),
                         dash_table.DataTable(
-                            id='country-ghg-results-table',
+                            id='{}-ghg-results-table'.format(id_name),
                             columns=[
                                 {'name': labels_dict[col], 'id': col}
                                 for col in ghg_columns
@@ -226,6 +245,19 @@ def scenario_div(init_scenario, init_elec_opt):
                 value=init_elec_opt,
             )
         ),
+        html.Div(
+            id='aggregate-input-div',
+            title='Tick this box to enable the aggregation of the results',
+            children=dcc.Checklist(
+                id='aggregate-input',
+                className='app__input__checklist',
+                options=[
+                    {'label': 'Aggregate results', 'value': 'aggregate'}
+                ],
+                values=[],
+            )
+        ),
+
     ]
     return divs
 
