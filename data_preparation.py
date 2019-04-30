@@ -100,6 +100,14 @@ ELECTRIFICATION_DICT = {
     SHS: 'Solar Home System'
 }
 
+ELECTRIFICATION_DESCRIPTIONS = {
+    GRID: 'Grid: Electrification is achieved by extension of the existing electricity \
+grid network',
+    MG: 'Mini Grid: Electrification is achieved via a set of electricity generators and possibly \
+energy storage systems interconnected to a distribution network that supplies electricity \
+to a localized group of customers',
+    SHS: 'Solar Home System: Electrification is achieved for a single household via solar panels.'
+}
 
 # column names of the exogenous results
 POP_GET = ['pop_get_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS]

@@ -16,6 +16,7 @@ from data_preparation import (
     GRID,
     SHS,
     ELECTRIFICATION_DICT,
+    ELECTRIFICATION_DESCRIPTIONS,
     MENTI_DRIVES,
     POP_GET,
     compute_ndc_results_from_raw_data,
@@ -608,6 +609,14 @@ def update_data_store(clicked_data, cur_data):
 )
 def update_scenario_description(scenario):
     return SCENARIOS_DESCRIPTIONS[scenario]
+
+
+@app.callback(
+    Output('electrification-input-div', 'title'),
+    [Input('electrification-input', 'value')]
+)
+def update_electrification_description(elec_opt):
+    return ELECTRIFICATION_DESCRIPTIONS[elec_opt]
 
 
 if __name__ == '__main__':
