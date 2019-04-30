@@ -54,11 +54,12 @@ def callback_generator(app, input_name, df_name):
     return update_drive_input
 
 
-def country_div(df=None, df_comp=None):
+def results_div(df=None, df_comp=None, aggregate=False):
     """Fill and return a specific country exogenous results and information.
 
     :param df: a single line of the dataframe corresponding to the results of a country
     :param df_comp: a single line of the dataframe corresponding to the BaU results of a country
+    :param aggregate: (bool) determine whether the results should be summed country wise
     :return: the content of the country-div
     """
 

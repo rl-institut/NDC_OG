@@ -26,7 +26,7 @@ from data_preparation import (
 )
 
 from app_components import (
-    country_div,
+    results_div,
     scenario_div,
     controls_div,
     general_info_div,
@@ -180,6 +180,11 @@ app.layout = html.Div(
                                     'height': '55vh',
                                 }
                             ),
+                        ),
+                        html.Div(
+                            id='aggregate-div',
+                            className='app__aggregate',
+                            children=results_div(aggregate=True)
                         )
                     ]
                 ),
@@ -237,13 +242,8 @@ app.layout = html.Div(
                         html.Div(
                             id='country-div',
                             className='app__country',
-                            children=country_div(),
+                            children=results_div(),
                         ),
-                        html.Div(
-                            id='aggregate-results-div',
-                            className='app__aggregate_results',
-                            children='Aggregated results'
-                        )
                     ]
 
                 )
@@ -251,6 +251,7 @@ app.layout = html.Div(
         )
     ]
 )
+
 
 @app.callback(
     Output('map', 'figure'),
