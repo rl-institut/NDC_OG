@@ -117,13 +117,19 @@ layout = go.Layout(
 
 fig_map = go.Figure(data=data, layout=layout)
 
-
 PIECHART_LABELS = list(ELECTRIFICATION_DICT.values())
 
 piechart = go.Figure(data=[go.Pie(labels=PIECHART_LABELS, values=[4500, 2500, 1053], sort=False)])
 
 # Initializes dash app
 app = dash.Dash(__name__)
+
+# Load css file
+external_css = [
+    'https://raw.githack.com/rl-institut/WAM/dev/static/foundation/css/app.css',
+]
+for css in external_css:
+    app.css.append_css({"external_url": css})
 
 app.title = 'NDC visualisation'
 
