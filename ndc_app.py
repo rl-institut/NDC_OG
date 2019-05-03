@@ -1,3 +1,4 @@
+import base64
 import numpy as np
 import pandas as pd
 import dash
@@ -11,12 +12,27 @@ from data_preparation import (
     SE4ALL_SCENARIO,
     SE4ALL_FLEX_SCENARIO,
     PROG_SCENARIO,
+    SCENARIOS_DICT,
+    SCENARIOS_DESCRIPTIONS,
     MG,
     GRID,
     SHS,
+    ELECTRIFICATION_OPTIONS,
     ELECTRIFICATION_DICT,
+    ELECTRIFICATION_DESCRIPTIONS,
     MENTI_DRIVES,
     POP_GET,
+    HH_GET,
+    HH_CAP,
+    HH_SCN2,
+    INVEST,
+    INVEST_CAP,
+    GHG,
+    GHG_CAP,
+    EXO_RESULTS,
+    BASIC_ROWS,
+    BASIC_COLUMNS_ID,
+    GHG_COLUMNS_ID,
     compute_ndc_results_from_raw_data,
     prepare_endogenous_variables,
     prepare_se4all_data,
@@ -24,7 +40,7 @@ from data_preparation import (
 )
 
 from app_components import (
-    country_div,
+    results_div,
     scenario_div,
     controls_div,
     general_info_div,
@@ -155,112 +171,130 @@ app = dash.Dash(__name__)
 app.title = 'NDC visualisation'
 
 app.layout = html.Div(
-    id='app-div',
-    className='app',
+    id='main-div',
     children=[
-        dcc.Store(
-            id='data-store',
-            storage_type='session',
-            data=SCENARIOS_DATA.copy()
-        ),
-        dcc.Store(
-            id='view-store',
-            storage_type='session',
-            data={'app_view': VIEW_GENERAL}
+        html.Div(
+            id='app-title',
+            className='title',
+            children='Visualization of New Electrification Scenarios by 2030 and the'
+                     ' Relevance of Off-Grid Components in the NDCs'
         ),
         html.Div(
-            id='left-panel-div',
-            className='app__container',
+            id='app-div',
+            className='app',
             children=[
-                html.Div(
-                    id='scenario-div',
-                    className='app__options',
-                    children=scenario_div(SE4ALL_FLEX_SCENARIO, GRID)
+                dcc.Store(
+                    id='data-store',
+                    storage_type='session',
+                    data=SCENARIOS_DATA.copy()
+                ),
+                dcc.Store(
+                    id='view-store',
+                    storage_type='session',
+                    data={'app_view': VIEW_GENERAL}
                 ),
                 html.Div(
-                    id='controls-div',
-                    className='app__controls',
-                    style={'display': 'none'},
-                    children=controls_div(),
-                ),
-                html.Div(
-                    id='general-info-div',
-                    className='app__info',
-                    children=general_info_div()
-                ),
-                html.Div(
-                    id='piechart-div',
-                    className='app__piechart',
-                    children=dcc.Graph(
-                        id='piechart',
-                        figure=piechart,
-                        style={
-                            'height': '55vh',
-                        }
-                    ),
-                )
-            ]
-        ),
-        html.Div(
-            id='right-panel-div',
-            className='app__container',
-            children=[
-                html.Div(
-                    id='header-div',
-                    className='app__header',
+                    id='left-panel-div',
+                    className='app__container',
                     children=[
                         html.Div(
-                            id='region-input-div',
-                            className='app__dropdown',
-                            title='region selection description',
-                            children=dcc.Dropdown(
-                                    id='region-input',
-                                    className='app__input__dropdown__map',
-                                    options=[
-                                        {'label': v, 'value': k}
-                                        for k, v in REGIONS_GPD.items()
-                                    ],
-                                    value=WORLD_ID
-                                )
+                            id='scenario-div',
+                            className='app__options',
+                            children=scenario_div(SE4ALL_FLEX_SCENARIO, GRID)
                         ),
                         html.Div(
-                            id='logo-div',
-                            className='app__logo',
+                            id='controls-div',
+                            className='app__controls',
+                            style={'display': 'none'},
+                            children=controls_div(),
                         ),
+                        html.Div(
+                            id='general-info-div',
+                            className='app__info',
+                            children=general_info_div()
+                        ),
+                        html.Div(
+                            id='piechart-div',
+                            className='app__piechart',
+                            children=dcc.Graph(
+                                id='piechart',
+                                figure=piechart,
+                                style={
+                                    'height': '55vh',
+                                }
+                            ),
+                        ),
+                        html.Div(
+                            id='aggregate-div',
+                            className='app__aggregate',
+                            children=results_div(aggregate=True),
+                            style={'display': 'none'}
+                        )
                     ]
                 ),
                 html.Div(
-                    id='country-input-div',
-                    className='app__dropdown',
-                    title='country selection description',
-                    children=dcc.Dropdown(
-                        id='country-input',
-                        className='app__input__dropdown__map',
-                        options=[],
-                        value=None,
-                        multi=False
-                    )
-                ),
-                html.Div(
-                    id='map-div',
-                    className='app__map',
-                    title='Hover over a country to display information.\n'
-                          + 'Click on it to access detailed report.',
-                    children=dcc.Graph(
-                        id='map',
-                        figure=fig_map,
-                        style={'width': '90vh', 'height': '90vh'}
-                    ),
-                ),
-                html.Div(
-                    id='country-div',
-                    className='app__country',
-                    children=country_div(),
-                )
-            ]
+                    id='right-panel-div',
+                    className='app__container',
+                    children=[
+                        html.Div(
+                            id='header-div',
+                            className='app__header',
+                            children=[
+                                html.Div(
+                                    id='region-input-div',
+                                    className='app__dropdown',
+                                    title='region selection description',
+                                    children=dcc.Dropdown(
+                                        id='region-input',
+                                        className='app__input__dropdown__map',
+                                        options=[
+                                            {'label': v, 'value': k}
+                                            for k, v in REGIONS_GPD.items()
+                                        ],
+                                        value=WORLD_ID
+                                    )
+                                ),
+                                html.Div(
+                                    id='logo-div',
+                                    className='app__logo',
+                                ),
+                            ]
+                        ),
+                        html.Div(
+                            id='country-input-div',
+                            className='app__dropdown',
+                            title='country selection description',
+                            children=dcc.Dropdown(
+                                id='country-input',
+                                className='app__input__dropdown__map',
+                                options=[],
+                                value=None,
+                                multi=False
+                            )
+                        ),
+                        html.Div(
+                            id='map-div',
+                            className='app__map',
+                            title='Hover over a country to display information.\n'
+                                  + 'Click on it to access detailed report.',
+                            children=dcc.Graph(
+                                id='map',
+                                figure=fig_map,
+                                style={'width': '90vh', 'height': '90vh'}
+                            ),
+                        ),
+                        html.Div(
+                            id='country-div',
+                            className='app__country',
+                            children=results_div(),
+                            style={'display': 'none'}
+                        ),
+                    ]
 
+                )
+            ],
         )
-    ],
+    ]
 )
 
 
@@ -389,7 +423,7 @@ def update_view(scenario, region_id, country_sel, cur_view):
 def toggle_map_div_display(cur_view, cur_style):
     """Change the display of map-div between the app's views."""
     if cur_style is None:
-        cur_style = {'app_view': VIEW_GENERAL}
+        cur_style = {'display': 'flex'}
 
     if cur_view['app_view'] == VIEW_GENERAL:
         cur_style.update({'display': 'flex'})
@@ -403,10 +437,10 @@ def toggle_map_div_display(cur_view, cur_style):
     [Input('view-store', 'data')],
     [State('country-div', 'style')]
 )
-def toggle_country_div_display(cur_view, cur_style):
+def toggle_results_div_display(cur_view, cur_style):
     """Change the display of country-div between the app's views."""
     if cur_style is None:
-        cur_style = {'app_view': VIEW_GENERAL}
+        cur_style = {'display': 'none'}
 
     if cur_view['app_view'] == VIEW_GENERAL:
         cur_style.update({'display': 'none'})
@@ -423,7 +457,7 @@ def toggle_country_div_display(cur_view, cur_style):
 def toggle_controls_div_display(cur_view, cur_style):
     """Change the display of controls-div between the app's views."""
     if cur_style is None:
-        cur_style = {'app_view': VIEW_GENERAL}
+        cur_style = {'display': 'none'}
 
     if cur_view['app_view'] == VIEW_GENERAL:
         cur_style.update({'display': 'none'})
@@ -440,7 +474,7 @@ def toggle_controls_div_display(cur_view, cur_style):
 def toggle_general_info_div_display(cur_view, cur_style):
     """Change the display of general-info-div between the app's views."""
     if cur_style is None:
-        cur_style = {'app_view': VIEW_GENERAL}
+        cur_style = {'display': 'flex'}
 
     if cur_view['app_view'] == VIEW_GENERAL:
         cur_style.update({'display': 'flex'})
@@ -450,7 +484,53 @@ def toggle_general_info_div_display(cur_view, cur_style):
 
 
 @app.callback(
-    Output('country-div', 'children'),
+    Output('aggregate-div', 'style'),
+    [
+        Input('view-store', 'data'),
+        Input('aggregate-input', 'values'),
+    ],
+    [State('aggregate-div', 'style')]
+)
+def toggle_aggregate_div_display(cur_view, aggregate, cur_style):
+    """Change the display of aggregate-div between the app's views."""
+    if cur_style is None:
+        cur_style = {'display': 'none'}
+
+    if cur_view['app_view'] == VIEW_GENERAL:
+        if aggregate:
+            cur_style.update({'display': 'flex'})
+        else:
+            cur_style.update({'display': 'none'})
+    elif cur_view['app_view'] == VIEW_COUNTRY:
+        cur_style.update({'display': 'none'})
+    return cur_style
+
+
+@app.callback(
+    Output('piechart-div', 'style'),
+    [
+        Input('view-store', 'data'),
+        Input('aggregate-input', 'values'),
+    ],
+    [State('piechart-div', 'style')]
+)
+def toggle_piechart_div_display(cur_view, aggregate, cur_style):
+    """Change the display of piechart-div between the app's views."""
+    if cur_style is None:
+        cur_style = {'app_view': VIEW_GENERAL}
+
+    if cur_view['app_view'] == VIEW_GENERAL:
+        if aggregate:
+            cur_style.update({'display': 'none'})
+        else:
+            cur_style.update({'display': 'flex'})
+    elif cur_view['app_view'] == VIEW_COUNTRY:
+        cur_style.update({'display': 'flex'})
+    return cur_style
+
+
+@app.callback(
+    Output('country-basic-results-table', 'data'),
     [
         Input('country-input', 'value'),
         Input('scenario-input', 'value'),
@@ -466,7 +546,7 @@ def toggle_general_info_div_display(cur_view, cur_style):
     ],
     [State('data-store', 'data')]
 )
-def update_country_div_content(
+def update_country_basic_results_table(
         country_sel,
         scenario,
         weight_mentis,
@@ -478,11 +558,10 @@ def update_country_div_content(
         rise_mg,
         rise_shs,
         tier_level,
-        cur_data
+        cur_data,
 ):
     """Display information and study's results for a country."""
-
-    df = None
+    answer_table = []
     country_iso = country_sel
     # in case of country_iso is a list of one element
     if np.shape(country_iso) and len(country_iso) == 1:
@@ -495,6 +574,114 @@ def update_country_div_content(
             df = df.loc[df.country_iso == country_iso]
 
             if scenario in [SE4ALL_FLEX_SCENARIO, SE4ALL_SCENARIO, PROG_SCENARIO]:
+                # TODO: only recompute the tier if it has changed (with context)
+                if tier_level is not None:
+                    df = prepare_endogenous_variables(
+                        input_df=df,
+                        tier_level=tier_level
+                    )
+            if scenario == SE4ALL_FLEX_SCENARIO:
+
+                if gdp_class is not None:
+                    df.loc[:, 'gdp_class'] = gdp_class
+                if mm_class is not None:
+                    df.loc[:, 'mobile_money_class'] = mm_class
+                if edb_class is not None:
+                    df.loc[:, 'ease_doing_business_class'] = edb_class
+                if corruption_class is not None:
+                    df.loc[:, 'corruption_class'] = corruption_class
+                if weak_grid_class is not None:
+                    df.loc[:, 'weak_grid_class'] = weak_grid_class
+                if rise_mg is not None:
+                    df.loc[:, 'rise_mg'] = rise_mg
+                if rise_shs is not None:
+                    df.loc[:, 'rise_shs'] = rise_shs
+
+                # recompute the results after updating the shift drives
+                df = prepare_se4all_data(
+                    input_df=df,
+                    weight_mentis=weight_mentis,
+                    fixed_shift_drives=False
+                )
+                df = extract_results_scenario(df, scenario)
+
+            # compute the percentage of population with electricity access
+            df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
+            # gather the values of the results to display in the table
+            pop_res = np.squeeze(df[POP_GET].values * 100).round(1)
+            hh_res = np.squeeze(df[HH_GET].values).round(0)
+            cap_res = np.squeeze(df[HH_CAP].values * 1e-3).round(0)
+            cap2_res = np.squeeze(df[HH_SCN2].values * 1e-3).round(0)
+            invest_res = np.squeeze(df[INVEST].values).round(0)
+            invest_res = np.append(np.NaN, invest_res)
+            invest2_res = np.squeeze(df[INVEST_CAP].values).round(0)
+            invest2_res = np.append(np.NaN, invest2_res)
+            basic_results_data = np.vstack(
+                [pop_res, hh_res, cap_res, cap2_res, invest_res, invest2_res]
+            )
+            # prepare a DataFrame
+            basic_results_data = pd.DataFrame(
+                data=basic_results_data,
+                columns=ELECTRIFICATION_OPTIONS
+            )
+            # label of the table rows
+            basic_results_data['labels'] = pd.Series(BASIC_ROWS)
+            answer_table = basic_results_data[BASIC_COLUMNS_ID].to_dict('records')
+
+    return answer_table
+
+
+@app.callback(
+    Output('country-ghg-results-table', 'data'),
+    [
+        Input('country-input', 'value'),
+        Input('scenario-input', 'value'),
+        Input('mentis-weight-input', 'value'),
+        Input('mentis-gdp-input', 'value'),
+        Input('mentis-mobile-money-input', 'value'),
+        Input('mentis-ease-doing-business-input', 'value'),
+        Input('mentis-corruption-input', 'value'),
+        Input('mentis-weak-grid-input', 'value'),
+        Input('rise-mg-input', 'value'),
+        Input('rise-shs-input', 'value'),
+        Input('tier-input', 'value')
+    ],
+    [State('data-store', 'data')]
+)
+def update_country_ghg_results_table(
+        country_sel,
+        scenario,
+        weight_mentis,
+        gdp_class,
+        mm_class,
+        edb_class,
+        corruption_class,
+        weak_grid_class,
+        rise_mg,
+        rise_shs,
+        tier_level,
+        cur_data,
+):
+    """Display information and study's results for a country."""
+    answer_table = []
+    df_comp = None
+    country_iso = country_sel
+    # in case of country_iso is a list of one element
+    if np.shape(country_iso) and len(country_iso) == 1:
+        country_iso = country_iso[0]
+
+    # extract the data from the selected scenario if a country was selected
+    if country_iso is not None:
+        if scenario in SCENARIOS:
+            df = pd.read_json(cur_data[scenario])
+            df = df.loc[df.country_iso == country_iso]
+
+            if scenario in [SE4ALL_FLEX_SCENARIO, SE4ALL_SCENARIO, PROG_SCENARIO]:
+
+                # to compare greenhouse gas emissions with BaU scenario
+                df_comp = pd.read_json(cur_data[BAU_SCENARIO])
+                df_comp = df_comp.loc[df_comp.country_iso == country_iso]
+
                 # TODO: only recompute the tier if it has changed (with context)
                 if tier_level is not None:
                     df = prepare_endogenous_variables(
@@ -527,7 +714,259 @@ def update_country_div_content(
                 )
                 df = extract_results_scenario(df, scenario)
 
-    return country_div(df)
+            if df_comp is None:
+                ghg_rows = [
+                    'GHG (case 1)',
+                    'GHG (case 2)',
+                    # 'GHG CUMUL'
+                ]
+            else:
+                ghg_rows = [
+                    'GHG (case 1)',
+                    'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
+                    'GHG (case 2)',
+                    'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
+                ]
+
+            # gather the values of the results to display in the table
+            ghg_res = np.squeeze(df[GHG].values).round(0)
+            ghg2_res = np.squeeze(df[GHG_CAP].values).round(0)
+            if df_comp is not None:
+                ghg_comp_res = ghg_res - np.squeeze(df_comp[GHG].values).round(0)
+                ghg2_comp_res = ghg2_res - np.squeeze(df_comp[GHG_CAP].values).round(0)
+                ghg_results_data = np.vstack([ghg_res, ghg_comp_res, ghg2_res, ghg2_comp_res])
+            else:
+                ghg_results_data = np.vstack([ghg_res, ghg2_res])
+            # prepare a DataFrame
+            ghg_results_data = pd.DataFrame(data=ghg_results_data, columns=ELECTRIFICATION_OPTIONS)
+            # label of the table rows
+            ghg_results_data['labels'] = pd.Series(ghg_rows)
+            answer_table = ghg_results_data[GHG_COLUMNS_ID].to_dict('records')
+
+    return answer_table
+
+
+@app.callback(
+    Output('aggregate-basic-results-table', 'data'),
+    [
+        Input('region-input', 'value'),
+        Input('scenario-input', 'value'),
+        Input('mentis-weight-input', 'value'),
+        Input('mentis-gdp-input', 'value'),
+        Input('mentis-mobile-money-input', 'value'),
+        Input('mentis-ease-doing-business-input', 'value'),
+        Input('mentis-corruption-input', 'value'),
+        Input('mentis-weak-grid-input', 'value'),
+        Input('rise-mg-input', 'value'),
+        Input('rise-shs-input', 'value'),
+        Input('tier-input', 'value')
+    ],
+    [State('data-store', 'data')]
+)
+def update_aggregate_basic_results_table(
+        region_id,
+        scenario,
+        weight_mentis,
+        gdp_class,
+        mm_class,
+        edb_class,
+        corruption_class,
+        weak_grid_class,
+        rise_mg,
+        rise_shs,
+        tier_level,
+        cur_data,
+):
+    """Display information and study's results for a country."""
+    answer_table = []
+    if region_id is not None:
+        if scenario in SCENARIOS:
+            df = pd.read_json(cur_data[scenario])
+            if region_id != WORLD_ID:
+                # narrow to the region if the scope is not on the whole world
+                df = df.loc[df.region == REGIONS_NDC[region_id]]
+
+            if scenario in [SE4ALL_FLEX_SCENARIO, SE4ALL_SCENARIO, PROG_SCENARIO]:
+
+                # TODO: only recompute the tier if it has changed (with context)
+                if tier_level is not None:
+                    df = prepare_endogenous_variables(
+                        input_df=df,
+                        tier_level=tier_level
+                    )
+            if scenario == SE4ALL_FLEX_SCENARIO:
+
+                if gdp_class is not None:
+                    df.loc[:, 'gdp_class'] = gdp_class
+                if mm_class is not None:
+                    df.loc[:, 'mobile_money_class'] = mm_class
+                if edb_class is not None:
+                    df.loc[:, 'ease_doing_business_class'] = edb_class
+                if corruption_class is not None:
+                    df.loc[:, 'corruption_class'] = corruption_class
+                if weak_grid_class is not None:
+                    df.loc[:, 'weak_grid_class'] = weak_grid_class
+                if rise_mg is not None:
+                    df.loc[:, 'rise_mg'] = rise_mg
+                if rise_shs is not None:
+                    df.loc[:, 'rise_shs'] = rise_shs
+
+                # recompute the results after updating the shift drives
+                df = prepare_se4all_data(
+                    input_df=df,
+                    weight_mentis=weight_mentis,
+                    fixed_shift_drives=False
+                )
+                df = extract_results_scenario(df, scenario)
+
+            # aggregate the results
+            df = df[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
+
+            # compute the percentage of population with electricity access
+            df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0)
+            # gather the values of the results to display in the table
+            pop_res = np.squeeze(df[POP_GET].values * 100).round(1)
+            hh_res = np.squeeze(df[HH_GET].values).round(0)
+            cap_res = np.squeeze(df[HH_CAP].values * 1e-3).round(0)
+            cap2_res = np.squeeze(df[HH_SCN2].values * 1e-3).round(0)
+            invest_res = np.squeeze(df[INVEST].values).round(0)
+            invest_res = np.append(np.NaN, invest_res)
+            invest2_res = np.squeeze(df[INVEST_CAP].values).round(0)
+            invest2_res = np.append(np.NaN, invest2_res)
+            basic_results_data = np.vstack(
+                [pop_res, hh_res, cap_res, cap2_res, invest_res, invest2_res]
+            )
+            # prepare a DataFrame
+            basic_results_data = pd.DataFrame(
+                data=basic_results_data,
+                columns=ELECTRIFICATION_OPTIONS
+            )
+            # label of the table rows
+            basic_results_data['labels'] = pd.Series(BASIC_ROWS)
+            answer_table = basic_results_data[BASIC_COLUMNS_ID].to_dict('records')
+
+    return answer_table
+
+
+@app.callback(
+    Output('aggregate-ghg-results-table', 'data'),
+    [
+        Input('region-input', 'value'),
+        Input('scenario-input', 'value'),
+        Input('mentis-weight-input', 'value'),
+        Input('mentis-gdp-input', 'value'),
+        Input('mentis-mobile-money-input', 'value'),
+        Input('mentis-ease-doing-business-input', 'value'),
+        Input('mentis-corruption-input', 'value'),
+        Input('mentis-weak-grid-input', 'value'),
+        Input('rise-mg-input', 'value'),
+        Input('rise-shs-input', 'value'),
+        Input('tier-input', 'value')
+    ],
+    [State('data-store', 'data')]
+)
+def update_aggregate_ghg_results_table(
+        region_id,
+        scenario,
+        weight_mentis,
+        gdp_class,
+        mm_class,
+        edb_class,
+        corruption_class,
+        weak_grid_class,
+        rise_mg,
+        rise_shs,
+        tier_level,
+        cur_data,
+):
+    """Display information and study's results for a country."""
+    answer_table = []
+    if region_id is not None:
+        if scenario in SCENARIOS:
+            df = pd.read_json(cur_data[scenario])
+            df_comp = None
+            if region_id != WORLD_ID:
+                # narrow to the region if the scope is not on the whole world
+                df = df.loc[df.region == REGIONS_NDC[region_id]]
+
+            if scenario in [SE4ALL_FLEX_SCENARIO, SE4ALL_SCENARIO, PROG_SCENARIO]:
+
+                # to compare greenhouse gas emissions with BaU scenario
+                df_comp = pd.read_json(cur_data[BAU_SCENARIO])
+
+                if region_id != WORLD_ID:
+                    # narrow to the region if the scope is not on the whole world
+                    df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[region_id]]
+
+                # TODO: only recompute the tier if it has changed (with context)
+                if tier_level is not None:
+                    df = prepare_endogenous_variables(
+                        input_df=df,
+                        tier_level=tier_level
+                    )
+
+            if scenario == SE4ALL_FLEX_SCENARIO:
+
+                if gdp_class is not None:
+                    df.loc[:, 'gdp_class'] = gdp_class
+                if mm_class is not None:
+                    df.loc[:, 'mobile_money_class'] = mm_class
+                if edb_class is not None:
+                    df.loc[:, 'ease_doing_business_class'] = edb_class
+                if corruption_class is not None:
+                    df.loc[:, 'corruption_class'] = corruption_class
+                if weak_grid_class is not None:
+                    df.loc[:, 'weak_grid_class'] = weak_grid_class
+                if rise_mg is not None:
+                    df.loc[:, 'rise_mg'] = rise_mg
+                if rise_shs is not None:
+                    df.loc[:, 'rise_shs'] = rise_shs
+
+                # recompute the results after updating the shift drives
+                df = prepare_se4all_data(
+                    input_df=df,
+                    weight_mentis=weight_mentis,
+                    fixed_shift_drives=False
+                )
+                df = extract_results_scenario(df, scenario)
+
+            if df_comp is None:
+                ghg_rows = [
+                    'GHG (case 1)',
+                    'GHG (case 2)',
+                    # 'GHG CUMUL'
+                ]
+            else:
+                ghg_rows = [
+                    'GHG (case 1)',
+                    'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
+                    'GHG (case 2)',
+                    'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
+                ]
+                # aggregate the results
+                df_comp = df_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
+
+            # aggregate the results
+            df = df[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
+
+            # gather the values of the results to display in the table
+            ghg_res = np.squeeze(df[GHG].values).round(0)
+            ghg2_res = np.squeeze(df[GHG_CAP].values).round(0)
+
+            if df_comp is not None:
+                ghg_comp_res = ghg_res - np.squeeze(df_comp[GHG].values).round(0)
+                ghg2_comp_res = ghg2_res - np.squeeze(df_comp[GHG_CAP].values).round(0)
+                ghg_results_data = np.vstack([ghg_res, ghg_comp_res, ghg2_res, ghg2_comp_res])
+            else:
+                ghg_results_data = np.vstack([ghg_res, ghg2_res])
+            # prepare a DataFrame
+            ghg_results_data = pd.DataFrame(data=ghg_results_data, columns=ELECTRIFICATION_OPTIONS)
+            ghg_results_data['labels'] = pd.Series(ghg_rows)
+            # label of the table rows
+            ghg_columns = ['labels'] + ELECTRIFICATION_OPTIONS
+            answer_table = ghg_results_data[ghg_columns].to_dict('records')
+
+    return answer_table
 
 
 # generate callbacks for the mentis drives dcc.Input
@@ -594,6 +1033,70 @@ def update_selected_country_on_map(cur_data, cur_val):
 
 
 @app.callback(
+    Output('country-info-div', 'children'),
+    [
+        Input('scenario-input', 'value'),
+        Input('country-input', 'value')
+    ],
+    [State('data-store', 'data')]
+)
+def update_country_info_div(scenario, country_iso, cur_data):
+
+    divs = []
+    if scenario in SCENARIOS and country_iso is not None:
+        df = pd.read_json(cur_data[scenario])
+        pop_2017 = df.loc[df.country_iso == country_iso].pop_2017.values[0]
+
+        image_filename = 'icons/{}.png'.format(country_iso)
+        encoded_image = base64.b64encode(open(image_filename, 'rb').read())
+
+        divs = [
+            html.Img(
+                src='data:image/png;base64,{}'.format(encoded_image.decode()),
+                className='country__info__flag',
+                style={'width': '100%'}
+            ),
+            html.Div('Population (2017) : {}'.format(pop_2017)),
+        ]
+
+    return divs
+
+
+@app.callback(
+    Output('country-basic-results-title', 'children'),
+    [Input('country-input', 'value')],
+    [
+        State('scenario-input', 'value'),
+        State('data-store', 'data')]
+)
+def country_basic_results_title(country_iso, scenario,  cur_data):
+
+    answer = 'Results'
+    if scenario in SCENARIOS and country_iso is not None:
+        df = pd.read_json(cur_data[scenario])
+        answer = 'Results for {}'.format(df.loc[df.country_iso == country_iso].country.values[0])
+    return answer
+
+
+@app.callback(
+    Output('aggregate-info-div', 'children'),
+    [
+        Input('scenario-input', 'value'),
+        Input('region-input', 'value')
+    ],
+    [State('data-store', 'data')]
+)
+def update_aggregate_info_div(scenario, region_id, cur_data):
+
+    pop_2017 = ''
+    if scenario in SCENARIOS and region_id is not None:
+        df = pd.read_json(cur_data[scenario])
+        pop_2017 = df.pop_2017.sum(axis=0)
+
+    return html.Div('Population (2017) : {}'.format(pop_2017))
+
+
+@app.callback(
     Output('country-input', 'options'),
     [Input('region-input', 'value')],
     [
@@ -630,6 +1133,22 @@ def update_data_store(clicked_data, cur_data):
         country_iso = clicked_data['points'][0]['location']
         cur_data.update({'selected_country': country_iso})
     return cur_data
+
+
+@app.callback(
+    Output('scenario-input-div', 'title'),
+    [Input('scenario-input', 'value')]
+)
+def update_scenario_description(scenario):
+    return SCENARIOS_DESCRIPTIONS[scenario]
+
+
+@app.callback(
+    Output('electrification-input-div', 'title'),
+    [Input('electrification-input', 'value')]
+)
+def update_electrification_description(elec_opt):
+    return ELECTRIFICATION_DESCRIPTIONS[elec_opt]
 
 
 if __name__ == '__main__':

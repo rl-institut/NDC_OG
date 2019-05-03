@@ -3,7 +3,7 @@ App to display the results and analysis of the [Study on Renewable Energy Off-Gr
 
 This app is based on [Plotly-Dash](https://dash.plot.ly/) (python) and can be integrated in a standard webpage using an `<iframe src="url_of_your_deployed_app"></iframe>` tag.
 
-The most recent deploy of the app can be seen [here](https://ndc-test.herokuapp.com/)
+The most recent deploy of the app can be seen [here](https://rli-ndc-og.herokuapp.com/)
 
 ## Requirements
 

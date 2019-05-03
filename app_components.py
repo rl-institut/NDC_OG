@@ -4,14 +4,23 @@ import dash_html_components as html
 import dash_core_components as dcc
 from dash.dependencies import Output, Input, State
 import dash_daq as daq
+import dash_table
+import plotly.graph_objs as go
 from data_preparation import (
     ELECTRIFICATION_OPTIONS,
     ELECTRIFICATION_DICT,
+    BAU_SCENARIO,
     SCENARIOS_DICT,
     SE4ALL_FLEX_SCENARIO,
-    POP_GET,
-    HH_CAP,
-    MENTI_DRIVES
+    GRID,
+    MG,
+    SHS,
+    BASIC_ROWS,
+    LABEL_COLUMNS,
+    BASIC_COLUMNS_ID,
+    GHG_COLUMNS_ID,
+    MENTI_DRIVES,
+
 )
 
 
@@ -46,75 +55,115 @@ def callback_generator(app, input_name, df_name):
     return update_drive_input
 
 
-def country_div(df=None):
+def results_div(aggregate=False):
     """Fill and return a specific country exogenous results and information.
 
-    :param df: a single line of the dataframe corresponding to the results of a country
-    :return: the content of the country-div
+    :param aggregate: (bool) determine whether the results should be summed country wise
+    :return: the content of the results-div
     """
 
-    # variables used in the div
-    pop_2017 = 0
-    country_pop_res = []
-    country_cap_res = []
+    if aggregate is True:
+        id_name = 'aggregate'
+    else:
+        id_name = 'country'
 
-    if df is not None:
-        df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
-        pop_2017 = df.pop_2017
-        country_pop_res = np.squeeze(df[POP_GET].values)
-        country_cap_res = np.squeeze(df[HH_CAP].values) * 1e-3
+    # align number on the right
+    number_styling = [
+        {
+            'if': {
+                'column_id': c,
+                'filter': 'labels eq "{}"'.format(label)
+            },
+            'textAlign': 'right'
+        }
+        for c in ELECTRIFICATION_OPTIONS
+        for label in BASIC_ROWS
+    ]
+    # align row labels on the left
+    label_styling = [
+        {
+            'if': {'column_id': 'labels'},
+            'textAlign': 'left'
+        }
+    ]
+    # align column width
+    columns_width = [
+        {'if': {'column_id': 'labels'},
+         'width': '40%'},
+        {'if': {'column_id': GRID},
+         'width': '20%'},
+        {'if': {'column_id': MG},
+         'width': '20%'},
+        {'if': {'column_id': SHS},
+         'width': '20%'},
+    ]
+
+    # tables containing the results
+    results_divs = [
+        html.Div(
+            id='{}-basic-results-div'.format(id_name),
+            className='{}__results__basic'.format(id_name),
+            style={'width': '90%'},
+            children=[
+                html.H4(id='{}-basic-results-title'.format(id_name), children='Results'),
+                dash_table.DataTable(
+                    id='{}-basic-results-table'.format(id_name),
+                    columns=[
+                        {'name': LABEL_COLUMNS[col], 'id': col} for col in BASIC_COLUMNS_ID
+                    ],
+                    style_data_conditional=number_styling + label_styling,
+                    style_cell_conditional=columns_width,
+                    style_header={'textAlign': 'center'}
+                )
+            ]
+        ),
+        html.Div(
+            id='{}-ghg-results-div'.format(id_name),
+            className='{}__results'.format(id_name),
+            style={'width': '90%'},
+            children=[
+                html.H4('Greenhouse Gases emissions'),
+                dash_table.DataTable(
+                    id='{}-ghg-results-table'.format(id_name),
+                    columns=[
+                        {'name': LABEL_COLUMNS[col], 'id': col}
+                        for col in GHG_COLUMNS_ID
+                    ],
+                    style_data_conditional=number_styling + label_styling,
+                    style_cell_conditional=columns_width,
+                    style_header={'textAlign': 'center'}
+                )
+            ]
+        ),
+    ]
+    if aggregate is False:
+        # add a barplot below the tables with the results
+        barplot = html.Div(
+            id='barplot-div',
+            className='app__{}__barplot'.format(id_name),
+            title='Description',
+            children=dcc.Graph(
+                id='barplot',
+                figure=go.Figure(data=[go.Bar(x=ELECTRIFICATION_OPTIONS, y=[20, 14, 23])]),
+                style={'height': '200px'}
+            ),
+        )
+
+        results_divs = results_divs + [barplot]
 
     divs = [
         html.Div(
-            id='country-info-div',
-            className='country__info',
-            children='Population (2017) %i' % pop_2017
+            id='{}-info-div'.format(id_name),
+            className='{}__info'.format(id_name),
+            children='Population (2017)'
         ),
         html.Div(
-            id='country-results-div',
-            className='country__results',
-            children=[
-                html.Div(
-                    id='country-pop-results-div',
-                    className='country__results__pop',
-                    children=[
-                        html.H4('% POPULATION NEWLY ELECTRIFIED in 2030'),
-                        html.Div(
-                            className='country__results__pop__hdr',
-                            children=[
-                                html.P(str(opt)) for opt in ELECTRIFICATION_OPTIONS
-                            ]
-                        ),
-                        html.Div(
-                            className='country__results__pop__line',
-                            children=[
-                                html.P('{:.1f}'.format(res * 100)) for res in country_pop_res
-                            ]
-                        ),
-                    ]
-                ),
-                html.Div(
-                    id='country-cap-results-div',
-                    className='country__results__cap',
-                    children=[
-                        html.H4('MW household capacity'),
-                        html.Div(
-                            className='country__results__cap__hdr',
-                            children=[
-                                html.P(str(opt)) for opt in ELECTRIFICATION_OPTIONS
-                            ]
-                        ),
-                        html.Div(
-                            className='country__results__cap__line',
-                            children=[
-                                html.P('{:.1f}'.format(res)) for res in country_cap_res
-                            ]
-                        ),
-                    ]
-                ),
-            ],
+            id='{}-results-div'.format(id_name),
+            className='{}__results'.format(id_name),
+            children=results_divs
         ),
     ]
+
     return divs
 
 
@@ -158,6 +207,19 @@ def scenario_div(init_scenario, init_elec_opt):
                 value=init_elec_opt,
             )
         ),
+        html.Div(
+            id='aggregate-input-div',
+            title='Tick this box to enable the aggregation of the results',
+            children=dcc.Checklist(
+                id='aggregate-input',
+                className='app__input__checklist',
+                options=[
+                    {'label': 'Aggregate results', 'value': 'aggregate'}
+                ],
+                values=[],
+            )
+        ),
+
     ]
     return divs
 
@@ -325,4 +387,23 @@ def controls_div():
 
 def general_info_div():
     """Return text displayed for the user."""
-    return dcc.Markdown('''Description of app and project here''')
+    return [
+        html.P(
+            'In the Study on Renewable Energy Off-Grid Components of NDCs and their Role for \
+            Climate Change Mitigation financed by GIZ,  Reiner Lemoine Institute and the \
+            greenwerk develop strategies for the use of renewable energy that can support \
+            climate protection in developing countries.'
+        ),
+        html.P(
+            'The study targets the inclusion of off-grid components \
+           in the Nationally Determined Contributions (NDCs), in which the signatory states \
+           to the Paris Climate Change Convention commit themselves to elaborate national \
+           climate protection targets, should be achieved.'
+        ),
+        html.P(
+            'In this visualization tool a quantification of four different new \
+        electrification until 2030 scenarios are presented for 52 countries. These countries were \
+        selected through the criteria of having > 1 million people without electricity \
+        access in 2017.'
+        )
+    ]
