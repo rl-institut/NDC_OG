@@ -1,3 +1,4 @@
+import base64
 import numpy as np
 import pandas as pd
 import dash
@@ -988,6 +989,70 @@ def update_selected_country_on_map(cur_data, cur_val):
     if country_iso is None:
         country_iso = cur_val
     return country_iso
+
+
+@app.callback(
+    Output('country-info-div', 'children'),
+    [
+        Input('scenario-input', 'value'),
+        Input('country-input', 'value')
+    ],
+    [State('data-store', 'data')]
+)
+def update_country_info_div(scenario, country_iso, cur_data):
+
+    divs = []
+    if scenario in SCENARIOS and country_iso is not None:
+        df = pd.read_json(cur_data[scenario])
+        pop_2017 = df.loc[df.country_iso == country_iso].pop_2017.values[0]
+
+        image_filename = 'icons/{}.png'.format(country_iso)
+        encoded_image = base64.b64encode(open(image_filename, 'rb').read())
+
+        divs = [
+            html.Img(
+                src='data:image/png;base64,{}'.format(encoded_image.decode()),
+                className='country__info__flag',
+                style={'width': '100%'}
+            ),
+            html.Div('Population (2017) : {}'.format(pop_2017)),
+        ]
+
+    return divs
+
+
+@app.callback(
+    Output('country-basic-results-title', 'children'),
+    [Input('country-input', 'value')],
+    [
+        State('scenario-input', 'value'),
+        State('data-store', 'data')]
+)
+def country_basic_results_title(country_iso, scenario,  cur_data):
+
+    answer = 'Results'
+    if scenario in SCENARIOS and country_iso is not None:
+        df = pd.read_json(cur_data[scenario])
+        answer = 'Results for {}'.format(df.loc[df.country_iso == country_iso].country.values[0])
+    return answer
+
+
+@app.callback(
+    Output('aggregate-info-div', 'children'),
+    [
+        Input('scenario-input', 'value'),
+        Input('region-input', 'value')
+    ],
+    [State('data-store', 'data')]
+)
+def update_aggregate_info_div(scenario, region_id, cur_data):
+
+    pop_2017 = ''
+    if scenario in SCENARIOS and region_id is not None:
+        df = pd.read_json(cur_data[scenario])
+        pop_2017 = df.pop_2017.sum(axis=0)
+
+    return html.Div('Population (2017) : {}'.format(pop_2017))
 
 
 @app.callback(

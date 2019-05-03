@@ -105,7 +105,7 @@ def results_div(aggregate=False):
             className='{}__results__basic'.format(id_name),
             style={'width': '90%'},
             children=[
-                html.H4(id='', children='Results'),
+                html.H4(id='{}-basic-results-title'.format(id_name), children='Results'),
                 dash_table.DataTable(
                     id='{}-basic-results-table'.format(id_name),
                     columns=[
