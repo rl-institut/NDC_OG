@@ -111,6 +111,7 @@ data = [
         colorscale=scl,
         autocolorscale=False,
         locationmode='ISO-3',
+        hoverinfo='text',
         marker=go.choropleth.Marker(
             line=go.choropleth.marker.Line(
                 color='rgb(255,255,255)',
@@ -118,22 +119,6 @@ data = [
             )),
         colorbar=go.choropleth.ColorBar(title="Pop."),
 
-    )
-]
-
-
-centroid = pd.read_csv('data/centroid.csv')
-
-points = [
-    go.Scattergeo(
-        lon=centroid['Longitude'],
-        lat=centroid['Latitude'],
-        text=centroid['country_iso'],
-        marker=go.scattergeo.Marker(
-            size=25,
-            color='black',
-            line=go.scattergeo.marker.Line(width=0)
-        ),
     )
 ]
 
@@ -157,8 +142,7 @@ layout = go.Layout(
     )
 )
 
-
-fig_map = go.Figure(data=data + points, layout=layout)
+fig_map = go.Figure(data=data, layout=layout)
 
 
 PIECHART_LABELS = list(ELECTRIFICATION_DICT.values())
@@ -316,7 +300,7 @@ def update_map(region_id, scenario, elec_opt, fig, cur_data):
     # load the data of the scenario
     df = pd.read_json(cur_data[scenario])
 
-    centroids = pd.read_json(cur_data[region_id])
+    centroid = pd.read_json(cur_data[region_id])
 
     if region_id != WORLD_ID:
         # narrow to the region if the scope is not on the whole world
@@ -355,14 +339,40 @@ def update_map(region_id, scenario, elec_opt, fig, cur_data):
         }
     )
 
-    fig['data'][1].update(
-        {
-            'lon': centroids['Longitude'],
-            'lat': centroids['Latitude'],
-            'text': centroids['country_iso'],
-            'geo': geo
-        }
-    )
+    points = []
+    i = 0
+    if scenario == BAU_SCENARIO:
+        z = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
+        z['no_ec'] = 1 - z.sum(axis=1)
+        n = 4
+        labels = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
+    else:
+        z = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
+        n = 3
+        labels = ELECTRIFICATION_OPTIONS.copy()
+    colors = ['blue', 'orange', 'green', 'red']
+    for idx, c in centroid.iterrows():
+        for j in range(n):
+            points.append(
+                go.Scattergeo(
+                    lon=[c['Longitude']],
+                    lat=[c['Latitude']],
+                    name=c['country_iso'],
+                    text=country_hover_text(df[df.country_iso == c['country_iso']]),
+                    # text='{}: {:.1f}%%'.format(labels[j], z.iloc[i, j] * 100),
+                    hoverinfo='text+name',
+                    marker=go.scattergeo.Marker(
+                        size=z.iloc[i, j:n].sum() * 25,
+                        color=colors[j],
+                        line=go.scattergeo.marker.Line(width=0)
+                    ),
+                    showlegend=False,
+                    geo=geo
+                )
+            )
+        i = i + 1
+
+    fig['data'][1:] = points
 
     fig['layout']['geo'].update({'scope': region_name.lower()})
     return fig
