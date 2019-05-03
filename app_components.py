@@ -12,16 +12,15 @@ from data_preparation import (
     BAU_SCENARIO,
     SCENARIOS_DICT,
     SE4ALL_FLEX_SCENARIO,
-    POP_GET,
-    HH_GET,
-    HH_CAP,
-    HH_SCN2,
-    INVEST,
-    INVEST_CAP,
-    GHG,
-    GHG_CAP,
-    EXO_RESULTS,
-    MENTI_DRIVES
+    GRID,
+    MG,
+    SHS,
+    BASIC_ROWS,
+    LABEL_COLUMNS,
+    BASIC_COLUMNS_ID,
+    GHG_COLUMNS_ID,
+    MENTI_DRIVES,
+
 )
 
 
@@ -56,134 +55,83 @@ def callback_generator(app, input_name, df_name):
     return update_drive_input
 
 
-def results_div(df=None, df_comp=None, aggregate=False):
+def results_div(aggregate=False):
     """Fill and return a specific country exogenous results and information.
 
-    :param df: a single line of the dataframe corresponding to the results of a country
-    :param df_comp: a single line of the dataframe corresponding to the BaU results of a country
     :param aggregate: (bool) determine whether the results should be summed country wise
-    :return: the content of the country-div
+    :return: the content of the results-div
     """
-
-    # variables used in the div
-    pop_2017 = 0
-    country = ''
-
-    basic_results_data = []
-    ghg_results_data = []
-    basic_columns = []
-    ghg_columns = []
-
-    # labels of the table columns
-    labels_dict = ELECTRIFICATION_DICT.copy()
-    # a column for the row labels
-    labels_dict['labels'] = ''
-    # a column for comparison of greenhouse gases emission
-    labels_dict['comp'] = 'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO])
-
-    # label of the table rows
-    basic_rows = [
-        '% population newly electrified in 2030',
-        '# household newly electrified in 2030',
-        'MW household capacity',
-        'MW household capacity (TIER capped)',
-        'Total investment (case 1) EUR',
-        'Total investment (case 2) EUR',
-    ]
-
-    if df_comp is None:
-        ghg_rows = [
-            'GHG (case 1)',
-            'GHG (case 2)',
-            # 'GHG CUMUL'
-        ]
-    else:
-        ghg_rows = [
-            'GHG (case 1)',
-            'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-            'GHG (case 2)',
-            'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-        ]
-
-    if df is not None:
-
-        df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
-
-        if aggregate is True:
-            pop_2017 = df.pop_2017.sum(axis=0)
-            country = 'selected region'
-            df = df[EXO_RESULTS].sum(axis=0)
-            if df_comp is not None:
-                df_comp = df_comp[EXO_RESULTS].sum(axis=0)
-        else:
-            pop_2017 = df.pop_2017
-            country = df.country.values[0]
-
-        pop_res = np.squeeze(df[POP_GET].values) * 100
-        hh_res = np.squeeze(df[HH_GET].values) * 100
-        cap_res = np.squeeze(df[HH_CAP].values) * 1e-3
-        cap2_res = np.squeeze(df[HH_SCN2].values) * 1e-3
-        invest_res = np.squeeze(df[INVEST].values)
-        invest_res = np.append(np.NaN, invest_res)
-        invest2_res = np.squeeze(df[INVEST_CAP].values)
-        invest2_res = np.append(np.NaN, invest2_res)
-        ghg_res = np.squeeze(df[GHG].values)
-        ghg2_res = np.squeeze(df[GHG_CAP].values)
-
-        basic_results_data = np.vstack(
-            [pop_res, hh_res, cap_res, cap2_res, invest_res, invest2_res]
-        )
-
-        basic_results_data = pd.DataFrame(data=basic_results_data, columns=ELECTRIFICATION_OPTIONS)
-        basic_results_data['labels'] = pd.Series(basic_rows)
-        basic_columns = ['labels'] + ELECTRIFICATION_OPTIONS
-        basic_results_data = basic_results_data[basic_columns].to_dict('records')
-
-        if df_comp is not None:
-            ghg_comp_res = ghg_res - np.squeeze(df_comp[GHG].values)
-            ghg2_comp_res = ghg2_res - np.squeeze(df_comp[GHG_CAP].values)
-            ghg_results_data = np.vstack([ghg_res, ghg_comp_res, ghg2_res, ghg2_comp_res])
-        else:
-            ghg_results_data = np.vstack([ghg_res, ghg2_res])
-
-        ghg_results_data = pd.DataFrame(data=ghg_results_data, columns=ELECTRIFICATION_OPTIONS)
-        ghg_results_data['labels'] = pd.Series(ghg_rows)
-        ghg_columns = ['labels'] + ELECTRIFICATION_OPTIONS
-        ghg_results_data = ghg_results_data[ghg_columns].to_dict('records')
 
     if aggregate is True:
         id_name = 'aggregate'
     else:
         id_name = 'country'
 
+    # align number on the right
+    number_styling = [
+        {
+            'if': {
+                'column_id': c,
+                'filter': 'labels eq "{}"'.format(label)
+            },
+            'textAlign': 'right'
+        }
+        for c in ELECTRIFICATION_OPTIONS
+        for label in BASIC_ROWS
+    ]
+    # align row labels on the left
+    label_styling = [
+        {
+            'if': {'column_id': 'labels'},
+            'textAlign': 'left'
+        }
+    ]
+    # align column width
+    columns_width = [
+        {'if': {'column_id': 'labels'},
+         'width': '40%'},
+        {'if': {'column_id': GRID},
+         'width': '20%'},
+        {'if': {'column_id': MG},
+         'width': '20%'},
+        {'if': {'column_id': SHS},
+         'width': '20%'},
+    ]
+
     # tables containing the results
     results_divs = [
         html.Div(
             id='{}-basic-results-div'.format(id_name),
             className='{}__results__basic'.format(id_name),
+            style={'width': '90%'},
             children=[
-                html.H4('Results for {}'.format(country)),
+                html.H4(id='', children='Results'),
                 dash_table.DataTable(
                     id='{}-basic-results-table'.format(id_name),
                     columns=[
-                        {'name': labels_dict[col], 'id': col} for col in basic_columns
+                        {'name': LABEL_COLUMNS[col], 'id': col} for col in BASIC_COLUMNS_ID
                     ],
-                    data=basic_results_data
+                    style_data_conditional=number_styling + label_styling,
+                    style_cell_conditional=columns_width,
+                    style_header={'textAlign': 'center'}
                 )
             ]
         ),
         html.Div(
             id='{}-ghg-results-div'.format(id_name),
             className='{}__results'.format(id_name),
+            style={'width': '90%'},
             children=[
                 html.H4('Greenhouse Gases emissions'),
                 dash_table.DataTable(
                     id='{}-ghg-results-table'.format(id_name),
                     columns=[
-                        {'name': labels_dict[col], 'id': col}
-                        for col in ghg_columns
+                        {'name': LABEL_COLUMNS[col], 'id': col}
+                        for col in GHG_COLUMNS_ID
                     ],
-                    data=ghg_results_data
+                    style_data_conditional=number_styling + label_styling,
+                    style_cell_conditional=columns_width,
+                    style_header={'textAlign': 'center'}
                 )
             ]
         ),
@@ -207,7 +155,7 @@ def results_div(df=None, df_comp=None, aggregate=False):
         html.Div(
             id='{}-info-div'.format(id_name),
             className='{}__info'.format(id_name),
-            children='Population (2017) %i' % pop_2017
+            children='Population (2017)'
         ),
         html.Div(
             id='{}-results-div'.format(id_name),

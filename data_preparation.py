@@ -157,6 +157,21 @@ WEIGHT_MENTIS = 0.2
 RISE_INDICES = ['rise_%s' % opt for opt in ELECTRIFICATION_OPTIONS]
 SHIFT_MENTI = ['shift_menti_mg', 'shift_menti_shs']
 
+BASIC_ROWS = [
+    '% population newly electrified in 2030',
+    '# household newly electrified in 2030',
+    'MW household capacity',
+    'MW household capacity (TIER capped)',
+    'Total investment (case 1) EUR',
+    'Total investment (case 2) EUR',
+]
+# labels of the columns of the result tables
+LABEL_COLUMNS = ELECTRIFICATION_DICT.copy()
+# a column for the row labels
+LABEL_COLUMNS['labels'] = ''
+BASIC_COLUMNS_ID = ['labels'] + ELECTRIFICATION_OPTIONS
+GHG_COLUMNS_ID = ['labels'] + ELECTRIFICATION_OPTIONS
+
 
 def _slope_capacity_vs_yearly_consumption(tier_level):
     """Linearize the relation between min rated capacity and min annual consumption
