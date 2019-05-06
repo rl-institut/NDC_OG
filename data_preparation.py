@@ -731,14 +731,18 @@ def extract_results_scenario(input_df, scenario, regions=None, bau_data=None):
     return df
 
 
-def compute_ndc_results_from_raw_data(scenario, fname='data/raw_data.csv'):
+def compute_ndc_results_from_raw_data(scenario, fname='data/raw_data.csv', raw_data=None):
     """Compute the exogenous results from the raw data for a given scenario
-    :param scenario (str): name of the scenario
-    :param fname (str): path to the raw data csv file
+    :param scenario: (str) name of the scenario
+    :param fname: (str) path to the raw data csv file
+    :param raw_data: (dataFrame) dataFrame
     :return:
     """
-    # Load data from csv
-    df = pd.read_csv(fname, float_precision='high')
+    if raw_data is None:
+        # Load data from csv
+        df = pd.read_csv(fname, float_precision='high')
+    else:
+        df = raw_data
     # Compute endogenous results for the given scenario
     df = prepare_scenario_data(df, scenario, prepare_endogenous=True)
     # Compute the exogenous results

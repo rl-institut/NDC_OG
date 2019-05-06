@@ -44,7 +44,8 @@ from app_components import (
     scenario_div,
     controls_div,
     general_info_div,
-    callback_generator
+    callback_generator,
+    parse_upload_contents
 )
 
 
@@ -1015,13 +1016,34 @@ def update_country_selection_options(region_id, scenario, cur_data):
 
 @app.callback(
     Output('data-store', 'data'),
-    [Input('map', 'clickData')],
-    [State('data-store', 'data')]
+    [
+        Input('map', 'clickData'),
+        Input('raw-data-upload', 'contents')
+    ],
+    [
+        State('raw-data-upload', 'filename'),
+        State('data-store', 'data')
+    ]
 )
-def update_data_store(clicked_data, cur_data):
-    if clicked_data is not None:
+def update_data_store(clicked_data, contents, filename, cur_data):
+
+    ctx = dash.callback_context
+    prop_id = None
+    if ctx.triggered:
+        prop_id = ctx.triggered[0]['prop_id']
+
+    if 'raw-data-upload' in prop_id and contents is not None:
+        raw_data = parse_upload_contents(contents, filename, json_format=False)
+        # Recompute the results with the uploaded raw_data
+        for sce in SCENARIOS:
+            cur_data.update(
+                {sce: compute_ndc_results_from_raw_data(sce, raw_data=raw_data).to_json()}
+            )
+
+    if 'map' in prop_id and clicked_data is not None:
         country_iso = clicked_data['points'][0]['location']
         cur_data.update({'selected_country': country_iso})
+
     return cur_data
 
 
