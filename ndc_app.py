@@ -225,6 +225,18 @@ app.layout = html.Div(
                                         value=WORLD_ID
                                     )
                                 ),
+                                dcc.Upload(
+                                    id='raw-data-upload',
+                                    className='app__upload',
+                                    children=html.Div(
+                                        title='description of the csv file columns',
+                                        children=[
+                                            'Upload ',
+                                            html.A('raw data csv file')
+                                        ]
+                                    ),
+                                    multiple=False,
+                                ),
                                 html.Div(
                                     id='logo-div',
                                     className='app__logo',

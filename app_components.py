@@ -1,3 +1,5 @@
+import base64
+import io
 import numpy as np
 import pandas as pd
 import dash_html_components as html
@@ -22,6 +24,32 @@ from data_preparation import (
     MENTI_DRIVES,
 
 )
+
+
+def parse_upload_contents(contents, filename, json_format=True):
+    """Parse the content of file uploaded with dcc.Upload
+
+    :param contents: value of the dcc.Upload contents prop
+    :param filename: value of the dcc.Upload contents prop
+    :return:
+    """
+    content_type, content_string = contents.split(',')
+    decoded = base64.b64decode(content_string)
+    df = pd.DataFrame()
+    try:
+        if 'csv' in filename:
+            # Assume that the user uploaded a CSV file
+            df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
+        elif 'xls' in filename:
+            # Assume that the user uploaded an excel file
+            df = pd.read_excel(io.BytesIO(decoded))
+    except Exception as e:
+        print(e)
+
+    if json_format:
+        df = df.to_json()
+    return df
+
 
 
 def callback_generator(app, input_name, df_name):

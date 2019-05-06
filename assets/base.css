@@ -14,6 +14,16 @@
     flex-direction: column;
 }
 
+.app__upload {
+    width: 270px;
+    height: 60px;
+    line-height: 60px;
+    border: dashed 1px black;
+    border-radius: 5px;
+    text-align: center;
+    margin: 10px;
+}
+
 .app__options {
     border: solid 2px #E8F0F9;
     display: flex;
