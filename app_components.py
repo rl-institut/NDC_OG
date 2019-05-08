@@ -239,11 +239,11 @@ def impact_factors_div(opt, title=''):
                     dcc.Input(
                         id='impact-{}-{}-input'.format(opt, input_name.replace('_', '-')),
                         className='app__input__impact',
-                        value=IMPACT_FACTORS[opt][input_name],
+                        value=np.round(IMPACT_FACTORS[opt][input_name], 3),
                         type='number',
                         min=0,
-                        max=1,
-                        step=0.5
+                        max=10,
+                        step=0.001
                     ),
                 ]
             )

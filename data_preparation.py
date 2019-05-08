@@ -670,7 +670,6 @@ def _compute_investment_cost(df):
         df.hh_cap_scn2_shs_capacity * SHS_AVERAGE_INVESTMENT_COST
 
 
-
 def extract_results_scenario(input_df, scenario, regions=None, bau_data=None):
     df = input_df.copy()
 

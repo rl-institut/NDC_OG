@@ -21,6 +21,7 @@ from data_preparation import (
     ELECTRIFICATION_DICT,
     ELECTRIFICATION_DESCRIPTIONS,
     MENTI_DRIVES,
+    IMPACT_FACTORS,
     POP_GET,
     HH_GET,
     HH_CAP,
@@ -458,6 +459,13 @@ def toggle_aggregate_div_display(cur_view, aggregate, cur_style):
     return cur_style
 
 
+impact_inputs = []
+for opt in [MG, SHS]:
+    for input_name in IMPACT_FACTORS.index.to_list():
+        impact_inputs.append(
+            Input('impact-{}-{}-input'.format(opt, input_name.replace('_', '-')), 'value')
+        )
+
 
 @app.callback(
     Output('flex-store', 'data'),
@@ -467,10 +475,11 @@ def toggle_aggregate_div_display(cur_view, aggregate, cur_style):
         Input('mentis-ease-doing-business-input', 'value'),
         Input('mentis-corruption-input', 'value'),
         Input('mentis-weak-grid-input', 'value'),
+    ] + impact_inputs + [
         Input('rise-grid-input', 'value'),
         Input('rise-mg-input', 'value'),
         Input('rise-shs-input', 'value')
-     ],
+    ],
     [State('flex-store', 'data')]
 )
 def update_flex_store(
@@ -479,6 +488,16 @@ def update_flex_store(
         edb_class,
         corruption_class,
         weak_grid_class,
+        impact_mg__gdp,
+        impact_mg__mobile_money,
+        impact_mg__ease_doing_business,
+        impact_mg_low_corruption,
+        impact_mg__grid_weakness,
+        impact_shs__gdp,
+        impact_shs__mobile_money,
+        impact_shs__ease_doing_business,
+        impact_shs_low_corruption,
+        impact_shs__grid_weakness,
         rise_grid,
         rise_mg,
         rise_shs,
@@ -500,6 +519,34 @@ def update_flex_store(
         flex_data.update({'rise_mg': rise_mg})
     if rise_shs is not None:
         flex_data.update({'rise_shs': rise_shs})
+
+    # impact factors for the flex scenario
+    impact_mg = [
+        impact_mg__gdp,
+        impact_mg__mobile_money,
+        impact_mg__ease_doing_business,
+        impact_mg_low_corruption,
+        impact_mg__grid_weakness
+    ]
+
+    impact_shs = [
+        impact_shs__gdp,
+        impact_shs__mobile_money,
+        impact_shs__ease_doing_business,
+        impact_shs_low_corruption,
+        impact_shs__grid_weakness,
+    ]
+
+    impact_factor = pd.DataFrame(
+        {
+            MG: impact_mg,
+            SHS: impact_shs,
+            'labels': IMPACT_FACTORS.index.to_list()
+        }
+    )
+    impact_factor = impact_factor.set_index('labels')
+
+    flex_data['impact_factor'] = impact_factor.to_json()
 
     return flex_data
 
@@ -544,7 +591,8 @@ def update_country_basic_results_table(
                         tier_level=tier_level
                     )
             if scenario == SE4ALL_FLEX_SCENARIO:
-
+                # assign the values of the impact parameters for mg and shs
+                impact_factor = pd.read_json(flex_data.pop('impact_factor', None))
                 # assign the values of the flex parameters
                 for k in flex_data:
                     df.loc[:, k] = flex_data[k]
@@ -553,7 +601,8 @@ def update_country_basic_results_table(
                 df = prepare_se4all_data(
                     input_df=df,
                     weight_mentis=weight_mentis,
-                    fixed_shift_drives=False
+                    fixed_shift_drives=False,
+                    impact_factor=impact_factor
                 )
                 df = extract_results_scenario(df, scenario)
 
@@ -630,7 +679,8 @@ def update_country_ghg_results_table(
                     )
 
             if scenario == SE4ALL_FLEX_SCENARIO:
-
+                # assign the values of the impact parameters for mg and shs
+                impact_factor = pd.read_json(flex_data.pop('impact_factor', None))
                 # assign the values of the flex parameters
                 for k in flex_data:
                     df.loc[:, k] = flex_data[k]
@@ -639,7 +689,8 @@ def update_country_ghg_results_table(
                 df = prepare_se4all_data(
                     input_df=df,
                     weight_mentis=weight_mentis,
-                    fixed_shift_drives=False
+                    fixed_shift_drives=False,
+                    impact_factor=impact_factor
                 )
                 df = extract_results_scenario(df, scenario)
 
