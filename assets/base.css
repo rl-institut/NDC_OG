@@ -74,9 +74,14 @@
     width: 40%;
 }
 
-.app__input__mentis-drives{
+.app__input__influence{
     height: 100%;
     width: 25%;
+}
+
+.app__input__impact{
+    height: 100%;
+    width: 40%;
 }
 
 .app__input__label{

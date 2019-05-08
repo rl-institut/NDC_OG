@@ -20,7 +20,7 @@ from data_preparation import (
     BASIC_COLUMNS_ID,
     GHG_COLUMNS_ID,
     MENTI_DRIVES,
-
+    IMPACT_FACTORS,
 )
 
 
@@ -224,6 +224,45 @@ def scenario_div(init_scenario, init_elec_opt):
     return divs
 
 
+def impact_factors_div(opt, title=''):
+    factors = []
+    for input_name in IMPACT_FACTORS.index.to_list():
+        factors.append(
+            html.Div(
+                id='impact-{}-{}-input-div'.format(opt, input_name.replace('_', '-')),
+                title='{} description'.format(input_name.replace('_', ' ')),
+                children=[
+                    html.Div(
+                        id='impact-{}-{}-input_label'.format(opt, input_name.replace('_', '-')),
+                        children=input_name.replace('_', ' ')
+                    ),
+                    dcc.Input(
+                        id='impact-{}-{}-input'.format(opt, input_name.replace('_', '-')),
+                        className='app__input__impact',
+                        value=IMPACT_FACTORS[opt][input_name],
+                        type='number',
+                        min=0,
+                        max=1,
+                        step=0.5
+                    ),
+                ]
+            )
+        )
+
+    return html.Div(
+        id='impact-{}-drives-div'.format(opt),
+        className='app__input',
+        title=title,
+        children=[
+                     html.Div(
+                         id='impact-{}-label'.format(opt),
+                         className='app__input__label',
+                         children='Impact factors ({})'.format(opt.upper())
+                     )
+                 ] + factors
+    )
+
+
 def controls_div():
     """Return controls for scenario dependent variables."""
 
@@ -357,6 +396,8 @@ def controls_div():
                          for input_name in MENTI_DRIVES
                      ]
         ),
+        impact_factors_div('mg'),
+        impact_factors_div('shs'),
         html.Div(
             id='tier-div',
             className='app__input',
