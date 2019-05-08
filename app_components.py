@@ -266,21 +266,35 @@ def controls_div():
             className='app__input',
             children=[
                 html.Div(
-                    id='tier-label',
+                    id='min-tier-label',
                     className='app__input__label',
                     children='Min TIER level'
                 ),
                 html.Div(
-                    id='tier-input-div',
+                    id='min-tier-input-div',
                     title='min tier level description',
                     children=dcc.Input(
-                        id='tier-input',
+                        id='min-tier-input',
                         className='app__input__tier',
                         value=3,
                         type='number',
                         min=1,
                         max=5,
                         step=1
+                    )
+                ),
+                html.Div(
+                    id='tier-label',
+                    className='app__input__label',
+                    children='Lower TIER level'
+                ),
+                html.Div(
+                    id='tier-value-div',
+                    title='tier level description',
+                    children=html.Div(
+                        id='tier-value',
+                        className='app__display__tier',
+                        children=''
                     )
                 ),
             ]
@@ -308,7 +322,6 @@ def controls_div():
                             handleLabel={
                                 "showCurrentValue": True, "label": "VALUE"},
                             step=1,
-
                         ),
                     ]
                 ),
