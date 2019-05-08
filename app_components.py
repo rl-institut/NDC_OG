@@ -347,7 +347,7 @@ def controls_div():
                 html.Div(
                     id='mentis-weight-label',
                     className='app__input__label',
-                    children='Mentis weight'
+                    children='Weight RISE / influence factors'
                 ),
                 html.Div(
                     id='mentis-weight-input-div',
@@ -371,7 +371,7 @@ def controls_div():
                          html.Div(
                              id='mentis-label',
                              className='app__input__label',
-                             children='Mentis drives'
+                             children='Influence factors'
                          )
                      ] + [
                          html.Div(
@@ -384,7 +384,7 @@ def controls_div():
                                  ),
                                  dcc.Input(
                                      id='mentis-%s-input' % input_name.replace('_', '-'),
-                                     className='app__input__mentis-drives',
+                                     className='app__input__influence',
                                      value=0,
                                      type='number',
                                      min=0,
