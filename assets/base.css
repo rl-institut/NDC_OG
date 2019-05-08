@@ -116,6 +116,12 @@ region-input-div
     width: 25%;
 }
 
+#factor-div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 #country-info-div{
     border: solid 1px #E8F0F9;
 }

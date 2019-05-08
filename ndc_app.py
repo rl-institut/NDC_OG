@@ -483,6 +483,30 @@ def toggle_aggregate_div_display(cur_view, aggregate, cur_style):
     return cur_style
 
 
+@app.callback(
+    Output('factor-div', 'style'),
+    [
+        Input('view-store', 'data'),
+        Input('factor-input', 'values'),
+    ],
+    [State('factor-div', 'style')]
+)
+def toggle_factor_div_display(cur_view, show, cur_style):
+    """Change the display of factor-div between the app's views."""
+    if cur_style is None:
+        cur_style = {'display': 'none'}
+
+    if cur_view['app_view'] == VIEW_GENERAL:
+        cur_style.update({'display': 'none'})
+    elif cur_view['app_view'] == VIEW_COUNTRY:
+        if show:
+            cur_style.update({'display': 'flex'})
+        else:
+            cur_style.update({'display': 'none'})
+
+    return cur_style
+
+
 impact_inputs = []
 for opt in [MG, SHS]:
     for input_name in IMPACT_FACTORS.index.to_list():
