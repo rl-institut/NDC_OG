@@ -49,10 +49,14 @@ from app_components import (
 )
 
 
-# A dict with the data for each scenario in json format
-SCENARIOS_DATA = {
-    sce: compute_ndc_results_from_raw_data(sce).to_json() for sce in SCENARIOS
-}
+def extract_centroids(reg):
+    """Load the longitude and latitude of countries per region."""
+    if not isinstance(reg, list):
+        reg = [reg]
+    centroids = pd.read_csv('data/centroid.csv')
+    return centroids.loc[centroids.region.isin(reg)].copy()
+
+
 WORLD_ID = 'WD'
 REGIONS_GPD = dict(WD='World', SA='South America', AF='Africa', AS='Asia')
 
@@ -60,6 +64,15 @@ REGIONS_NDC = dict(WD=['LA', 'SSA', 'DA'], SA='LA', AF='SSA', AS='DA')
 
 VIEW_GENERAL = 'general'
 VIEW_COUNTRY = 'specific'
+
+# A dict with the data for each scenario in json format
+SCENARIOS_DATA = {
+    sce: compute_ndc_results_from_raw_data(sce).to_json() for sce in SCENARIOS
+}
+
+SCENARIOS_DATA.update(
+    {reg: extract_centroids(REGIONS_NDC[reg]).to_json() for reg in REGIONS_NDC}
+)
 
 
 def country_hover_text(input_df):
@@ -99,6 +112,7 @@ data = [
         colorscale=scl,
         autocolorscale=False,
         locationmode='ISO-3',
+        hoverinfo='text',
         marker=go.choropleth.Marker(
             line=go.choropleth.marker.Line(
                 color='rgb(255,255,255)',
@@ -106,7 +120,7 @@ data = [
             )),
         colorbar=go.choropleth.ColorBar(title="Pop."),
 
-    ),
+    )
 ]
 
 layout = go.Layout(
@@ -128,7 +142,6 @@ layout = go.Layout(
         framewidth=0,
     )
 )
-
 
 fig_map = go.Figure(data=data, layout=layout)
 
@@ -305,6 +318,8 @@ def update_map(region_id, scenario, elec_opt, fig, cur_data):
     # load the data of the scenario
     df = pd.read_json(cur_data[scenario])
 
+    centroid = pd.read_json(cur_data[region_id])
+
     if region_id != WORLD_ID:
         # narrow to the region if the scope is not on the whole world
         df = df.loc[df.region == REGIONS_NDC[region_id]]
@@ -319,6 +334,7 @@ def update_map(region_id, scenario, elec_opt, fig, cur_data):
 
     if region_id == 'SA':
         region_name = REGIONS_GPD[WORLD_ID]
+
         geo = 'geo2'
     else:
         region_name = REGIONS_GPD[region_id]
@@ -340,6 +356,41 @@ def update_map(region_id, scenario, elec_opt, fig, cur_data):
             ),
         }
     )
+
+    points = []
+    i = 0
+    if scenario == BAU_SCENARIO:
+        z = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
+        z['no_ec'] = 1 - z.sum(axis=1)
+        n = 4
+        labels = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
+    else:
+        z = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
+        n = 3
+        labels = ELECTRIFICATION_OPTIONS.copy()
+    colors = ['blue', 'orange', 'green', 'red']
+    for idx, c in centroid.iterrows():
+        for j in range(n):
+            points.append(
+                go.Scattergeo(
+                    lon=[c['Longitude']],
+                    lat=[c['Latitude']],
+                    name=c['country_iso'],
+                    text=country_hover_text(df[df.country_iso == c['country_iso']]),
+                    # text='{}: {:.1f}%%'.format(labels[j], z.iloc[i, j] * 100),
+                    hoverinfo='text+name',
+                    marker=go.scattergeo.Marker(
+                        size=z.iloc[i, j:n].sum() * 25,
+                        color=colors[j],
+                        line=go.scattergeo.marker.Line(width=0)
+                    ),
+                    showlegend=False,
+                    geo=geo
+                )
+            )
+        i = i + 1
+
+    fig['data'][1:] = points
 
     fig['layout']['geo'].update({'scope': region_name.lower()})
     return fig
