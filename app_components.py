@@ -224,7 +224,7 @@ def impact_factors_div(opt, title=''):
                         value=np.round(IMPACT_FACTORS[opt][input_name], 3),
                         type='number',
                         min=0,
-                        max=10,
+                        max=5,
                         step=0.001
                     ),
                 ]
