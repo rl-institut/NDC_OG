@@ -233,6 +233,29 @@ def controls_div():
             className='app__input',
             children=[
                 html.Div(
+                    id='rise-grid-div',
+                    className='app__input__slider',
+                    title='rise grid description',
+                    children=[
+                        html.Div(
+                            id='rise-grid-label',
+                            className='app__input__label',
+                            children='RISE-GRID'
+                        ),
+                        daq.Slider(
+                            id='rise-grid-input',
+                            className='daq__slider',
+                            min=0,
+                            max=100,
+                            value=14,
+                            handleLabel={
+                                "showCurrentValue": True, "label": "VALUE"},
+                            step=1,
+
+                        ),
+                    ]
+                ),
+                html.Div(
                     id='rise-shs-div',
                     className='app__input__slider',
                     title='rise shs description',
@@ -244,6 +267,7 @@ def controls_div():
                         ),
                         daq.Slider(
                             id='rise-shs-input',
+                            className='daq__slider',
                             min=0,
                             max=100,
                             value=14,
@@ -265,6 +289,7 @@ def controls_div():
                         ),
                         daq.Slider(
                             id='rise-mg-input',
+                            className='daq__slider',
                             min=0,
                             max=100,
                             value=67,
