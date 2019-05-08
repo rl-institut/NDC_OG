@@ -36,7 +36,8 @@ from data_preparation import (
     compute_ndc_results_from_raw_data,
     prepare_endogenous_variables,
     prepare_se4all_data,
-    extract_results_scenario
+    extract_results_scenario,
+    _find_tier_level,
 )
 
 from app_components import (
@@ -953,6 +954,27 @@ def country_basic_results_title(country_iso, scenario,  cur_data):
     if scenario in SCENARIOS and country_iso is not None:
         df = pd.read_json(cur_data[scenario])
         answer = 'Results for {}'.format(df.loc[df.country_iso == country_iso].country.values[0])
+    return answer
+
+
+@app.callback(
+    Output('tier-value', 'children'),
+    [Input('country-input', 'value')],
+    [
+        State('scenario-input', 'value'),
+        State('data-store', 'data')]
+)
+def update_tier_value_div(country_iso, scenario, cur_data):
+    """Find the actual tier level of the country based on its yearly electricity consumption"""
+    answer = ''
+    if scenario in SCENARIOS and country_iso is not None:
+        df = pd.read_json(cur_data[scenario])
+        answer = '{}'.format(
+            _find_tier_level(
+                df.loc[df.country_iso == country_iso].hh_yearly_electricity_consumption.values[0],
+                1
+            )
+        )
     return answer
 
 

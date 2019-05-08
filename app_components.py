@@ -337,7 +337,7 @@ def controls_div():
             className='app__input',
             children=[
                 html.Div(
-                    id='tier-label',
+                    id='min-tier-label',
                     className='app__input__label',
                     children='Min TIER level'
                 ),
@@ -352,6 +352,20 @@ def controls_div():
                         min=1,
                         max=5,
                         step=1
+                    )
+                ),
+                html.Div(
+                    id='tier-label',
+                    className='app__input__label',
+                    children='Lower TIER level'
+                ),
+                html.Div(
+                    id='tier-value-div',
+                    title='tier level description',
+                    children=html.Div(
+                        id='tier-value',
+                        className='app__display__tier',
+                        children=''
                     )
                 ),
             ]

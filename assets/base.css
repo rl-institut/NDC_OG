@@ -126,3 +126,10 @@
     border: solid 1px #E8F0F9;
     padding: 10px
 }
+
+.app__display__tier {
+    align-content: center;
+    border: solid 1px black;
+    border-radius: 5px;
+    padding: 5px
+}
