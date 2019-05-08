@@ -208,38 +208,42 @@ def _linear_investment_cost():
 
 for tier_lvl in [1, 2, 3, 4]:
     RATIO_CAP_CONSUMPTION[tier_lvl] = _slope_capacity_vs_yearly_consumption(tier_lvl)
+RATIO_CAP_CONSUMPTION[5] = RATIO_CAP_CONSUMPTION[4]
 
 
-def _find_tier_level(yearly_consumption):
+def _find_tier_level(yearly_consumption, min_tier_level):
     """Find the lower bound of the TIER level based on the electrical yearly consumption
 
     Compare the yearly electricity consumption between the minimal yearly consumptions
-    for tier levels (3, 4) and (4, 5).
+    for tier levels (3, 4) and (4, 5) and assigns a tier level of 3 and 4, respectively.
 
-    ### APPROXIMATION ###
-
-    If the yearly_consumption is lower that the minimum consumption for tier level 3
-    then tier level 3 is returned nevertheless.
+    If the yearly_consumption is lower that the minimum consumption for min_tier_level
+    then min_tier_level is returned nevertheless.
 
     :param yearly_consumption: yearly electricity consumption per household
+    :param min_tier_level: minimum TIER level
+    :return: maximum between the actual TIER level and the min_tier_level
     """
-    answer = 3
-    for tier_level in [3, 4]:
+    answer = min_tier_level
+    for tier_level in [1, 2, 3, 4]:
         if MIN_ANNUAL_CONSUMPTION[tier_level] \
                 <= yearly_consumption \
                 < MIN_ANNUAL_CONSUMPTION[tier_level + 1]:
             answer = tier_level
-    return answer
+    if yearly_consumption >= MIN_ANNUAL_CONSUMPTION[5]:
+        answer = 5
+    return np.max([answer, min_tier_level])
 
 
-def get_peak_capacity_from_yearly_consumption(yearly_consumption):
+def get_peak_capacity_from_yearly_consumption(yearly_consumption, min_tier_level):
     """Use linear interpolation of the minimum values of capacity and consumption.
 
     :param yearly_consumption: yearly consumption per household in kWh/year
     :return: peak capacity in kW
+    :param min_tier_level: minimum TIER level
     """
     # Find the lower tier level bound
-    tier_level = _find_tier_level(yearly_consumption)
+    tier_level = _find_tier_level(yearly_consumption, min_tier_level)
     # Renaming the variables to explicitly show the formula used
     x = yearly_consumption
     m = RATIO_CAP_CONSUMPTION[tier_level]
@@ -301,11 +305,11 @@ def map_weak_grid_class(weak_grid_idx):
 def map_tier_yearly_consumption(
         yearly_consumption,
         electrification_option_share,
-        tier_level=MIN_TIER_LEVEL
+        min_tier_level
 ):
     """Assign yearly consumption adjusted for tier level."""
-    if yearly_consumption < MIN_ANNUAL_CONSUMPTION[tier_level] / electrification_option_share:
-        answer = MIN_ANNUAL_CONSUMPTION[tier_level]
+    if yearly_consumption < MIN_ANNUAL_CONSUMPTION[min_tier_level] / electrification_option_share:
+        answer = MIN_ANNUAL_CONSUMPTION[min_tier_level]
     else:
         answer = yearly_consumption * electrification_option_share
     return answer
@@ -313,10 +317,13 @@ def map_tier_yearly_consumption(
 
 def map_capped_tier_yearly_consumption(
         yearly_consumption,
-        tier_level=4
+        min_tier_level,
 ):
+    tier_level = _find_tier_level(yearly_consumption, min_tier_level)
     """Assign yearly consumption from the upper tier level bound."""
     if yearly_consumption >= MIN_ANNUAL_CONSUMPTION[tier_level]:
+        if tier_level == 5:
+            tier_level = 4
         answer = MIN_ANNUAL_CONSUMPTION[tier_level + 1]
     else:
         answer = MIN_ANNUAL_CONSUMPTION[tier_level]
@@ -375,7 +382,12 @@ def shs_av_power(power_cat, shs_power_categories=None):
     return shs_power_categories.loc[power_cat, 'power_av']
 
 
-def prepare_endogenous_variables(input_df, shs_sales_volumes=None, tier_level=MIN_TIER_LEVEL):
+def prepare_endogenous_variables(
+        input_df,
+        min_tier_level,
+        shs_sales_volumes=None,
+        # min_tier_level=MIN_TIER_LEVEL
+):
 
     if shs_sales_volumes is None:
         shs_sales_volumes = SHS_SALES_VOLUMES
@@ -387,7 +399,7 @@ def prepare_endogenous_variables(input_df, shs_sales_volumes=None, tier_level=MI
             np.vectorize(map_tier_yearly_consumption)(
                 df.hh_yearly_electricity_consumption,
                 df['hh_%s_share' % opt],
-                tier_level
+                min_tier_level
             )
 
     df['shs_unit_av_capacity'] = df.region.map(
@@ -408,12 +420,12 @@ def prepare_endogenous_variables(input_df, shs_sales_volumes=None, tier_level=MI
         lambda shs_cap: shs_av_power(6) if shs_cap <= shs_av_power(5) else shs_av_power(7)
     )
 
-    # peak demand
+    # peak demand computed row-wise and depending on the minimum tier level
     for opt in [GRID, MG]:
         df['hh_%s_tier_peak_demand' % opt] = \
-            df['hh_%s_tier_yearly_electricity_consumption' % opt].map(
-                get_peak_capacity_from_yearly_consumption,
-                na_action='ignore'
+            np.vectorize(get_peak_capacity_from_yearly_consumption)(
+                df['hh_%s_tier_yearly_electricity_consumption' % opt],
+                min_tier_level
             )
 
     df['pop_rel_growth'] = df.pop_2030 / df.pop_2017
@@ -578,16 +590,22 @@ def prepare_prog_data(input_df):
     return df
 
 
-def prepare_scenario_data(df, scenario, prepare_endogenous=False, tier_level=MIN_TIER_LEVEL):
+def prepare_scenario_data(
+        df,
+        scenario,
+        min_tier_level,
+        prepare_endogenous=False,
+):
     """Prepare the data prior to compute the exogenous results for a given scenario.
-    :param df (pandas.DataFrame): a dataframe for which the 'prepare_endogenous_variables' has
+    :param df: (pandas.DataFrame) a dataframe for which the 'prepare_endogenous_variables' has
     been already applied (if prepare_endogenous is not True)
-    :param scenario (str): name of the scenario
-    :param prepare_endogenous (bool):
+    :param scenario: (str) name of the scenario
+    :param min_tier_level: (int) minimum TIER level
+    :param prepare_endogenous: (bool)
     :return: a copy of the dataframe with the scenario specific data
     """
     if prepare_endogenous:
-        df = prepare_endogenous_variables(input_df=df, tier_level=tier_level)
+        df = prepare_endogenous_variables(input_df=df, min_tier_level=min_tier_level)
 
     if scenario == BAU_SCENARIO:
         df = prepare_bau_data(input_df=df)
@@ -598,7 +616,7 @@ def prepare_scenario_data(df, scenario, prepare_endogenous=False, tier_level=MIN
     return df
 
 
-def _compute_ghg_emissions(df):
+def _compute_ghg_emissions(df, min_tier_level):
     """Compute green house gases emissions in `extract_results_scenario."""
 
     # source : ???
@@ -633,7 +651,10 @@ def _compute_ghg_emissions(df):
 
     # consider the upper tier level minimal consumption value instead of the actual value
     df['hh_grid_tier_cap_yearly_electricity_consumption'] = \
-        df.hh_grid_tier_yearly_electricity_consumption.map(map_capped_tier_yearly_consumption)
+        np.vectorize(map_capped_tier_yearly_consumption)(
+            df.hh_grid_tier_yearly_electricity_consumption,
+            min_tier_level=min_tier_level,
+    )
 
     df['hh_mg_tier_cap_yearly_electricity_consumption'] = \
         df.hh_grid_tier_cap_yearly_electricity_consumption * 0.8
@@ -666,8 +687,14 @@ def _compute_investment_cost(df):
         df.hh_cap_scn2_shs_capacity * SHS_AVERAGE_INVESTMENT_COST
 
 
+def extract_results_scenario(
+        input_df,
+        scenario,
+        min_tier_level,
+        regions=None,
+        bau_data=None,
 
-def extract_results_scenario(input_df, scenario, regions=None, bau_data=None):
+):
     df = input_df.copy()
 
     if scenario == BAU_SCENARIO:
@@ -725,21 +752,22 @@ def extract_results_scenario(input_df, scenario, regions=None, bau_data=None):
             df['hh_cap_scn2_%s_capacity' % opt] = df['hh_get_%s_2030' % opt] * df[
                 'cap_sn2_%s_tier_up' % opt] / 1000
 
-    _compute_ghg_emissions(df)
+    _compute_ghg_emissions(df, min_tier_level)
     _compute_investment_cost(df)
 
     return df
 
 
-def compute_ndc_results_from_raw_data(scenario, fname='data/raw_data.csv'):
+def compute_ndc_results_from_raw_data(scenario, min_tier_level, fname='data/raw_data.csv'):
     """Compute the exogenous results from the raw data for a given scenario
-    :param scenario (str): name of the scenario
-    :param fname (str): path to the raw data csv file
+    :param scenario: (str) name of the scenario
+    :param min_tier_level: (int) minimum TIER level
+    :param fname: (str) path to the raw data csv file
     :return:
     """
     # Load data from csv
     df = pd.read_csv(fname, float_precision='high')
     # Compute endogenous results for the given scenario
-    df = prepare_scenario_data(df, scenario, prepare_endogenous=True)
+    df = prepare_scenario_data(df, scenario, min_tier_level, prepare_endogenous=True)
     # Compute the exogenous results
-    return extract_results_scenario(df, scenario)
+    return extract_results_scenario(df, scenario, min_tier_level)

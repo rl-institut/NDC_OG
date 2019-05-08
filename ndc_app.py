@@ -7,6 +7,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 import plotly.graph_objs as go
 from data_preparation import (
+    MIN_TIER_LEVEL,
     SCENARIOS,
     BAU_SCENARIO,
     SE4ALL_SCENARIO,
@@ -51,7 +52,7 @@ from app_components import (
 
 # A dict with the data for each scenario in json format
 SCENARIOS_DATA = {
-    sce: compute_ndc_results_from_raw_data(sce).to_json() for sce in SCENARIOS
+    sce: compute_ndc_results_from_raw_data(sce, MIN_TIER_LEVEL).to_json() for sce in SCENARIOS
 }
 WORLD_ID = 'WD'
 REGIONS_GPD = dict(WD='World', SA='South America', AF='Africa', AS='Asia')
@@ -530,12 +531,17 @@ def update_country_basic_results_table(
     # extract the data from the selected scenario if a country was selected
     if country_iso is not None:
         if scenario in SCENARIOS:
+
+            # identify the prop which triggered the callback
+            ctx = dash.callback_context
+            prop_id = ctx.triggered[0]['prop_id']
+
             df = pd.read_json(cur_data[scenario])
             df = df.loc[df.country_iso == country_iso]
 
             if scenario in [SE4ALL_FLEX_SCENARIO, SE4ALL_SCENARIO, PROG_SCENARIO]:
                 # TODO: only recompute the tier if it has changed (with context)
-                if min_tier_level is not None:
+                if min_tier_level is not None and 'min-tier-input' in prop_id:
                     df = prepare_endogenous_variables(
                         input_df=df,
                         min_tier_level=min_tier_level
@@ -563,8 +569,7 @@ def update_country_basic_results_table(
                     weight_mentis=weight_mentis,
                     fixed_shift_drives=False
                 )
-                df = extract_results_scenario(df, scenario)
-
+                df = extract_results_scenario(df, scenario, min_tier_level)
             # compute the percentage of population with electricity access
             df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
             # gather the values of the results to display in the table
@@ -633,6 +638,11 @@ def update_country_ghg_results_table(
     # extract the data from the selected scenario if a country was selected
     if country_iso is not None:
         if scenario in SCENARIOS:
+
+            # identify the prop which triggered the callback
+            ctx = dash.callback_context
+            prop_id = ctx.triggered[0]['prop_id']
+
             df = pd.read_json(cur_data[scenario])
             df = df.loc[df.country_iso == country_iso]
 
@@ -643,7 +653,7 @@ def update_country_ghg_results_table(
                 df_comp = df_comp.loc[df_comp.country_iso == country_iso]
 
                 # TODO: only recompute the tier if it has changed (with context)
-                if min_tier_level is not None:
+                if min_tier_level is not None and 'min-tier-input' in prop_id:
                     df = prepare_endogenous_variables(
                         input_df=df,
                         min_tier_level=min_tier_level
@@ -672,7 +682,7 @@ def update_country_ghg_results_table(
                     weight_mentis=weight_mentis,
                     fixed_shift_drives=False
                 )
-                df = extract_results_scenario(df, scenario)
+                df = extract_results_scenario(df, scenario, min_tier_level)
 
             if df_comp is None:
                 ghg_rows = [
@@ -725,6 +735,11 @@ def update_aggregate_basic_results_table(
     answer_table = []
     if region_id is not None:
         if scenario in SCENARIOS:
+
+            # identify the prop which triggered the callback
+            ctx = dash.callback_context
+            prop_id = ctx.triggered[0]['prop_id']
+
             df = pd.read_json(cur_data[scenario])
             if region_id != WORLD_ID:
                 # narrow to the region if the scope is not on the whole world
@@ -733,7 +748,7 @@ def update_aggregate_basic_results_table(
             if scenario in [SE4ALL_FLEX_SCENARIO, SE4ALL_SCENARIO, PROG_SCENARIO]:
 
                 # TODO: only recompute the tier if it has changed (with context)
-                if min_tier_level is not None:
+                if min_tier_level is not None and 'min-tier-input' in prop_id:
                     df = prepare_endogenous_variables(
                         input_df=df,
                         min_tier_level=min_tier_level
@@ -787,6 +802,11 @@ def update_aggregate_ghg_results_table(
     answer_table = []
     if region_id is not None:
         if scenario in SCENARIOS:
+
+            # identify the prop which triggered the callback
+            ctx = dash.callback_context
+            prop_id = ctx.triggered[0]['prop_id']
+
             df = pd.read_json(cur_data[scenario])
             df_comp = None
             if region_id != WORLD_ID:
@@ -803,10 +823,10 @@ def update_aggregate_ghg_results_table(
                     df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[region_id]]
 
                 # TODO: only recompute the tier if it has changed (with context)
-                if min_tier_level is not None:
+                if min_tier_level is not None and 'min-tier-input' in prop_id:
                     df = prepare_endogenous_variables(
                         input_df=df,
-                        tier_level=min_tier_level
+                        min_tier_level=min_tier_level
                     )
 
             if df_comp is None:
