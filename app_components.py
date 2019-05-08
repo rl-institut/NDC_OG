@@ -355,32 +355,7 @@ def controls_div():
                     )
                 ),
             ]
-        ),
-        html.Div(
-            id='invest-div',
-            className='app__input',
-            children=[
-                html.Div(
-                    id='invest-label',
-                    className='app__input',
-                    children='Invest'
-                ),
-                html.Div(
-                    id='invest-input-div',
-                    title='invest description',
-                    children=dcc.Input(
-                        id='invest-input',
-                        className='app__input__invest',
-                        type='number',
-                    )
-                ),
-                html.Div(
-                    id='invest-unit',
-                    className='app__input__unit',
-                    children='USD/kW'
-                ),
-            ]
-        ),
+        )
     ]
     return divs
 
