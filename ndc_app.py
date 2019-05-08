@@ -501,7 +501,7 @@ def toggle_piechart_div_display(cur_view, aggregate, cur_style):
         Input('mentis-weak-grid-input', 'value'),
         Input('rise-mg-input', 'value'),
         Input('rise-shs-input', 'value'),
-        Input('tier-input', 'value')
+        Input('min-tier-input', 'value')
     ],
     [State('data-store', 'data')]
 )
@@ -516,7 +516,7 @@ def update_country_basic_results_table(
         weak_grid_class,
         rise_mg,
         rise_shs,
-        tier_level,
+        min_tier_level,
         cur_data,
 ):
     """Display information and study's results for a country."""
@@ -534,10 +534,10 @@ def update_country_basic_results_table(
 
             if scenario in [SE4ALL_FLEX_SCENARIO, SE4ALL_SCENARIO, PROG_SCENARIO]:
                 # TODO: only recompute the tier if it has changed (with context)
-                if tier_level is not None:
+                if min_tier_level is not None:
                     df = prepare_endogenous_variables(
                         input_df=df,
-                        tier_level=tier_level
+                        min_tier_level=min_tier_level
                     )
             if scenario == SE4ALL_FLEX_SCENARIO:
 
@@ -603,7 +603,7 @@ def update_country_basic_results_table(
         Input('mentis-weak-grid-input', 'value'),
         Input('rise-mg-input', 'value'),
         Input('rise-shs-input', 'value'),
-        Input('tier-input', 'value')
+        Input('min-tier-input', 'value')
     ],
     [State('data-store', 'data')]
 )
@@ -618,7 +618,7 @@ def update_country_ghg_results_table(
         weak_grid_class,
         rise_mg,
         rise_shs,
-        tier_level,
+        min_tier_level,
         cur_data,
 ):
     """Display information and study's results for a country."""
@@ -642,10 +642,10 @@ def update_country_ghg_results_table(
                 df_comp = df_comp.loc[df_comp.country_iso == country_iso]
 
                 # TODO: only recompute the tier if it has changed (with context)
-                if tier_level is not None:
+                if min_tier_level is not None:
                     df = prepare_endogenous_variables(
                         input_df=df,
-                        tier_level=tier_level
+                        min_tier_level=min_tier_level
                     )
 
             if scenario == SE4ALL_FLEX_SCENARIO:
@@ -710,14 +710,14 @@ def update_country_ghg_results_table(
     [
         Input('region-input', 'value'),
         Input('scenario-input', 'value'),
-        Input('tier-input', 'value')
+        Input('min-tier-input', 'value')
     ],
     [State('data-store', 'data')]
 )
 def update_aggregate_basic_results_table(
         region_id,
         scenario,
-        tier_level,
+        min_tier_level,
         cur_data,
 ):
     """Display information and study's results for a country."""
@@ -732,10 +732,10 @@ def update_aggregate_basic_results_table(
             if scenario in [SE4ALL_FLEX_SCENARIO, SE4ALL_SCENARIO, PROG_SCENARIO]:
 
                 # TODO: only recompute the tier if it has changed (with context)
-                if tier_level is not None:
+                if min_tier_level is not None:
                     df = prepare_endogenous_variables(
                         input_df=df,
-                        tier_level=tier_level
+                        min_tier_level=min_tier_level
                     )
 
             # aggregate the results
@@ -772,14 +772,14 @@ def update_aggregate_basic_results_table(
     [
         Input('region-input', 'value'),
         Input('scenario-input', 'value'),
-        Input('tier-input', 'value')
+        Input('min-tier-input', 'value')
     ],
     [State('data-store', 'data')]
 )
 def update_aggregate_ghg_results_table(
         region_id,
         scenario,
-        tier_level,
+        min_tier_level,
         cur_data,
 ):
     """Display information and study's results for a country."""
@@ -802,10 +802,10 @@ def update_aggregate_ghg_results_table(
                     df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[region_id]]
 
                 # TODO: only recompute the tier if it has changed (with context)
-                if tier_level is not None:
+                if min_tier_level is not None:
                     df = prepare_endogenous_variables(
                         input_df=df,
-                        tier_level=tier_level
+                        tier_level=min_tier_level
                     )
 
             if df_comp is None:

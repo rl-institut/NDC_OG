@@ -342,10 +342,10 @@ def controls_div():
                     children='Min TIER level'
                 ),
                 html.Div(
-                    id='tier-input-div',
+                    id='min-tier-input-div',
                     title='min tier level description',
                     children=dcc.Input(
-                        id='tier-input',
+                        id='min-tier-input',
                         className='app__input__tier',
                         value=2,
                         type='number',
