@@ -137,17 +137,20 @@ USD_TO_EUR = 0.87
 FCFA_TO_EUR = 0.0015
 
 # drives for the socio-economic model
-MENTI = pd.DataFrame({MG: [3, 13. / 6, 19. / 6, 3.25, 11. / 3],
-                      SHS: [23. / 12, 4.5, 37. / 12, 17. / 6, 41. / 12],
-                      'labels': [
-                          'high_gdp',
-                          'high_mobile_money',
-                          'high_ease_doing_business',
-                          'low_corruption',
-                          'high_grid_weakness'
-                      ]
-                      })
-MENTI = MENTI.set_index('labels')
+IMPACT_FACTORS = pd.DataFrame(
+    {
+        MG: [3, 13. / 6, 19. / 6, 3.25, 11. / 3],
+        SHS: [23. / 12, 4.5, 37. / 12, 17. / 6, 41. / 12],
+        'labels': [
+            'high_gdp',
+            'high_mobile_money',
+            'high_ease_doing_business',
+            'low_corruption',
+            'high_grid_weakness'
+        ]
+    }
+)
+IMPACT_FACTORS = IMPACT_FACTORS.set_index('labels')
 
 MENTI_DRIVES = ['gdp', 'mobile_money', 'ease_doing_business', 'corruption', 'weak_grid']
 
@@ -472,23 +475,24 @@ def prepare_se4all_shift_drives(df):
         map_mobile_money_class, na_action='ignore').fillna(0)
 
 
-def apply_se4all_shift_drives(df, menti=None):
-    if menti is None:
-        menti = MENTI
+def apply_se4all_shift_drives(df, impact_factor=None):
+    if impact_factor is None:
+        impact_factor = IMPACT_FACTORS
     # apply the shift drives
     for opt in [MG, SHS]:
         df['shift_menti_%s' % opt] = \
-            df.gdp_class * menti[opt]['high_gdp'] \
-            + df.mobile_money_class * menti[opt]['high_mobile_money'] \
-            + df.ease_doing_business_class * menti[opt]['high_ease_doing_business'] \
-            + df.corruption_class * menti[opt]['low_corruption'] \
-            + df.weak_grid_class * menti[opt]['high_grid_weakness']
+            df.gdp_class * impact_factor[opt]['high_gdp'] \
+            + df.mobile_money_class * impact_factor[opt]['high_mobile_money'] \
+            + df.ease_doing_business_class * impact_factor[opt]['high_ease_doing_business'] \
+            + df.corruption_class * impact_factor[opt]['low_corruption'] \
+            + df.weak_grid_class * impact_factor[opt]['high_grid_weakness']
 
 
 def prepare_se4all_data(
         input_df,
         weight_mentis=WEIGHT_MENTIS,
-        fixed_shift_drives=True
+        fixed_shift_drives=True,
+        impact_factor=None
 ):
     # for se4all+SHIFT
 
@@ -498,7 +502,7 @@ def prepare_se4all_data(
 
     if fixed_shift_drives:
         prepare_se4all_shift_drives(df)
-    apply_se4all_shift_drives(df)
+    apply_se4all_shift_drives(df, impact_factor)
 
     for opt in ELECTRIFICATION_OPTIONS:
         df['endo_pop_get_%s_2030' % opt] = df['pop_%s_share' % opt] * df.pop_newly_electrified_2030

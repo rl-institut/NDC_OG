@@ -20,7 +20,7 @@ from data_preparation import (
     BASIC_COLUMNS_ID,
     GHG_COLUMNS_ID,
     MENTI_DRIVES,
-
+    IMPACT_FACTORS,
 )
 
 
@@ -167,14 +167,14 @@ def results_div(aggregate=False):
     return divs
 
 
-def scenario_div(init_scenario, init_elec_opt):
+def scenario_div(init_scenario):
     """Return controls for choice of scenario and electrification options."""
 
     divs = [
         html.Div(
             id='scenario-label',
             className='app__input__label',
-            children='Scenario'
+            children='Scenario:'
         ),
         html.Div(
             id='scenario-input-div',
@@ -190,24 +190,6 @@ def scenario_div(init_scenario, init_elec_opt):
             )
         ),
         html.Div(
-            id='elec-label',
-            className='app__input__label',
-            children='Electrification option'
-        ),
-        html.Div(
-            id='electrification-input-div',
-            title='electrification option description',
-            children=dcc.Dropdown(
-                id='electrification-input',
-                className='app__input__dropdown',
-                options=[
-                    {'label': v, 'value': k}
-                    for k, v in ELECTRIFICATION_DICT.items()
-                ],
-                value=init_elec_opt,
-            )
-        ),
-        html.Div(
             id='aggregate-input-div',
             title='Tick this box to enable the aggregation of the results',
             children=dcc.Checklist(
@@ -219,119 +201,66 @@ def scenario_div(init_scenario, init_elec_opt):
                 values=[],
             )
         ),
+        html.Div(
+            id='factor-input-div',
+            title='Tick this box to show the influence and impact factors',
+            children=dcc.Checklist(
+                id='factor-input',
+                className='app__input__checklist',
+                options=[
+                    {'label': 'Show influence factors', 'value': 'show'}
+                ],
+                values=[],
+            )
+        ),
 
     ]
     return divs
+
+
+def impact_factors_div(opt, title=''):
+    factors = []
+    for input_name in IMPACT_FACTORS.index.to_list():
+        factors.append(
+            html.Div(
+                id='impact-{}-{}-input-div'.format(opt, input_name.replace('_', '-')),
+                title='{} description'.format(input_name.replace('_', ' ')),
+                children=[
+                    html.Div(
+                        id='impact-{}-{}-input_label'.format(opt, input_name.replace('_', '-')),
+                        children=input_name.replace('_', ' ')
+                    ),
+                    dcc.Input(
+                        id='impact-{}-{}-input'.format(opt, input_name.replace('_', '-')),
+                        className='app__input__impact',
+                        value=np.round(IMPACT_FACTORS[opt][input_name], 3),
+                        type='number',
+                        min=0,
+                        max=5,
+                        step=0.001
+                    ),
+                ]
+            )
+        )
+
+    return html.Div(
+        id='impact-{}-drives-div'.format(opt),
+        className='app__input',
+        title=title,
+        children=[
+                     html.Div(
+                         id='impact-{}-label'.format(opt),
+                         className='app__input__label',
+                         children='Impact factors ({})'.format(opt.upper())
+                     )
+                 ] + factors
+    )
 
 
 def controls_div():
     """Return controls for scenario dependent variables."""
 
     divs = [
-        html.Div(
-            id='rise-div',
-            className='app__input',
-            children=[
-                html.Div(
-                    id='rise-shs-div',
-                    className='app__input__slider',
-                    title='rise shs description',
-                    children=[
-                        html.Div(
-                            id='rise-shs-label',
-                            className='app__input__label',
-                            children='RISE-SHS'
-                        ),
-                        daq.Slider(
-                            id='rise-shs-input',
-                            min=0,
-                            max=100,
-                            value=14,
-                            handleLabel={
-                                "showCurrentValue": True, "label": "VALUE"},
-                            step=1,
-                        ),
-                    ]
-                ),
-                html.Div(
-                    id='rise-mg-div',
-                    className='app__input__slider',
-                    title='rise mg description',
-                    children=[
-                        html.Div(
-                            id='rise-label',
-                            className='app__input__label',
-                            children='RISE-MG'
-                        ),
-                        daq.Slider(
-                            id='rise-mg-input',
-                            min=0,
-                            max=100,
-                            value=67,
-                            handleLabel={
-                                "showCurrentValue": True, "label": "VALUE"},
-                            step=1,
-                        ),
-                    ]
-                )
-            ]
-        ),
-        html.Div(
-            id='mentis-weight-div',
-            className='app__input',
-            children=[
-                html.Div(
-                    id='mentis-weight-label',
-                    className='app__input__label',
-                    children='Mentis weight'
-                ),
-                html.Div(
-                    id='mentis-weight-input-div',
-                    title='mentis weight description',
-                    children=dcc.Input(
-                        id='mentis-weight-input',
-                        className='app__input__mentis-weight',
-                        value=0.2,
-                        type='number',
-                        min=0,
-                        max=1,
-                        step=0.01
-                    )
-                )
-            ]
-        ),
-        html.Div(
-            id='mentis-drives-div',
-            className='app__input',
-            children=[
-                         html.Div(
-                             id='mentis-label',
-                             className='app__input__label',
-                             children='Mentis drives'
-                         )
-                     ] + [
-                         html.Div(
-                             id='mentis-%s-input-div' % input_name.replace('_', '-'),
-                             title='%s description' % input_name.replace('_', ' '),
-                             children=[
-                                 html.Div(
-                                     id='mentis-%s-input_label' % input_name.replace('_', '-'),
-                                     children=input_name.replace('_', ' ')
-                                 ),
-                                 dcc.Input(
-                                     id='mentis-%s-input' % input_name.replace('_', '-'),
-                                     className='app__input__mentis-drives',
-                                     value=0,
-                                     type='number',
-                                     min=0,
-                                     max=1,
-                                     step=0.5
-                                 ),
-                             ]
-                         )
-                         for input_name in MENTI_DRIVES
-                     ]
-        ),
         html.Div(
             id='tier-div',
             className='app__input',
@@ -347,7 +276,7 @@ def controls_div():
                     children=dcc.Input(
                         id='min-tier-input',
                         className='app__input__tier',
-                        value=2,
+                        value=3,
                         type='number',
                         min=1,
                         max=5,
@@ -371,30 +300,147 @@ def controls_div():
             ]
         ),
         html.Div(
-            id='invest-div',
+            id='rise-div',
             className='app__input',
             children=[
                 html.Div(
-                    id='invest-label',
-                    className='app__input',
-                    children='Invest'
+                    id='rise-grid-div',
+                    className='app__input__slider',
+                    title='rise grid description',
+                    children=[
+                        html.Div(
+                            id='rise-grid-label',
+                            className='app__input__label',
+                            children='RISE-GRID'
+                        ),
+                        daq.Slider(
+                            id='rise-grid-input',
+                            className='daq__slider',
+                            min=0,
+                            max=100,
+                            value=14,
+                            handleLabel={
+                                "showCurrentValue": True, "label": "VALUE"},
+                            step=1,
+                        ),
+                    ]
                 ),
                 html.Div(
-                    id='invest-input-div',
-                    title='invest description',
-                    children=dcc.Input(
-                        id='invest-input',
-                        className='app__input__invest',
-                        type='number',
-                    )
+                    id='rise-shs-div',
+                    className='app__input__slider',
+                    title='rise shs description',
+                    children=[
+                        html.Div(
+                            id='rise-shs-label',
+                            className='app__input__label',
+                            children='RISE-SHS'
+                        ),
+                        daq.Slider(
+                            id='rise-shs-input',
+                            className='daq__slider',
+                            min=0,
+                            max=100,
+                            value=14,
+                            handleLabel={
+                                "showCurrentValue": True, "label": "VALUE"},
+                            step=1,
+                        ),
+                    ]
                 ),
                 html.Div(
-                    id='invest-unit',
-                    className='app__input__unit',
-                    children='USD/kW'
-                ),
+                    id='rise-mg-div',
+                    className='app__input__slider',
+                    title='rise mg description',
+                    children=[
+                        html.Div(
+                            id='rise-label',
+                            className='app__input__label',
+                            children='RISE-MG'
+                        ),
+                        daq.Slider(
+                            id='rise-mg-input',
+                            className='daq__slider',
+                            min=0,
+                            max=100,
+                            value=67,
+                            handleLabel={
+                                "showCurrentValue": True, "label": "VALUE"},
+                            step=1,
+                        ),
+                    ]
+                )
             ]
         ),
+        html.Div(
+            id='factor-div',
+            className='app__input',
+            children=[
+                html.Div(
+                    id='mentis-weight-div',
+                    className='app__input',
+                    children=[
+                        html.Div(
+                            id='mentis-weight-label',
+                            className='app__input__label',
+                            children='Weight RISE / influence factors'
+                        ),
+                        html.Div(
+                            id='mentis-weight-input-div',
+                            title='mentis weight description',
+                            children=dcc.Input(
+                                id='mentis-weight-input',
+                                className='app__input__mentis-weight',
+                                value=0.2,
+                                type='number',
+                                min=0,
+                                max=1,
+                                step=0.01
+                            )
+                        )
+                    ]
+                ),
+                html.Div(
+                    id='mentis-drives-div',
+                    className='app__input',
+                    children=[
+                                 html.Div(
+                                     id='mentis-label',
+                                     className='app__input__label',
+                                     children='Influence factors'
+                                 )
+                             ] + [
+                                 html.Div(
+                                     id='mentis-%s-input-div' % input_name.replace('_', '-'),
+                                     title='%s description' % input_name.replace('_', ' '),
+                                     children=[
+                                         html.Div(
+                                             id='mentis-%s-input_label' %
+                                                input_name.replace('_', '-'),
+                                             children=input_name.replace('_', ' ')
+                                         ),
+                                         dcc.Input(
+                                             id='mentis-%s-input' %
+                                                input_name.replace('_', '-'),
+                                             className='app__input__influence',
+                                     # options=[
+                                     #     {'label': l, 'value': v}
+                                     #     for l, v in zip(['low', 'medium', 'high'], [0, 0.5, 1])
+                                     # ],
+                                             value=0,
+                                             type='number',
+                                             min=0,
+                                             max=1,
+                                             step=0.5
+                                         ),
+                                     ]
+                                 )
+                                 for input_name in MENTI_DRIVES
+                             ]
+                ),
+                impact_factors_div('mg'),
+                impact_factors_div('shs'),
+            ]
+        )
     ]
     return divs
 
