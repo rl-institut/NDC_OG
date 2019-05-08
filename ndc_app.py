@@ -156,6 +156,11 @@ app.layout = html.Div(
                     data=SCENARIOS_DATA.copy()
                 ),
                 dcc.Store(
+                    id='flex-store',
+                    storage_type='session',
+                    data={}
+                ),
+                dcc.Store(
                     id='view-store',
                     storage_type='session',
                     data={'app_view': VIEW_GENERAL}
@@ -453,20 +458,60 @@ def toggle_aggregate_div_display(cur_view, aggregate, cur_style):
     return cur_style
 
 
+
+@app.callback(
+    Output('flex-store', 'data'),
+    [
+        Input('mentis-gdp-input', 'value'),
+        Input('mentis-mobile-money-input', 'value'),
+        Input('mentis-ease-doing-business-input', 'value'),
+        Input('mentis-corruption-input', 'value'),
+        Input('mentis-weak-grid-input', 'value'),
+        Input('rise-grid-input', 'value'),
+        Input('rise-mg-input', 'value'),
+        Input('rise-shs-input', 'value')
+     ],
+    [State('flex-store', 'data')]
+)
+def update_flex_store(
+        gdp_class,
+        mm_class,
+        edb_class,
+        corruption_class,
+        weak_grid_class,
+        rise_grid,
+        rise_mg,
+        rise_shs,
+        flex_data
+):
+    if gdp_class is not None:
+        flex_data.update({'gdp_class':  gdp_class})
+    if mm_class is not None:
+        flex_data.update({'mobile_money_class': mm_class})
+    if edb_class is not None:
+        flex_data.update({'ease_doing_business_class': edb_class})
+    if corruption_class is not None:
+        flex_data.update({'corruption_class': corruption_class})
+    if weak_grid_class is not None:
+        flex_data.update({'weak_grid_class': weak_grid_class})
+    if rise_grid is not None:
+        flex_data.update({'rise_grid': rise_grid})
+    if rise_mg is not None:
+        flex_data.update({'rise_mg': rise_mg})
+    if rise_shs is not None:
+        flex_data.update({'rise_shs': rise_shs})
+
+    return flex_data
+
+
 @app.callback(
     Output('country-basic-results-table', 'data'),
     [
         Input('country-input', 'value'),
         Input('scenario-input', 'value'),
         Input('mentis-weight-input', 'value'),
-        Input('mentis-gdp-input', 'value'),
-        Input('mentis-mobile-money-input', 'value'),
-        Input('mentis-ease-doing-business-input', 'value'),
-        Input('mentis-corruption-input', 'value'),
-        Input('mentis-weak-grid-input', 'value'),
-        Input('rise-mg-input', 'value'),
-        Input('rise-shs-input', 'value'),
-        Input('tier-input', 'value')
+        Input('tier-input', 'value'),
+        Input('flex-store', 'data')
     ],
     [State('data-store', 'data')]
 )
@@ -474,14 +519,8 @@ def update_country_basic_results_table(
         country_sel,
         scenario,
         weight_mentis,
-        gdp_class,
-        mm_class,
-        edb_class,
-        corruption_class,
-        weak_grid_class,
-        rise_mg,
-        rise_shs,
         tier_level,
+        flex_data,
         cur_data,
 ):
     """Display information and study's results for a country."""
@@ -506,20 +545,9 @@ def update_country_basic_results_table(
                     )
             if scenario == SE4ALL_FLEX_SCENARIO:
 
-                if gdp_class is not None:
-                    df.loc[:, 'gdp_class'] = gdp_class
-                if mm_class is not None:
-                    df.loc[:, 'mobile_money_class'] = mm_class
-                if edb_class is not None:
-                    df.loc[:, 'ease_doing_business_class'] = edb_class
-                if corruption_class is not None:
-                    df.loc[:, 'corruption_class'] = corruption_class
-                if weak_grid_class is not None:
-                    df.loc[:, 'weak_grid_class'] = weak_grid_class
-                if rise_mg is not None:
-                    df.loc[:, 'rise_mg'] = rise_mg
-                if rise_shs is not None:
-                    df.loc[:, 'rise_shs'] = rise_shs
+                # assign the values of the flex parameters
+                for k in flex_data:
+                    df.loc[:, k] = flex_data[k]
 
                 # recompute the results after updating the shift drives
                 df = prepare_se4all_data(
@@ -561,14 +589,8 @@ def update_country_basic_results_table(
         Input('country-input', 'value'),
         Input('scenario-input', 'value'),
         Input('mentis-weight-input', 'value'),
-        Input('mentis-gdp-input', 'value'),
-        Input('mentis-mobile-money-input', 'value'),
-        Input('mentis-ease-doing-business-input', 'value'),
-        Input('mentis-corruption-input', 'value'),
-        Input('mentis-weak-grid-input', 'value'),
-        Input('rise-mg-input', 'value'),
-        Input('rise-shs-input', 'value'),
-        Input('tier-input', 'value')
+        Input('tier-input', 'value'),
+        Input('flex-store', 'data')
     ],
     [State('data-store', 'data')]
 )
@@ -576,14 +598,8 @@ def update_country_ghg_results_table(
         country_sel,
         scenario,
         weight_mentis,
-        gdp_class,
-        mm_class,
-        edb_class,
-        corruption_class,
-        weak_grid_class,
-        rise_mg,
-        rise_shs,
         tier_level,
+        flex_data,
         cur_data,
 ):
     """Display information and study's results for a country."""
@@ -615,20 +631,9 @@ def update_country_ghg_results_table(
 
             if scenario == SE4ALL_FLEX_SCENARIO:
 
-                if gdp_class is not None:
-                    df.loc[:, 'gdp_class'] = gdp_class
-                if mm_class is not None:
-                    df.loc[:, 'mobile_money_class'] = mm_class
-                if edb_class is not None:
-                    df.loc[:, 'ease_doing_business_class'] = edb_class
-                if corruption_class is not None:
-                    df.loc[:, 'corruption_class'] = corruption_class
-                if weak_grid_class is not None:
-                    df.loc[:, 'weak_grid_class'] = weak_grid_class
-                if rise_mg is not None:
-                    df.loc[:, 'rise_mg'] = rise_mg
-                if rise_shs is not None:
-                    df.loc[:, 'rise_shs'] = rise_shs
+                # assign the values of the flex parameters
+                for k in flex_data:
+                    df.loc[:, k] = flex_data[k]
 
                 # recompute the results after updating the shift drives
                 df = prepare_se4all_data(
