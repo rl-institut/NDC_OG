@@ -21,6 +21,7 @@ from data_preparation import (
     ELECTRIFICATION_DICT,
     ELECTRIFICATION_DESCRIPTIONS,
     MENTI_DRIVES,
+    IMPACT_FACTORS,
     POP_GET,
     HH_GET,
     HH_CAP,
@@ -132,10 +133,6 @@ layout = go.Layout(
 fig_map = go.Figure(data=data, layout=layout)
 
 
-PIECHART_LABELS = list(ELECTRIFICATION_DICT.values())
-
-piechart = go.Figure(data=[go.Pie(labels=PIECHART_LABELS, values=[4500, 2500, 1053], sort=False)])
-
 # Initializes dash app
 app = dash.Dash(__name__)
 
@@ -160,6 +157,11 @@ app.layout = html.Div(
                     data=SCENARIOS_DATA.copy()
                 ),
                 dcc.Store(
+                    id='flex-store',
+                    storage_type='session',
+                    data={}
+                ),
+                dcc.Store(
                     id='view-store',
                     storage_type='session',
                     data={'app_view': VIEW_GENERAL}
@@ -171,7 +173,7 @@ app.layout = html.Div(
                         html.Div(
                             id='scenario-div',
                             className='app__options',
-                            children=scenario_div(SE4ALL_FLEX_SCENARIO, GRID)
+                            children=scenario_div(SE4ALL_FLEX_SCENARIO)
                         ),
                         html.Div(
                             id='controls-div',
@@ -183,17 +185,6 @@ app.layout = html.Div(
                             id='general-info-div',
                             className='app__info',
                             children=general_info_div()
-                        ),
-                        html.Div(
-                            id='piechart-div',
-                            className='app__piechart',
-                            children=dcc.Graph(
-                                id='piechart',
-                                figure=piechart,
-                                style={
-                                    'height': '55vh',
-                                }
-                            ),
                         ),
                         html.Div(
                             id='aggregate-div',
@@ -212,6 +203,11 @@ app.layout = html.Div(
                             className='app__header',
                             children=[
                                 html.Div(
+                                    id='region-label',
+                                    className='app__input__label',
+                                    children='Region:'
+                                ),
+                                html.Div(
                                     id='region-input-div',
                                     className='app__dropdown',
                                     title='region selection description',
@@ -226,8 +222,27 @@ app.layout = html.Div(
                                     )
                                 ),
                                 html.Div(
+                                    id='elec-label',
+                                    className='app__input__label',
+                                    children='Electrification option:'
+                                ),
+                                html.Div(
+                                    id='electrification-input-div',
+                                    title='electrification option description',
+                                    children=dcc.Dropdown(
+                                        id='electrification-input',
+                                        className='app__input__dropdown',
+                                        options=[
+                                            {'label': v, 'value': k}
+                                            for k, v in ELECTRIFICATION_DICT.items()
+                                        ],
+                                        value=GRID,
+                                    )
+                                ),
+                                html.Div(
                                     id='logo-div',
                                     className='app__logo',
+                                    children='ORG LOGO'
                                 ),
                             ]
                         ),
@@ -237,7 +252,7 @@ app.layout = html.Div(
                             title='country selection description',
                             children=dcc.Dropdown(
                                 id='country-input',
-                                className='app__input__dropdown__map',
+                                className='app__input__dropdown__country',
                                 options=[],
                                 value=None,
                                 multi=False
@@ -251,7 +266,10 @@ app.layout = html.Div(
                             children=dcc.Graph(
                                 id='map',
                                 figure=fig_map,
-                                style={'width': '90vh', 'height': '90vh'}
+                                style={'width': '90vh', 'height': '90vh'},
+                                config={
+                                    'displayModeBar': False,
+                                }
                             ),
                         ),
                         html.Div(
@@ -466,26 +484,119 @@ def toggle_aggregate_div_display(cur_view, aggregate, cur_style):
 
 
 @app.callback(
-    Output('piechart-div', 'style'),
+    Output('factor-div', 'style'),
     [
         Input('view-store', 'data'),
-        Input('aggregate-input', 'values'),
+        Input('factor-input', 'values'),
     ],
-    [State('piechart-div', 'style')]
+    [State('factor-div', 'style')]
 )
-def toggle_piechart_div_display(cur_view, aggregate, cur_style):
-    """Change the display of piechart-div between the app's views."""
+def toggle_factor_div_display(cur_view, show, cur_style):
+    """Change the display of factor-div between the app's views."""
     if cur_style is None:
-        cur_style = {'app_view': VIEW_GENERAL}
+        cur_style = {'display': 'none'}
 
     if cur_view['app_view'] == VIEW_GENERAL:
-        if aggregate:
-            cur_style.update({'display': 'none'})
-        else:
-            cur_style.update({'display': 'flex'})
+        cur_style.update({'display': 'none'})
     elif cur_view['app_view'] == VIEW_COUNTRY:
-        cur_style.update({'display': 'flex'})
+        if show:
+            cur_style.update({'display': 'flex'})
+        else:
+            cur_style.update({'display': 'none'})
+
     return cur_style
+
+
+impact_inputs = []
+for opt in [MG, SHS]:
+    for input_name in IMPACT_FACTORS.index.to_list():
+        impact_inputs.append(
+            Input('impact-{}-{}-input'.format(opt, input_name.replace('_', '-')), 'value')
+        )
+
+
+@app.callback(
+    Output('flex-store', 'data'),
+    [
+        Input('mentis-gdp-input', 'value'),
+        Input('mentis-mobile-money-input', 'value'),
+        Input('mentis-ease-doing-business-input', 'value'),
+        Input('mentis-corruption-input', 'value'),
+        Input('mentis-weak-grid-input', 'value'),
+    ] + impact_inputs + [
+        Input('rise-grid-input', 'value'),
+        Input('rise-mg-input', 'value'),
+        Input('rise-shs-input', 'value')
+    ],
+    [State('flex-store', 'data')]
+)
+def update_flex_store(
+        gdp_class,
+        mm_class,
+        edb_class,
+        corruption_class,
+        weak_grid_class,
+        impact_mg__gdp,
+        impact_mg__mobile_money,
+        impact_mg__ease_doing_business,
+        impact_mg_low_corruption,
+        impact_mg__grid_weakness,
+        impact_shs__gdp,
+        impact_shs__mobile_money,
+        impact_shs__ease_doing_business,
+        impact_shs_low_corruption,
+        impact_shs__grid_weakness,
+        rise_grid,
+        rise_mg,
+        rise_shs,
+        flex_data
+):
+    if gdp_class is not None:
+        flex_data.update({'gdp_class':  gdp_class})
+    if mm_class is not None:
+        flex_data.update({'mobile_money_class': mm_class})
+    if edb_class is not None:
+        flex_data.update({'ease_doing_business_class': edb_class})
+    if corruption_class is not None:
+        flex_data.update({'corruption_class': corruption_class})
+    if weak_grid_class is not None:
+        flex_data.update({'weak_grid_class': weak_grid_class})
+    if rise_grid is not None:
+        flex_data.update({'rise_grid': rise_grid})
+    if rise_mg is not None:
+        flex_data.update({'rise_mg': rise_mg})
+    if rise_shs is not None:
+        flex_data.update({'rise_shs': rise_shs})
+
+    # impact factors for the flex scenario
+    impact_mg = [
+        impact_mg__gdp,
+        impact_mg__mobile_money,
+        impact_mg__ease_doing_business,
+        impact_mg_low_corruption,
+        impact_mg__grid_weakness
+    ]
+
+    impact_shs = [
+        impact_shs__gdp,
+        impact_shs__mobile_money,
+        impact_shs__ease_doing_business,
+        impact_shs_low_corruption,
+        impact_shs__grid_weakness,
+    ]
+
+    impact_factor = pd.DataFrame(
+        {
+            MG: impact_mg,
+            SHS: impact_shs,
+            'labels': IMPACT_FACTORS.index.to_list()
+        }
+    )
+    impact_factor = impact_factor.set_index('labels')
+
+    flex_data['impact_factor'] = impact_factor.to_json()
+
+    return flex_data
 
 
 @app.callback(
@@ -494,14 +605,8 @@ def toggle_piechart_div_display(cur_view, aggregate, cur_style):
         Input('country-input', 'value'),
         Input('scenario-input', 'value'),
         Input('mentis-weight-input', 'value'),
-        Input('mentis-gdp-input', 'value'),
-        Input('mentis-mobile-money-input', 'value'),
-        Input('mentis-ease-doing-business-input', 'value'),
-        Input('mentis-corruption-input', 'value'),
-        Input('mentis-weak-grid-input', 'value'),
-        Input('rise-mg-input', 'value'),
-        Input('rise-shs-input', 'value'),
-        Input('tier-input', 'value')
+        Input('tier-input', 'value'),
+        Input('flex-store', 'data')
     ],
     [State('data-store', 'data')]
 )
@@ -509,14 +614,8 @@ def update_country_basic_results_table(
         country_sel,
         scenario,
         weight_mentis,
-        gdp_class,
-        mm_class,
-        edb_class,
-        corruption_class,
-        weak_grid_class,
-        rise_mg,
-        rise_shs,
         tier_level,
+        flex_data,
         cur_data,
 ):
     """Display information and study's results for a country."""
@@ -540,27 +639,18 @@ def update_country_basic_results_table(
                         tier_level=tier_level
                     )
             if scenario == SE4ALL_FLEX_SCENARIO:
-
-                if gdp_class is not None:
-                    df.loc[:, 'gdp_class'] = gdp_class
-                if mm_class is not None:
-                    df.loc[:, 'mobile_money_class'] = mm_class
-                if edb_class is not None:
-                    df.loc[:, 'ease_doing_business_class'] = edb_class
-                if corruption_class is not None:
-                    df.loc[:, 'corruption_class'] = corruption_class
-                if weak_grid_class is not None:
-                    df.loc[:, 'weak_grid_class'] = weak_grid_class
-                if rise_mg is not None:
-                    df.loc[:, 'rise_mg'] = rise_mg
-                if rise_shs is not None:
-                    df.loc[:, 'rise_shs'] = rise_shs
+                # assign the values of the impact parameters for mg and shs
+                impact_factor = pd.read_json(flex_data.pop('impact_factor', None))
+                # assign the values of the flex parameters
+                for k in flex_data:
+                    df.loc[:, k] = flex_data[k]
 
                 # recompute the results after updating the shift drives
                 df = prepare_se4all_data(
                     input_df=df,
                     weight_mentis=weight_mentis,
-                    fixed_shift_drives=False
+                    fixed_shift_drives=False,
+                    impact_factor=impact_factor
                 )
                 df = extract_results_scenario(df, scenario)
 
@@ -596,14 +686,8 @@ def update_country_basic_results_table(
         Input('country-input', 'value'),
         Input('scenario-input', 'value'),
         Input('mentis-weight-input', 'value'),
-        Input('mentis-gdp-input', 'value'),
-        Input('mentis-mobile-money-input', 'value'),
-        Input('mentis-ease-doing-business-input', 'value'),
-        Input('mentis-corruption-input', 'value'),
-        Input('mentis-weak-grid-input', 'value'),
-        Input('rise-mg-input', 'value'),
-        Input('rise-shs-input', 'value'),
-        Input('tier-input', 'value')
+        Input('tier-input', 'value'),
+        Input('flex-store', 'data')
     ],
     [State('data-store', 'data')]
 )
@@ -611,14 +695,8 @@ def update_country_ghg_results_table(
         country_sel,
         scenario,
         weight_mentis,
-        gdp_class,
-        mm_class,
-        edb_class,
-        corruption_class,
-        weak_grid_class,
-        rise_mg,
-        rise_shs,
         tier_level,
+        flex_data,
         cur_data,
 ):
     """Display information and study's results for a country."""
@@ -649,27 +727,18 @@ def update_country_ghg_results_table(
                     )
 
             if scenario == SE4ALL_FLEX_SCENARIO:
-
-                if gdp_class is not None:
-                    df.loc[:, 'gdp_class'] = gdp_class
-                if mm_class is not None:
-                    df.loc[:, 'mobile_money_class'] = mm_class
-                if edb_class is not None:
-                    df.loc[:, 'ease_doing_business_class'] = edb_class
-                if corruption_class is not None:
-                    df.loc[:, 'corruption_class'] = corruption_class
-                if weak_grid_class is not None:
-                    df.loc[:, 'weak_grid_class'] = weak_grid_class
-                if rise_mg is not None:
-                    df.loc[:, 'rise_mg'] = rise_mg
-                if rise_shs is not None:
-                    df.loc[:, 'rise_shs'] = rise_shs
+                # assign the values of the impact parameters for mg and shs
+                impact_factor = pd.read_json(flex_data.pop('impact_factor', None))
+                # assign the values of the flex parameters
+                for k in flex_data:
+                    df.loc[:, k] = flex_data[k]
 
                 # recompute the results after updating the shift drives
                 df = prepare_se4all_data(
                     input_df=df,
                     weight_mentis=weight_mentis,
-                    fixed_shift_drives=False
+                    fixed_shift_drives=False,
+                    impact_factor=impact_factor
                 )
                 df = extract_results_scenario(df, scenario)
 
@@ -854,47 +923,6 @@ for input_name in MENTI_DRIVES:
 # generate callbacks for the mentis drives dcc.Input
 for input_name in [MG, SHS]:
     callback_generator(app, 'rise-%s' % input_name.replace('_', '-'), 'rise_%s' % input_name)
-
-
-@app.callback(
-    Output('piechart', 'figure'),
-    [Input('map', 'hoverData')],
-    [
-        State('piechart', 'figure'),
-        State('scenario-input', 'value'),
-        State('data-store', 'data')
-    ]
-)
-def update_piechart(selected_data, fig, scenario, cur_data):
-    if selected_data is not None:
-        chosen = [point['location'] if point['pointNumber'] != 0 else None for point in
-                  selected_data['points']]
-        if chosen[0] is not None:
-            country_iso = chosen[0]
-            if scenario in SCENARIOS:
-                # load the data of the scenario
-                df = pd.read_json(cur_data[scenario])
-                # narrow the selection to the selected country
-                df = df.loc[df.country_iso == country_iso]
-
-                # compute the percentage of people with the given electrification option
-                df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
-                # TODO: need to implement https://en.wikipedia.org/wiki/Largest_remainder_method
-                percentage = df[POP_GET].values[0] * 100
-                labels = PIECHART_LABELS
-
-                if scenario == BAU_SCENARIO:
-                    diff = 100 - percentage.sum()
-                    percentage = np.append(percentage, diff)
-                    labels = PIECHART_LABELS + ['no electricity']
-
-                fig['data'][0].update(
-                    {
-                        'values': percentage,
-                        'labels': labels
-                    }
-                )
-    return fig
 
 
 @app.callback(
