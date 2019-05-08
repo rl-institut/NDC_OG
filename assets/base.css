@@ -56,22 +56,38 @@
 
 .app__input__slider {
     //border: solid 2px #E8F0F9;
+    width: 33.33%;
     display: flex;
     flex-direction: row;
     padding-top:45px;
+}
+
+.daq__slider {
+    width: 130px;
 }
 
 .app__input__dropdown {
     width: 140px;
 }
 
-.app__input__dropdown__map {
-    width: 40%;
+.app__input__dropdown__region {
+    width: 100%;
 }
 
-.app__input__mentis-drives{
+.app__input__dropdown__country {
+    width: 40%;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.app__input__influence{
     height: 100%;
     width: 25%;
+}
+
+.app__input__impact{
+    height: 100%;
+    width: 40%;
 }
 
 .app__input__label{
@@ -79,6 +95,18 @@
     padding-right: 15px;
     width: auto;
 }
+#region-input-div {
+    width: 20%;
+}
+
+#header-div {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+region-input-div
+
 
 #scenario-input {
     width: 15%;
@@ -88,10 +116,10 @@
     width: 25%;
 }
 
-
-#piechart-div{
-    height: 25%;
-    border: solid 1px #E8F0F9;
+#factor-div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 #country-info-div{
@@ -125,4 +153,11 @@
     align-content: center;
     border: solid 1px #E8F0F9;
     padding: 10px
+}
+
+.app__display__tier {
+    align-content: center;
+    border: solid 1px black;
+    border-radius: 5px;
+    padding: 5px
 }

@@ -12,16 +12,15 @@ from data_preparation import (
     BAU_SCENARIO,
     SCENARIOS_DICT,
     SE4ALL_FLEX_SCENARIO,
-    POP_GET,
-    HH_GET,
-    HH_CAP,
-    HH_SCN2,
-    INVEST,
-    INVEST_CAP,
-    GHG,
-    GHG_CAP,
-    EXO_RESULTS,
-    MENTI_DRIVES
+    GRID,
+    MG,
+    SHS,
+    BASIC_ROWS,
+    LABEL_COLUMNS,
+    BASIC_COLUMNS_ID,
+    GHG_COLUMNS_ID,
+    MENTI_DRIVES,
+    IMPACT_FACTORS,
 )
 
 
@@ -56,134 +55,83 @@ def callback_generator(app, input_name, df_name):
     return update_drive_input
 
 
-def results_div(df=None, df_comp=None, aggregate=False):
+def results_div(aggregate=False):
     """Fill and return a specific country exogenous results and information.
 
-    :param df: a single line of the dataframe corresponding to the results of a country
-    :param df_comp: a single line of the dataframe corresponding to the BaU results of a country
     :param aggregate: (bool) determine whether the results should be summed country wise
-    :return: the content of the country-div
+    :return: the content of the results-div
     """
-
-    # variables used in the div
-    pop_2017 = 0
-    country = ''
-
-    basic_results_data = []
-    ghg_results_data = []
-    basic_columns = []
-    ghg_columns = []
-
-    # labels of the table columns
-    labels_dict = ELECTRIFICATION_DICT.copy()
-    # a column for the row labels
-    labels_dict['labels'] = ''
-    # a column for comparison of greenhouse gases emission
-    labels_dict['comp'] = 'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO])
-
-    # label of the table rows
-    basic_rows = [
-        '% population newly electrified in 2030',
-        '# household newly electrified in 2030',
-        'MW household capacity',
-        'MW household capacity (TIER capped)',
-        'Total investment (case 1) EUR',
-        'Total investment (case 2) EUR',
-    ]
-
-    if df_comp is None:
-        ghg_rows = [
-            'GHG (case 1)',
-            'GHG (case 2)',
-            # 'GHG CUMUL'
-        ]
-    else:
-        ghg_rows = [
-            'GHG (case 1)',
-            'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-            'GHG (case 2)',
-            'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-        ]
-
-    if df is not None:
-
-        df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
-
-        if aggregate is True:
-            pop_2017 = df.pop_2017.sum(axis=0)
-            country = 'selected region'
-            df = df[EXO_RESULTS].sum(axis=0)
-            if df_comp is not None:
-                df_comp = df_comp[EXO_RESULTS].sum(axis=0)
-        else:
-            pop_2017 = df.pop_2017
-            country = df.country.values[0]
-
-        pop_res = np.squeeze(df[POP_GET].values) * 100
-        hh_res = np.squeeze(df[HH_GET].values) * 100
-        cap_res = np.squeeze(df[HH_CAP].values) * 1e-3
-        cap2_res = np.squeeze(df[HH_SCN2].values) * 1e-3
-        invest_res = np.squeeze(df[INVEST].values)
-        invest_res = np.append(np.NaN, invest_res)
-        invest2_res = np.squeeze(df[INVEST_CAP].values)
-        invest2_res = np.append(np.NaN, invest2_res)
-        ghg_res = np.squeeze(df[GHG].values)
-        ghg2_res = np.squeeze(df[GHG_CAP].values)
-
-        basic_results_data = np.vstack(
-            [pop_res, hh_res, cap_res, cap2_res, invest_res, invest2_res]
-        )
-
-        basic_results_data = pd.DataFrame(data=basic_results_data, columns=ELECTRIFICATION_OPTIONS)
-        basic_results_data['labels'] = pd.Series(basic_rows)
-        basic_columns = ['labels'] + ELECTRIFICATION_OPTIONS
-        basic_results_data = basic_results_data[basic_columns].to_dict('records')
-
-        if df_comp is not None:
-            ghg_comp_res = ghg_res - np.squeeze(df_comp[GHG].values)
-            ghg2_comp_res = ghg2_res - np.squeeze(df_comp[GHG_CAP].values)
-            ghg_results_data = np.vstack([ghg_res, ghg_comp_res, ghg2_res, ghg2_comp_res])
-        else:
-            ghg_results_data = np.vstack([ghg_res, ghg2_res])
-
-        ghg_results_data = pd.DataFrame(data=ghg_results_data, columns=ELECTRIFICATION_OPTIONS)
-        ghg_results_data['labels'] = pd.Series(ghg_rows)
-        ghg_columns = ['labels'] + ELECTRIFICATION_OPTIONS
-        ghg_results_data = ghg_results_data[ghg_columns].to_dict('records')
 
     if aggregate is True:
         id_name = 'aggregate'
     else:
         id_name = 'country'
 
+    # align number on the right
+    number_styling = [
+        {
+            'if': {
+                'column_id': c,
+                'filter': 'labels eq "{}"'.format(label)
+            },
+            'textAlign': 'right'
+        }
+        for c in ELECTRIFICATION_OPTIONS
+        for label in BASIC_ROWS
+    ]
+    # align row labels on the left
+    label_styling = [
+        {
+            'if': {'column_id': 'labels'},
+            'textAlign': 'left'
+        }
+    ]
+    # align column width
+    columns_width = [
+        {'if': {'column_id': 'labels'},
+         'width': '40%'},
+        {'if': {'column_id': GRID},
+         'width': '20%'},
+        {'if': {'column_id': MG},
+         'width': '20%'},
+        {'if': {'column_id': SHS},
+         'width': '20%'},
+    ]
+
     # tables containing the results
     results_divs = [
         html.Div(
             id='{}-basic-results-div'.format(id_name),
             className='{}__results__basic'.format(id_name),
+            style={'width': '90%'},
             children=[
-                html.H4('Results for {}'.format(country)),
+                html.H4(id='{}-basic-results-title'.format(id_name), children='Results'),
                 dash_table.DataTable(
                     id='{}-basic-results-table'.format(id_name),
                     columns=[
-                        {'name': labels_dict[col], 'id': col} for col in basic_columns
+                        {'name': LABEL_COLUMNS[col], 'id': col} for col in BASIC_COLUMNS_ID
                     ],
-                    data=basic_results_data
+                    style_data_conditional=number_styling + label_styling,
+                    style_cell_conditional=columns_width,
+                    style_header={'textAlign': 'center'}
                 )
             ]
         ),
         html.Div(
             id='{}-ghg-results-div'.format(id_name),
             className='{}__results'.format(id_name),
+            style={'width': '90%'},
             children=[
                 html.H4('Greenhouse Gases emissions'),
                 dash_table.DataTable(
                     id='{}-ghg-results-table'.format(id_name),
                     columns=[
-                        {'name': labels_dict[col], 'id': col}
-                        for col in ghg_columns
+                        {'name': LABEL_COLUMNS[col], 'id': col}
+                        for col in GHG_COLUMNS_ID
                     ],
-                    data=ghg_results_data
+                    style_data_conditional=number_styling + label_styling,
+                    style_cell_conditional=columns_width,
+                    style_header={'textAlign': 'center'}
                 )
             ]
         ),
@@ -207,7 +155,7 @@ def results_div(df=None, df_comp=None, aggregate=False):
         html.Div(
             id='{}-info-div'.format(id_name),
             className='{}__info'.format(id_name),
-            children='Population (2017) %i' % pop_2017
+            children='Population (2017)'
         ),
         html.Div(
             id='{}-results-div'.format(id_name),
@@ -219,14 +167,14 @@ def results_div(df=None, df_comp=None, aggregate=False):
     return divs
 
 
-def scenario_div(init_scenario, init_elec_opt):
+def scenario_div(init_scenario):
     """Return controls for choice of scenario and electrification options."""
 
     divs = [
         html.Div(
             id='scenario-label',
             className='app__input__label',
-            children='Scenario'
+            children='Scenario:'
         ),
         html.Div(
             id='scenario-input-div',
@@ -242,24 +190,6 @@ def scenario_div(init_scenario, init_elec_opt):
             )
         ),
         html.Div(
-            id='elec-label',
-            className='app__input__label',
-            children='Electrification option'
-        ),
-        html.Div(
-            id='electrification-input-div',
-            title='electrification option description',
-            children=dcc.Dropdown(
-                id='electrification-input',
-                className='app__input__dropdown',
-                options=[
-                    {'label': v, 'value': k}
-                    for k, v in ELECTRIFICATION_DICT.items()
-                ],
-                value=init_elec_opt,
-            )
-        ),
-        html.Div(
             id='aggregate-input-div',
             title='Tick this box to enable the aggregation of the results',
             children=dcc.Checklist(
@@ -271,9 +201,60 @@ def scenario_div(init_scenario, init_elec_opt):
                 values=[],
             )
         ),
+        html.Div(
+            id='factor-input-div',
+            title='Tick this box to show the influence and impact factors',
+            children=dcc.Checklist(
+                id='factor-input',
+                className='app__input__checklist',
+                options=[
+                    {'label': 'Show influence factors', 'value': 'show'}
+                ],
+                values=[],
+            )
+        ),
 
     ]
     return divs
+
+
+def impact_factors_div(opt, title=''):
+    factors = []
+    for input_name in IMPACT_FACTORS.index.to_list():
+        factors.append(
+            html.Div(
+                id='impact-{}-{}-input-div'.format(opt, input_name.replace('_', '-')),
+                title='{} description'.format(input_name.replace('_', ' ')),
+                children=[
+                    html.Div(
+                        id='impact-{}-{}-input_label'.format(opt, input_name.replace('_', '-')),
+                        children=input_name.replace('_', ' ')
+                    ),
+                    dcc.Input(
+                        id='impact-{}-{}-input'.format(opt, input_name.replace('_', '-')),
+                        className='app__input__impact',
+                        value=np.round(IMPACT_FACTORS[opt][input_name], 3),
+                        type='number',
+                        min=0,
+                        max=5,
+                        step=0.001
+                    ),
+                ]
+            )
+        )
+
+    return html.Div(
+        id='impact-{}-drives-div'.format(opt),
+        className='app__input',
+        title=title,
+        children=[
+                     html.Div(
+                         id='impact-{}-label'.format(opt),
+                         className='app__input__label',
+                         children='Impact factors ({})'.format(opt.upper())
+                     )
+                 ] + factors
+    )
 
 
 def controls_div():
@@ -281,9 +262,69 @@ def controls_div():
 
     divs = [
         html.Div(
+            id='tier-div',
+            className='app__input',
+            children=[
+                html.Div(
+                    id='min-tier-label',
+                    className='app__input__label',
+                    children='Min TIER level'
+                ),
+                html.Div(
+                    id='min-tier-input-div',
+                    title='min tier level description',
+                    children=dcc.Input(
+                        id='min-tier-input',
+                        className='app__input__tier',
+                        value=3,
+                        type='number',
+                        min=1,
+                        max=5,
+                        step=1
+                    )
+                ),
+                html.Div(
+                    id='tier-label',
+                    className='app__input__label',
+                    children='Lower TIER level'
+                ),
+                html.Div(
+                    id='tier-value-div',
+                    title='tier level description',
+                    children=html.Div(
+                        id='tier-value',
+                        className='app__display__tier',
+                        children=''
+                    )
+                ),
+            ]
+        ),
+        html.Div(
             id='rise-div',
             className='app__input',
             children=[
+                html.Div(
+                    id='rise-grid-div',
+                    className='app__input__slider',
+                    title='rise grid description',
+                    children=[
+                        html.Div(
+                            id='rise-grid-label',
+                            className='app__input__label',
+                            children='RISE-GRID'
+                        ),
+                        daq.Slider(
+                            id='rise-grid-input',
+                            className='daq__slider',
+                            min=0,
+                            max=100,
+                            value=14,
+                            handleLabel={
+                                "showCurrentValue": True, "label": "VALUE"},
+                            step=1,
+                        ),
+                    ]
+                ),
                 html.Div(
                     id='rise-shs-div',
                     className='app__input__slider',
@@ -296,6 +337,7 @@ def controls_div():
                         ),
                         daq.Slider(
                             id='rise-shs-input',
+                            className='daq__slider',
                             min=0,
                             max=100,
                             value=14,
@@ -317,6 +359,7 @@ def controls_div():
                         ),
                         daq.Slider(
                             id='rise-mg-input',
+                            className='daq__slider',
                             min=0,
                             max=100,
                             value=67,
@@ -329,110 +372,75 @@ def controls_div():
             ]
         ),
         html.Div(
-            id='mentis-weight-div',
+            id='factor-div',
             className='app__input',
             children=[
                 html.Div(
-                    id='mentis-weight-label',
-                    className='app__input__label',
-                    children='Mentis weight'
-                ),
-                html.Div(
-                    id='mentis-weight-input-div',
-                    title='mentis weight description',
-                    children=dcc.Input(
-                        id='mentis-weight-input',
-                        className='app__input__mentis-weight',
-                        value=0.2,
-                        type='number',
-                        min=0,
-                        max=1,
-                        step=0.01
-                    )
-                )
-            ]
-        ),
-        html.Div(
-            id='mentis-drives-div',
-            className='app__input',
-            children=[
-                         html.Div(
-                             id='mentis-label',
-                             className='app__input__label',
-                             children='Mentis drives'
-                         )
-                     ] + [
-                         html.Div(
-                             id='mentis-%s-input-div' % input_name.replace('_', '-'),
-                             title='%s description' % input_name.replace('_', ' '),
-                             children=[
-                                 html.Div(
-                                     id='mentis-%s-input_label' % input_name.replace('_', '-'),
-                                     children=input_name.replace('_', ' ')
-                                 ),
-                                 dcc.Input(
-                                     id='mentis-%s-input' % input_name.replace('_', '-'),
-                                     className='app__input__mentis-drives',
-                                     value=0,
-                                     type='number',
-                                     min=0,
-                                     max=1,
-                                     step=0.5
-                                 ),
-                             ]
-                         )
-                         for input_name in MENTI_DRIVES
-                     ]
-        ),
-        html.Div(
-            id='tier-div',
-            className='app__input',
-            children=[
-                html.Div(
-                    id='tier-label',
-                    className='app__input__label',
-                    children='Min TIER level'
-                ),
-                html.Div(
-                    id='tier-input-div',
-                    title='min tier level description',
-                    children=dcc.Input(
-                        id='tier-input',
-                        className='app__input__tier',
-                        value=2,
-                        type='number',
-                        min=1,
-                        max=5,
-                        step=1
-                    )
-                ),
-            ]
-        ),
-        html.Div(
-            id='invest-div',
-            className='app__input',
-            children=[
-                html.Div(
-                    id='invest-label',
+                    id='mentis-weight-div',
                     className='app__input',
-                    children='Invest'
+                    children=[
+                        html.Div(
+                            id='mentis-weight-label',
+                            className='app__input__label',
+                            children='Weight RISE / influence factors'
+                        ),
+                        html.Div(
+                            id='mentis-weight-input-div',
+                            title='mentis weight description',
+                            children=dcc.Input(
+                                id='mentis-weight-input',
+                                className='app__input__mentis-weight',
+                                value=0.2,
+                                type='number',
+                                min=0,
+                                max=1,
+                                step=0.01
+                            )
+                        )
+                    ]
                 ),
                 html.Div(
-                    id='invest-input-div',
-                    title='invest description',
-                    children=dcc.Input(
-                        id='invest-input',
-                        className='app__input__invest',
-                        type='number',
-                    )
+                    id='mentis-drives-div',
+                    className='app__input',
+                    children=[
+                                 html.Div(
+                                     id='mentis-label',
+                                     className='app__input__label',
+                                     children='Influence factors'
+                                 )
+                             ] + [
+                                 html.Div(
+                                     id='mentis-%s-input-div' % input_name.replace('_', '-'),
+                                     title='%s description' % input_name.replace('_', ' '),
+                                     children=[
+                                         html.Div(
+                                             id='mentis-%s-input_label' %
+                                                input_name.replace('_', '-'),
+                                             children=input_name.replace('_', ' ')
+                                         ),
+                                         dcc.Input(
+                                             id='mentis-%s-input' %
+                                                input_name.replace('_', '-'),
+                                             className='app__input__influence',
+                                     # options=[
+                                     #     {'label': l, 'value': v}
+                                     #     for l, v in zip(['low', 'medium', 'high'], [0, 0.5, 1])
+                                     # ],
+                                             value=0,
+                                             type='number',
+                                             min=0,
+                                             max=1,
+                                             step=0.5
+                                         ),
+                                     ]
+                                 )
+                                 for input_name in MENTI_DRIVES
+                             ]
                 ),
-                html.Div(
-                    id='invest-unit',
-                    className='app__input__unit',
-                    children='USD/kW'
-                ),
+                impact_factors_div('mg'),
+                impact_factors_div('shs'),
             ]
-        ),
+        )
     ]
     return divs
 
