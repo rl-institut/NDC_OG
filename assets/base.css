@@ -70,8 +70,14 @@
     width: 140px;
 }
 
-.app__input__dropdown__map {
+.app__input__dropdown__region {
+    width: 100%;
+}
+
+.app__input__dropdown__country {
     width: 40%;
+    margin-top: 5px;
+    margin-bottom: 5px;
 }
 
 .app__input__influence{
@@ -89,6 +95,18 @@
     padding-right: 15px;
     width: auto;
 }
+#region-input-div {
+    width: 20%;
+}
+
+#header-div {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+region-input-div
+
 
 #scenario-input {
     width: 15%;
@@ -96,12 +114,6 @@
 
 #electrification-input {
     width: 25%;
-}
-
-
-#piechart-div{
-    height: 25%;
-    border: solid 1px #E8F0F9;
 }
 
 #country-info-div{

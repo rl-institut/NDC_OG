@@ -173,7 +173,7 @@ app.layout = html.Div(
                         html.Div(
                             id='scenario-div',
                             className='app__options',
-                            children=scenario_div(SE4ALL_FLEX_SCENARIO, GRID)
+                            children=scenario_div(SE4ALL_FLEX_SCENARIO)
                         ),
                         html.Div(
                             id='controls-div',
@@ -203,6 +203,11 @@ app.layout = html.Div(
                             className='app__header',
                             children=[
                                 html.Div(
+                                    id='region-label',
+                                    className='app__input__label',
+                                    children='Region:'
+                                ),
+                                html.Div(
                                     id='region-input-div',
                                     className='app__dropdown',
                                     title='region selection description',
@@ -217,8 +222,27 @@ app.layout = html.Div(
                                     )
                                 ),
                                 html.Div(
+                                    id='elec-label',
+                                    className='app__input__label',
+                                    children='Electrification option:'
+                                ),
+                                html.Div(
+                                    id='electrification-input-div',
+                                    title='electrification option description',
+                                    children=dcc.Dropdown(
+                                        id='electrification-input',
+                                        className='app__input__dropdown',
+                                        options=[
+                                            {'label': v, 'value': k}
+                                            for k, v in ELECTRIFICATION_DICT.items()
+                                        ],
+                                        value=GRID,
+                                    )
+                                ),
+                                html.Div(
                                     id='logo-div',
                                     className='app__logo',
+                                    children='ORG LOGO'
                                 ),
                             ]
                         ),
@@ -228,7 +252,7 @@ app.layout = html.Div(
                             title='country selection description',
                             children=dcc.Dropdown(
                                 id='country-input',
-                                className='app__input__dropdown__map',
+                                className='app__input__dropdown__country',
                                 options=[],
                                 value=None,
                                 multi=False

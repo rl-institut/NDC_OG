@@ -167,14 +167,14 @@ def results_div(aggregate=False):
     return divs
 
 
-def scenario_div(init_scenario, init_elec_opt):
+def scenario_div(init_scenario):
     """Return controls for choice of scenario and electrification options."""
 
     divs = [
         html.Div(
             id='scenario-label',
             className='app__input__label',
-            children='Scenario'
+            children='Scenario:'
         ),
         html.Div(
             id='scenario-input-div',
@@ -187,24 +187,6 @@ def scenario_div(init_scenario, init_elec_opt):
                     for k, v in SCENARIOS_DICT.items()
                 ],
                 value=init_scenario,
-            )
-        ),
-        html.Div(
-            id='elec-label',
-            className='app__input__label',
-            children='Electrification option'
-        ),
-        html.Div(
-            id='electrification-input-div',
-            title='electrification option description',
-            children=dcc.Dropdown(
-                id='electrification-input',
-                className='app__input__dropdown',
-                options=[
-                    {'label': v, 'value': k}
-                    for k, v in ELECTRIFICATION_DICT.items()
-                ],
-                value=init_elec_opt,
             )
         ),
         html.Div(
