@@ -104,6 +104,7 @@ def country_hover_text(input_df):
         + '  MG: ' + df.pop_get_mg_2030.map('{:.1%}'.format) + '<br>' \
         + '  SHS: ' + df.pop_get_shs_2030.map('{:.1%}'.format) + '<br>'
 
+
 scl = [
     [0.0, '#f0f0f0'],
     [0.001, '#d2fbd4'],
@@ -392,10 +393,7 @@ def update_map(region_id, scenario, elec_opt, fig, cur_data):
                 go.Scattergeo(
                     lon=[c['Longitude']],
                     lat=[c['Latitude']],
-                    name=c['country_iso'],
-                    text=country_hover_text(df[df.country_iso == c['country_iso']]),
-                    # text='{}: {:.1f}%%'.format(labels[j], z.iloc[i, j] * 100),
-                    hoverinfo='none',
+                    hoverinfo='skip',
                     marker=go.scattergeo.Marker(
                         size=z.iloc[i, j:n].sum() * 25,
                         color=colors[j],
@@ -1151,16 +1149,13 @@ def update_country_selection_options(region_id, scenario, cur_data):
     Output('data-store', 'data'),
     [
         Input('map', 'clickData'),
-Input('map', 'hoverData')
-
     ],
     [State('data-store', 'data')]
 )
-def update_data_store(clicked_data, hover_data, cur_data):
+def update_data_store(clicked_data, cur_data):
     if clicked_data is not None:
         country_iso = clicked_data['points'][0]['location']
         cur_data.update({'selected_country': country_iso})
-    print(hover_data)
     return cur_data
 
 
