@@ -172,6 +172,10 @@ region-input-div
     flex-direction: row;
 }
 
+.country__results{
+    padding-left: 5px;
+}
+
 .country__results p {
     width: 10%;
     align-content: center;

@@ -123,6 +123,7 @@ data = [
 ]
 
 layout = go.Layout(
+    paper_bgcolor='#EBF2FA',
     geo=go.layout.Geo(
         scope='world',
         showlakes=True,
@@ -285,7 +286,7 @@ app.layout = html.Div(
                             children=dcc.Graph(
                                 id='map',
                                 figure=fig_map,
-                                style={'width': '90vh', 'height': '90vh'},
+                                style={'width': '90vh', 'height': '80vh'},
                                 config={
                                     'displayModeBar': False,
                                 }
@@ -384,7 +385,7 @@ def update_map(region_id, scenario, elec_opt, fig, cur_data):
                     name=c['country_iso'],
                     text=country_hover_text(df[df.country_iso == c['country_iso']]),
                     # text='{}: {:.1f}%%'.format(labels[j], z.iloc[i, j] * 100),
-                    hoverinfo='text+name',
+                    hoverinfo='none',
                     marker=go.scattergeo.Marker(
                         size=z.iloc[i, j:n].sum() * 25,
                         color=colors[j],
@@ -1134,13 +1135,18 @@ def update_country_selection_options(region_id, scenario, cur_data):
 
 @app.callback(
     Output('data-store', 'data'),
-    [Input('map', 'clickData')],
+    [
+        Input('map', 'clickData'),
+Input('map', 'hoverData')
+
+    ],
     [State('data-store', 'data')]
 )
-def update_data_store(clicked_data, cur_data):
+def update_data_store(clicked_data, hover_data, cur_data):
     if clicked_data is not None:
         country_iso = clicked_data['points'][0]['location']
         cur_data.update({'selected_country': country_iso})
+    print(hover_data)
     return cur_data
 
 
