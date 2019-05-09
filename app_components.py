@@ -191,6 +191,7 @@ def scenario_div(init_scenario):
         ),
         html.Div(
             id='aggregate-input-div',
+            className='app__checkbox',
             title='Tick this box to enable the aggregation of the results',
             children=dcc.Checklist(
                 id='aggregate-input',
@@ -203,6 +204,7 @@ def scenario_div(init_scenario):
         ),
         html.Div(
             id='factor-input-div',
+            className='app__checkbox',
             title='Tick this box to show the influence and impact factors',
             children=dcc.Checklist(
                 id='factor-input',
@@ -272,6 +274,7 @@ def controls_div():
                 ),
                 html.Div(
                     id='min-tier-input-div',
+                    className='app__input__input',
                     title='min tier level description',
                     children=dcc.Input(
                         id='min-tier-input',
