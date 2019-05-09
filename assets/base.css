@@ -105,13 +105,13 @@ width: 100%;
 }
 
 .app__input__influence{
-    height: 100%;
-    width: 25%;
+    height: 60%;
+    width: 60%;
 }
 
 .app__input__impact{
-    height: 100%;
-    width: 40%;
+    height: 60%;
+    width: 80%;
 }
 
 .app__input__label{
@@ -129,7 +129,6 @@ width: 100%;
     align-items: center;
 }
 
-region-input-div
 
 
 #scenario-input {
@@ -148,6 +147,16 @@ region-input-div
 
 #country-info-div{
     //border: solid 1px #E8F0F9;
+}
+
+
+.country__results h4 {
+    text-align: center;
+
+}
+.aggregate__results h4 {
+    text-align: center;
+
 }
 
 

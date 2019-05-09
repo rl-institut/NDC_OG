@@ -59,6 +59,15 @@ def extract_centroids(reg):
     return centroids.loc[centroids.region.isin(reg)].copy()
 
 
+def add_comma(val):
+    if np.isnan(val):
+        answer = ''
+    else:
+        answer = "{:,}".format(np.round(val, 0))
+        answer = answer.split('.')[0]
+    return answer
+
+
 WORLD_ID = 'WD'
 REGIONS_GPD = dict(WD='World', SA='South America', AF='Africa', AS='Asia')
 
@@ -193,7 +202,7 @@ app.layout = html.Div(
                         html.Div(
                             id='scenario-div',
                             className='app__options',
-                            children=scenario_div(SE4ALL_FLEX_SCENARIO)
+                            children=scenario_div(BAU_SCENARIO)
                         ),
                         html.Div(
                             id='controls-div',
@@ -289,6 +298,7 @@ app.layout = html.Div(
                                 style={'width': '90vh', 'height': '80vh'},
                                 config={
                                     'displayModeBar': False,
+                                    'autosizable': True,
                                 }
                             ),
                         ),
@@ -742,7 +752,9 @@ def update_country_basic_results_table(
                 columns=ELECTRIFICATION_OPTIONS
             )
             # label of the table rows
+
             basic_results_data['labels'] = pd.Series(BASIC_ROWS)
+            basic_results_data.iloc[1:, 0:3] = basic_results_data.iloc[1:, 0:3].applymap(add_comma)
             answer_table = basic_results_data[BASIC_COLUMNS_ID].to_dict('records')
 
     return answer_table
@@ -842,6 +854,8 @@ def update_country_ghg_results_table(
             ghg_results_data = pd.DataFrame(data=ghg_results_data, columns=ELECTRIFICATION_OPTIONS)
             # label of the table rows
             ghg_results_data['labels'] = pd.Series(ghg_rows)
+            ghg_results_data.iloc[:, 0:3] = ghg_results_data.iloc[:, 0:3].applymap(add_comma)
+
             answer_table = ghg_results_data[GHG_COLUMNS_ID].to_dict('records')
 
     return answer_table

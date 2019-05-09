@@ -96,6 +96,8 @@ def results_div(aggregate=False):
          'width': '20%'},
         {'if': {'column_id': SHS},
          'width': '20%'},
+        {'if': {'row_index': 'odd'},
+         'backgroundColor': 'rgb(248, 248, 248)'}
     ]
 
     # tables containing the results
@@ -113,7 +115,19 @@ def results_div(aggregate=False):
                     ],
                     style_data_conditional=number_styling + label_styling,
                     style_cell_conditional=columns_width,
-                    style_header={'textAlign': 'center'}
+                    style_header={'textAlign': 'center'},
+                    style_cell={
+                        'fontFamily': "Roboto"
+                    },
+                    locale_format={
+                        'decimal': '.',
+                        # 'symbol',
+                        # 'separate_4digits',
+                        # 'percent',
+                        # 'numerals',
+                        'group': ','
+                        # 'grouping'
+                    }
                 )
             ]
         ),
@@ -131,22 +145,32 @@ def results_div(aggregate=False):
                     ],
                     style_data_conditional=number_styling + label_styling,
                     style_cell_conditional=columns_width,
-                    style_header={'textAlign': 'center'}
+                    style_header={'textAlign': 'center'},
+                    style_cell={
+                        'fontFamily': "Roboto"
+                    },
                 )
             ]
         ),
     ]
     if aggregate is False:
         # add a barplot below the tables with the results
+
         barplot = html.Div(
             id='barplot-div',
             className='app__{}__barplot'.format(id_name),
             title='Description',
+            style={'width': '90%'},
             children=dcc.Graph(
-                id='barplot',
-                figure=go.Figure(data=[go.Bar(x=ELECTRIFICATION_OPTIONS, y=[20, 14, 23])]),
-                style={'height': '200px'}
-            ),
+                    id='barplot',
+                    figure=go.Figure(data=[go.Bar(x=ELECTRIFICATION_OPTIONS, y=[20, 14, 23])]),
+                    # style={'height': '300px', 'width': '90%'},
+                    style={'height': '300px'},
+                    config={
+                        'displayModeBar': False,
+                        'autosizable': True
+                    }
+                ),
         )
 
         results_divs = results_divs + [barplot]
