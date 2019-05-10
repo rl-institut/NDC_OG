@@ -882,7 +882,6 @@ def update_country_ghg_results_table(
             # label of the table rows
             ghg_results_data['labels'] = pd.Series(ghg_rows)
             ghg_results_data.iloc[:, 0:3] = ghg_results_data.iloc[:, 0:3].applymap(add_comma)
-
             answer_table = ghg_results_data[GHG_COLUMNS_ID].to_dict('records')
 
     return answer_table
@@ -950,6 +949,7 @@ def update_aggregate_basic_results_table(
             )
             # label of the table rows
             basic_results_data['labels'] = pd.Series(BASIC_ROWS)
+            basic_results_data.iloc[1:, 0:3] = basic_results_data.iloc[1:, 0:3].applymap(add_comma)
             answer_table = basic_results_data[BASIC_COLUMNS_ID].to_dict('records')
 
     return answer_table
@@ -1035,6 +1035,7 @@ def update_aggregate_ghg_results_table(
             ghg_results_data['labels'] = pd.Series(ghg_rows)
             # label of the table rows
             ghg_columns = ['labels'] + ELECTRIFICATION_OPTIONS
+            ghg_results_data.iloc[:, 0:3] = ghg_results_data.iloc[:, 0:3].applymap(add_comma)
             answer_table = ghg_results_data[ghg_columns].to_dict('records')
 
     return answer_table
