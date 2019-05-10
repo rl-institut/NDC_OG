@@ -10,8 +10,10 @@ from data_preparation import (
     ELECTRIFICATION_OPTIONS,
     ELECTRIFICATION_DICT,
     BAU_SCENARIO,
+    SE4ALL_SCENARIO,
     SCENARIOS_DICT,
     SE4ALL_FLEX_SCENARIO,
+    PROG_SCENARIO,
     GRID,
     MG,
     SHS,
@@ -163,7 +165,42 @@ def results_div(aggregate=False):
             style={'width': '90%'},
             children=dcc.Graph(
                     id='barplot',
-                    figure=go.Figure(data=[go.Bar(x=ELECTRIFICATION_OPTIONS, y=[20, 14, 23])]),
+                    figure=go.Figure(
+                        data=[
+                            go.Bar(
+                                x=ELECTRIFICATION_OPTIONS.copy() + ['No electricity'],
+                                y=[0, 0, 0, 0],
+                                marker=dict(
+                                    color=['#0000ff', '#ffa500', '#008000', 'red']
+                                ),
+                                name=BAU_SCENARIO
+                            ),
+                            go.Bar(
+                                x=ELECTRIFICATION_OPTIONS.copy() + ['No electricity'],
+                                y=[0, 0, 0, 0],
+                                marker=dict(
+                                    color=['#8080ff', '#ffd280', '#1aff1a', 'red']
+                                ),
+                                name=SE4ALL_SCENARIO
+                            ),
+                            go.Bar(
+                                x=ELECTRIFICATION_OPTIONS.copy() + ['No electricity'],
+                                y=[0, 0, 0, 0],
+                                marker=dict(
+                                    color=['#ccccff', '#ffedcc', '#99ff99', 'red']
+                                ),
+                                name=PROG_SCENARIO
+                            )
+                        ],
+                        layout=go.Layout(
+                            title='% pop. newly electrified in 2030',
+                            barmode='group',
+                            paper_bgcolor='#EBF2FA',
+                            plot_bgcolor='rgba(245, 246, 249, 1)',
+                            showlegend=False,
+                            height=400,
+                        )
+                    ),
                     # style={'height': '300px', 'width': '90%'},
                     style={'height': '300px'},
                     config={

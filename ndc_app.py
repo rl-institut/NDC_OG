@@ -412,6 +412,33 @@ def update_map(region_id, scenario, elec_opt, fig, cur_data):
 
 
 @app.callback(
+    Output('barplot', 'figure'),
+    [
+        Input('scenario-input', 'value'),
+        #Input('country-input', 'value'),
+        Input('country-basic-results-table', 'data')],
+    [State('barplot', 'figure')]
+)
+def update_barplot(scenario, table_data, fig):
+    """update the barplot for every scenario"""
+    if table_data:
+        df = pd.DataFrame.from_dict(table_data).set_index('labels')
+        y = df.loc['% pop. newly electrified in 2030', :]
+        y = np.append(y, 0)
+        if scenario == BAU_SCENARIO:
+            y[3] = 100 - y.sum()
+            sce_id = 0
+        elif scenario in [SE4ALL_SCENARIO, SE4ALL_FLEX_SCENARIO]:
+            sce_id = 1
+        elif scenario == PROG_SCENARIO:
+            sce_id = 2
+
+        fig['data'][sce_id].update({'y': y})
+    return fig
+
+
+
+@app.callback(
     Output('view-store', 'data'),
     [
         Input('scenario-input', 'value'),
@@ -752,6 +779,8 @@ def update_country_basic_results_table(
             # label of the table rows
 
             basic_results_data['labels'] = pd.Series(BASIC_ROWS)
+            # basic_results_data.iloc[0, 0:3] = \
+            #     basic_results_data.iloc[0, 0:3].map(lambda x: '{}%'.format(x))
             basic_results_data.iloc[1:, 0:3] = basic_results_data.iloc[1:, 0:3].applymap(add_comma)
             answer_table = basic_results_data[BASIC_COLUMNS_ID].to_dict('records')
 
@@ -1173,7 +1202,6 @@ def update_scenario_description(scenario):
 )
 def update_electrification_description(elec_opt):
     return ELECTRIFICATION_DESCRIPTIONS[elec_opt]
-
 
 if __name__ == '__main__':
     app.run_server(debug=True)
