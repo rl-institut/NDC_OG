@@ -121,15 +121,6 @@ def results_div(aggregate=False):
                     style_cell={
                         'fontFamily': "Roboto"
                     },
-                    locale_format={
-                        'decimal': '.',
-                        # 'symbol',
-                        # 'separate_4digits',
-                        # 'percent',
-                        # 'numerals',
-                        'group': ','
-                        # 'grouping'
-                    }
                 )
             ]
         ),
