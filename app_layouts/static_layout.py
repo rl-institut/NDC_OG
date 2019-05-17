@@ -281,8 +281,6 @@ def callbacks(app_handle):
     def update_map(region_id, scenario, fig, cur_data):
         """Plot color map of the percentage of people with a given electrification option."""
 
-        print('Here')
-
         # load the data of the scenario
         df = pd.read_json(cur_data[scenario])
 
@@ -581,14 +579,19 @@ def callbacks(app_handle):
                 basic_results_data = np.vstack(
                     [pop_res, hh_res, cap_res, cap2_res, invest_res, invest2_res]
                 )
+
+                total = np.nansum(basic_results_data, axis=1)
+
                 # prepare a DataFrame
                 basic_results_data = pd.DataFrame(
                     data=basic_results_data,
                     columns=ELECTRIFICATION_OPTIONS
                 )
+                # sums of the rows
+                basic_results_data['total'] = pd.Series(total)
                 # label of the table rows
                 basic_results_data['labels'] = pd.Series(BASIC_ROWS)
-                basic_results_data.iloc[1:, 0:3] = basic_results_data.iloc[1:, 0:3].applymap(
+                basic_results_data.iloc[1:, 0:4] = basic_results_data.iloc[1:, 0:4].applymap(
                     add_comma
                 )
                 answer_table = basic_results_data[BASIC_COLUMNS_ID].to_dict('records')
@@ -651,12 +654,18 @@ def callbacks(app_handle):
                     ghg_results_data = np.vstack([ghg_res, ghg_comp_res, ghg2_res, ghg2_comp_res])
                 else:
                     ghg_results_data = np.vstack([ghg_res, ghg2_res])
+
+                total = np.nansum(ghg_results_data, axis=1)
+
                 # prepare a DataFrame
                 ghg_results_data = pd.DataFrame(data=ghg_results_data,
                                                 columns=ELECTRIFICATION_OPTIONS)
+
+                # sums of the rows
+                ghg_results_data['total'] = pd.Series(total)
                 # label of the table rows
                 ghg_results_data['labels'] = pd.Series(ghg_rows)
-                ghg_results_data.iloc[:, 0:3] = ghg_results_data.iloc[:, 0:3].applymap(add_comma)
+                ghg_results_data.iloc[:, 0:4] = ghg_results_data.iloc[:, 0:4].applymap(add_comma)
                 answer_table = ghg_results_data[GHG_COLUMNS_ID].to_dict('records')
 
         return answer_table
@@ -701,14 +710,19 @@ def callbacks(app_handle):
                 basic_results_data = np.vstack(
                     [pop_res, hh_res, cap_res, cap2_res, invest_res, invest2_res]
                 )
+
+                total = np.nansum(basic_results_data, axis=1)
+
                 # prepare a DataFrame
                 basic_results_data = pd.DataFrame(
                     data=basic_results_data,
                     columns=ELECTRIFICATION_OPTIONS
                 )
+                # sums of the rows
+                basic_results_data['total'] = pd.Series(total)
                 # label of the table rows
                 basic_results_data['labels'] = pd.Series(BASIC_ROWS)
-                basic_results_data.iloc[1:, 0:3] = basic_results_data.iloc[1:, 0:3].applymap(
+                basic_results_data.iloc[1:, 0:4] = basic_results_data.iloc[1:, 0:4].applymap(
                     add_comma
                 )
                 answer_table = basic_results_data[BASIC_COLUMNS_ID].to_dict('records')
@@ -777,14 +791,18 @@ def callbacks(app_handle):
                     ghg_results_data = np.vstack([ghg_res, ghg_comp_res, ghg2_res, ghg2_comp_res])
                 else:
                     ghg_results_data = np.vstack([ghg_res, ghg2_res])
+
+                total = np.nansum(ghg_results_data, axis=1)
+
                 # prepare a DataFrame
                 ghg_results_data = pd.DataFrame(data=ghg_results_data,
                                                 columns=ELECTRIFICATION_OPTIONS)
+                # sums of the rows
+                ghg_results_data['total'] = pd.Series(total)
                 ghg_results_data['labels'] = pd.Series(ghg_rows)
                 # label of the table rows
-                ghg_columns = ['labels'] + ELECTRIFICATION_OPTIONS
-                ghg_results_data.iloc[:, 0:3] = ghg_results_data.iloc[:, 0:3].applymap(add_comma)
-                answer_table = ghg_results_data[ghg_columns].to_dict('records')
+                ghg_results_data.iloc[:, 0:4] = ghg_results_data.iloc[:, 0:4].applymap(add_comma)
+                answer_table = ghg_results_data[GHG_COLUMNS_ID].to_dict('records')
 
         return answer_table
 

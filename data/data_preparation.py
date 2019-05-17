@@ -157,6 +157,7 @@ SHIFT_MENTI = ['shift_menti_mg', 'shift_menti_shs']
 
 BASIC_ROWS = [
     '% pop. newly electrified in 2030',
+    'people newly electrified in 2030',
     'HH newly electrified in 2030',
     'HH cap. (MW)',
     'HH cap. (MW) (TIER + 1)',
@@ -167,8 +168,9 @@ BASIC_ROWS = [
 LABEL_COLUMNS = ELECTRIFICATION_DICT.copy()
 # a column for the row labels
 LABEL_COLUMNS['labels'] = ''
-BASIC_COLUMNS_ID = ['labels'] + ELECTRIFICATION_OPTIONS
-GHG_COLUMNS_ID = ['labels'] + ELECTRIFICATION_OPTIONS
+LABEL_COLUMNS['total'] = 'Total'
+BASIC_COLUMNS_ID = ['labels'] + ELECTRIFICATION_OPTIONS + ['total']
+GHG_COLUMNS_ID = ['labels'] + ELECTRIFICATION_OPTIONS + ['total']
 
 
 def _slope_capacity_vs_yearly_consumption(tier_level):
