@@ -355,19 +355,19 @@ def callbacks(app_handle):
         """update the barplot for every scenario"""
 
         country_iso = country_sel
+        if country_iso is not None:
+            for sce_id, sce in enumerate(SCENARIOS):
+                df = pd.read_json(cur_data[sce])
+                # narrow to the country's results
+                df = df.loc[df.country_iso == country_iso]
+                # compute the percentage of population with electricity access
+                y = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0) * 100
 
-        for sce_id, sce in enumerate(SCENARIOS):
-            df = pd.read_json(cur_data[sce])
-            # narrow to the country's results
-            df = df.loc[df.country_iso == country_iso]
-            # compute the percentage of population with electricity access
-            y = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0) * 100
+                y = np.append(y, 0)
+                if sce == BAU_SCENARIO:
+                    y[3] = 100 - y.sum()
 
-            y = np.append(y, 0)
-            if sce == BAU_SCENARIO:
-                y[3] = 100 - y.sum()
-
-            fig['data'][sce_id].update({'y': y})
+                fig['data'][sce_id].update({'y': y})
         return fig
 
     @app_handle.callback(
@@ -380,25 +380,25 @@ def callbacks(app_handle):
     )
     def update_aggregate_barplot(region_id, cur_data, fig):
         """update the barplot for every scenario"""
+        if region_id is not None:
+            for sce_id, sce in enumerate(SCENARIOS):
+                df = pd.read_json(cur_data[sce])
 
-        for sce_id, sce in enumerate(SCENARIOS):
-            df = pd.read_json(cur_data[sce])
+                if region_id != WORLD_ID:
+                    # narrow to the region if the scope is not on the whole world
+                    df = df.loc[df.region == REGIONS_NDC[region_id]]
 
-            if region_id != WORLD_ID:
-                # narrow to the region if the scope is not on the whole world
-                df = df.loc[df.region == REGIONS_NDC[region_id]]
+                # aggregate the results
+                df = df[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
 
-            # aggregate the results
-            df = df[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
+                # compute the percentage of population with electricity access
+                y = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0) * 100
 
-            # compute the percentage of population with electricity access
-            y = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0) * 100
+                y = np.append(y, 0)
+                if sce == BAU_SCENARIO:
+                    y[3] = 100 - y.sum()
 
-            y = np.append(y, 0)
-            if sce == BAU_SCENARIO:
-                y[3] = 100 - y.sum()
-
-            fig['data'][sce_id].update({'y': y})
+                fig['data'][sce_id].update({'y': y})
         return fig
 
     @app_handle.callback(
