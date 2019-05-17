@@ -54,6 +54,15 @@ def extract_centroids(reg):
     return centroids.loc[centroids.region.isin(reg)].copy()
 
 
+def add_comma(val):
+    if np.isnan(val):
+        answer = ''
+    else:
+        answer = "{:,}".format(np.round(val, 0))
+        answer = answer.split('.')[0]
+    return answer
+
+
 WORLD_ID = 'WD'
 REGIONS_GPD = dict(WD='World', SA='South America', AF='Africa', AS='Asia')
 
@@ -506,6 +515,9 @@ def callbacks(app_handle):
                 )
                 # label of the table rows
                 basic_results_data['labels'] = pd.Series(BASIC_ROWS)
+                basic_results_data.iloc[1:, 0:3] = basic_results_data.iloc[1:, 0:3].applymap(
+                    add_comma
+                )
                 answer_table = basic_results_data[BASIC_COLUMNS_ID].to_dict('records')
 
         return answer_table
@@ -571,6 +583,7 @@ def callbacks(app_handle):
                                                 columns=ELECTRIFICATION_OPTIONS)
                 # label of the table rows
                 ghg_results_data['labels'] = pd.Series(ghg_rows)
+                ghg_results_data.iloc[:, 0:3] = ghg_results_data.iloc[:, 0:3].applymap(add_comma)
                 answer_table = ghg_results_data[GHG_COLUMNS_ID].to_dict('records')
 
         return answer_table
@@ -622,6 +635,9 @@ def callbacks(app_handle):
                 )
                 # label of the table rows
                 basic_results_data['labels'] = pd.Series(BASIC_ROWS)
+                basic_results_data.iloc[1:, 0:3] = basic_results_data.iloc[1:, 0:3].applymap(
+                    add_comma
+                )
                 answer_table = basic_results_data[BASIC_COLUMNS_ID].to_dict('records')
 
         return answer_table
@@ -694,6 +710,7 @@ def callbacks(app_handle):
                 ghg_results_data['labels'] = pd.Series(ghg_rows)
                 # label of the table rows
                 ghg_columns = ['labels'] + ELECTRIFICATION_OPTIONS
+                ghg_results_data.iloc[:, 0:3] = ghg_results_data.iloc[:, 0:3].applymap(add_comma)
                 answer_table = ghg_results_data[ghg_columns].to_dict('records')
 
         return answer_table

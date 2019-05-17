@@ -161,10 +161,10 @@ RISE_INDICES = ['rise_%s' % opt for opt in ELECTRIFICATION_OPTIONS]
 SHIFT_MENTI = ['shift_menti_mg', 'shift_menti_shs']
 
 BASIC_ROWS = [
-    '% population newly electrified in 2030',
-    '# household newly electrified in 2030',
-    'MW household capacity',
-    'MW household capacity (TIER capped)',
+    '% pop. newly electrified in 2030',
+    'HH newly electrified in 2030',
+    'HH cap. (MW)',
+    'HH cap. (MW) (TIER capped)',
     'Total investment (case 1) EUR',
     'Total investment (case 2) EUR',
 ]
