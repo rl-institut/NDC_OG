@@ -5,6 +5,8 @@ from dash.dependencies import Input, Output
 from app_main import app, URL_BASEPATH
 from app_layouts import intro_layout, static_layout, flex_layout
 
+server = app.server
+
 # the app and its options are defined in the main_app module
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),

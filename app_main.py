@@ -14,5 +14,4 @@ for css in external_css:
 
 app.title = 'NDC visualisation'
 
-server = app.server
 app.config.suppress_callback_exceptions = True
