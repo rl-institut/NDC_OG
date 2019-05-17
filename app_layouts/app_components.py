@@ -11,12 +11,15 @@ from data.data_preparation import (
     ELECTRIFICATION_DICT,
     BAU_SCENARIO,
     SE4ALL_SCENARIO,
+    SCENARIOS,
     SCENARIOS_DICT,
     SE4ALL_FLEX_SCENARIO,
     PROG_SCENARIO,
     GRID,
     MG,
     SHS,
+    EXO_RESULTS,
+    POP_GET,
     BASIC_ROWS,
     LABEL_COLUMNS,
     BASIC_COLUMNS_ID,
@@ -66,64 +69,63 @@ def results_div(aggregate=False):
 
     if aggregate is True:
         id_name = 'aggregate'
+
     else:
         id_name = 'country'
 
     # add a barplot above the tables with the results
     barplot = html.Div(
-        id='barplot-div',
+        id='{}-barplot-div'.format(id_name),
         className='app__{}__barplot'.format(id_name),
         title='Description',
         style={'width': '90%'},
         children=dcc.Graph(
-                id='barplot',
-                figure=go.Figure(
-                    data=[
-                        go.Bar(
-                            x=ELECTRIFICATION_OPTIONS.copy() + ['No electricity'],
-                            y=[0, 0, 0, 0],
-                            marker=dict(
-                                color=['#0000ff', '#ffa500', '#008000', 'red']
-                            ),
-                            name=BAU_SCENARIO
+            id='{}-barplot'.format(id_name),
+            figure=go.Figure(
+                data=[
+                    go.Bar(
+                        x=ELECTRIFICATION_OPTIONS.copy() + ['No electricity'],
+                        y=[0, 0, 0, 0],
+                        marker=dict(
+                            color=['#0000ff', '#ffa500', '#008000', 'red']
                         ),
-                        go.Bar(
-                            x=ELECTRIFICATION_OPTIONS.copy() + ['No electricity'],
-                            y=[0, 0, 0, 0],
-                            marker=dict(
-                                color=['#8080ff', '#ffd280', '#1aff1a', 'red']
-                            ),
-                            name=SE4ALL_SCENARIO
+                        name=BAU_SCENARIO
+                    ),
+                    go.Bar(
+                        x=ELECTRIFICATION_OPTIONS.copy() + ['No electricity'],
+                        y=[0, 0, 0, 0],
+                        marker=dict(
+                            color=['#8080ff', '#ffd280', '#1aff1a', 'red']
                         ),
-                        go.Bar(
-                            x=ELECTRIFICATION_OPTIONS.copy() + ['No electricity'],
-                            y=[0, 0, 0, 0],
-                            marker=dict(
-                                color=['#ccccff', '#ffedcc', '#99ff99', 'red']
-                            ),
-                            name=PROG_SCENARIO
-                        )
-                    ],
-                    layout=go.Layout(
-                        title='% pop. newly electrified in 2030',
-                        barmode='group',
-                        paper_bgcolor='#EBF2FA',
-                        plot_bgcolor='rgba(245, 246, 249, 1)',
-                        showlegend=False,
-                        height=400,
+                        name=SE4ALL_SCENARIO
+                    ),
+                    go.Bar(
+                        x=ELECTRIFICATION_OPTIONS.copy() + ['No electricity'],
+                        y=[0, 0, 0, 0],
+                        marker=dict(
+                            color=['#ccccff', '#ffedcc', '#99ff99', 'red']
+                        ),
+                        name=PROG_SCENARIO
                     )
-                ),
-                # style={'height': '300px', 'width': '90%'},
-                style={'height': '300px'},
-                config={
-                    'displayModeBar': False,
-                    'autosizable': True
-                }
+                ],
+                layout=go.Layout(
+                    title='% pop. newly electrified in 2030',
+                    barmode='group',
+                    paper_bgcolor='#EBF2FA',
+                    plot_bgcolor='rgba(245, 246, 249, 1)',
+                    showlegend=False,
+                    height=400,
+                )
             ),
+            style={'height': '300px'},
+            config={
+                'displayModeBar': False,
+                'autosizable': True
+            }
+        ),
     )
 
     # add tables with the results
-
     # align number on the right
     number_styling = [
         {
@@ -159,6 +161,7 @@ def results_div(aggregate=False):
 
     # tables containing the results
     results_divs = [
+        barplot,
         html.Div(
             id='{}-basic-results-div'.format(id_name),
             className='{}__results__basic'.format(id_name),
@@ -202,14 +205,12 @@ def results_div(aggregate=False):
         ),
     ]
 
-
-
     divs = [
         html.Div(
             id='{}-results-div'.format(id_name),
             className='{}__results'.format(id_name),
-            children=[barplot] + results_divs
-        ),
+            children=results_divs
+        )
     ]
 
     return divs
