@@ -85,6 +85,33 @@ padding-top: 10px;
     width: 140px;
 }
 
+.app__input__radio {
+    display: flex;
+    flex-direction: row;
+
+
+}
+
+.app__input__radio input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.app__input__radio label {
+    border: solid 1px black;
+    border-radius: 5px;
+    padding: 5px;
+    margin: 4px;
+}
+
+/* On mouse-over, add a background color */
+.app__input__radio label:hover{
+  background-color: #1aff1a;
+}
+
 #min-tier-input-div{
 width: 20%;
 }
@@ -132,7 +159,7 @@ width: 100%;
 
 
 #scenario-input {
-    width: 15%;
+    //width: 15%;
 }
 
 #electrification-input {

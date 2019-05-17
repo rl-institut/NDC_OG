@@ -231,9 +231,9 @@ def scenario_div(init_scenario):
         html.Div(
             id='scenario-input-div',
             title='scenarios description',
-            children=dcc.Dropdown(
+            children=dcc.RadioItems(
                 id='scenario-input',
-                className='app__input__dropdown',
+                className='app__input__radio',
                 options=[
                     {'label': v, 'value': k}
                     for k, v in SCENARIOS_DICT.items()
