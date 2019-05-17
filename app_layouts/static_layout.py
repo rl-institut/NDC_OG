@@ -18,9 +18,6 @@ from data.data_preparation import (
     PROG_SCENARIO,
     SCENARIOS_DICT,
     SCENARIOS_DESCRIPTIONS,
-    MG,
-    GRID,
-    SHS,
     ELECTRIFICATION_OPTIONS,
     POP_GET,
     HH_GET,
@@ -173,7 +170,7 @@ layout = html.Div(
                         html.Div(
                             id='scenario-div',
                             className='app__options',
-                            children=scenario_div(SE4ALL_FLEX_SCENARIO)
+                            children=scenario_div(BAU_SCENARIO)
                         ),
                         html.Div(
                             id='general-info-div',
