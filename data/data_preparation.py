@@ -132,10 +132,6 @@ RATIO_CAP_CONSUMPTION = {}
 # unit is USD per household
 MEDIAN_INVESTMENT_COST = {1: 742, 2: 1273, 3: 2516, 4: 5277, 5: 5492}
 
-# Currency conversion
-USD_TO_EUR = 0.87
-FCFA_TO_EUR = 0.0015
-
 # drives for the socio-economic model
 IMPACT_FACTORS = pd.DataFrame(
     {
@@ -164,9 +160,9 @@ BASIC_ROWS = [
     '% pop. newly electrified in 2030',
     'HH newly electrified in 2030',
     'HH cap. (MW)',
-    'HH cap. (MW) (TIER capped)',
-    'Total investment (case 1) EUR',
-    'Total investment (case 2) EUR',
+    'HH cap. (MW) (TIER + 1)',
+    'Total investment USD',
+    'Total investment (TIER + 1) USD',
 ]
 # labels of the columns of the result tables
 LABEL_COLUMNS = ELECTRIFICATION_DICT.copy()
@@ -682,7 +678,7 @@ def _compute_investment_cost(df):
     """Compute investment costs in EUR in `extract_results_scenario."""
     m, h = _linear_investment_cost()
 
-    df['mg_investment_cost_per_kW'] = (df.hh_mg_tier_peak_demand * m + h) * USD_TO_EUR
+    df['mg_investment_cost_per_kW'] = (df.hh_mg_tier_peak_demand * m + h)
     df['mg_investment_cost'] = df.mg_investment_cost_per_kW * df.hh_mg_capacity
     df['shs_investment_cost'] = df.hh_shs_capacity * SHS_AVERAGE_INVESTMENT_COST
     df['tier_capped_mg_investment_cost'] = \
