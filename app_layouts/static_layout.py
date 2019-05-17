@@ -101,21 +101,12 @@ def country_hover_text(input_df):
         + '  SHS: ' + df.pop_get_shs_2030.map('{:.1%}'.format) + '<br>'
 
 
-scl = [
-    [0.0, 'rgb(136, 136, 68)'],
-    [0.001, 'rgb(242,240,247)'],
-    [0.2, 'rgb(218,218,235)'],
-    [0.4, 'rgb(188,189,220)'],
-    [0.6, 'rgb(158,154,200)'],
-    [0.8, 'rgb(117,107,177)'],
-    [1.0, 'rgb(84,39,143)']
-]
-
 # # Initial input data for the map
 data = [
     go.Choropleth(
-        colorscale=scl,
+        colorscale=[[0, '#a5dbc2'], [1, '#a5dbc2']],
         autocolorscale=False,
+        showscale=False,
         locationmode='ISO-3',
         hoverinfo='text',
         marker=go.choropleth.Marker(
@@ -128,6 +119,7 @@ data = [
 ]
 
 layout = go.Layout(
+    paper_bgcolor='#EBF2FA',
     geo=go.layout.Geo(
         scope='world',
         showlakes=True,
@@ -329,11 +321,7 @@ def callbacks(app_handle):
                     go.Scattergeo(
                         lon=[c['Longitude']],
                         lat=[c['Latitude']],
-                        name=c['country_iso'],
-                        text=str(c['country_iso']),
-                        # country_hover_text(df[df.country_iso == c['country_iso']]),
-                        # text='{}: {:.1f}%%'.format(labels[j], z.iloc[i, j] * 100),
-                        hoverinfo='text+name',
+                        hoverinfo='skip',
                         marker=go.scattergeo.Marker(
                             size=z.iloc[i, j:n].sum() * 25,
                             color=colors[j],
@@ -345,7 +333,7 @@ def callbacks(app_handle):
                 )
             i = i + 1
 
-        fig['data'][:1] = points
+        fig['data'][1:] = points
 
         fig['layout']['geo'].update({'scope': region_name.lower()})
         return fig
