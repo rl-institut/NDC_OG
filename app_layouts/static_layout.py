@@ -497,16 +497,22 @@ def callbacks(app_handle):
 
     @app_handle.callback(
         Output('general-info-div', 'style'),
-        [Input('view-store', 'data')],
+        [
+            Input('view-store', 'data'),
+            Input('aggregate-input', 'values'),
+        ],
         [State('general-info-div', 'style')]
     )
-    def toggle_general_info_div_display(cur_view, cur_style):
+    def toggle_general_info_div_display(cur_view, aggregate, cur_style):
         """Change the display of general-info-div between the app's views."""
         if cur_style is None:
-            cur_style = {'display': 'flex'}
+            cur_style = {'display': 'none'}
 
         if cur_view['app_view'] == VIEW_GENERAL:
-            cur_style.update({'display': 'flex'})
+            if aggregate:
+                cur_style.update({'display': 'none'})
+            else:
+                cur_style.update({'display': 'flex'})
         elif cur_view['app_view'] == VIEW_COUNTRY:
             cur_style.update({'display': 'none'})
         return cur_style
