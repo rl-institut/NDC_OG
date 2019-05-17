@@ -22,10 +22,6 @@ from data.data_preparation import (
     GRID,
     SHS,
     ELECTRIFICATION_OPTIONS,
-    ELECTRIFICATION_DICT,
-    ELECTRIFICATION_DESCRIPTIONS,
-    MENTI_DRIVES,
-    IMPACT_FACTORS,
     POP_GET,
     HH_GET,
     HH_CAP,
@@ -39,18 +35,12 @@ from data.data_preparation import (
     BASIC_COLUMNS_ID,
     GHG_COLUMNS_ID,
     compute_ndc_results_from_raw_data,
-    prepare_endogenous_variables,
-    prepare_se4all_data,
-    extract_results_scenario,
-    _find_tier_level,
 )
 
 from .app_components import (
     results_div,
     scenario_div,
-    controls_div,
     general_info_div,
-    callback_generator
 )
 
 URL_PATHNAME = 'static'
@@ -169,11 +159,6 @@ layout = html.Div(
                     id='data-store',
                     storage_type='session',
                     data=SCENARIOS_DATA.copy()
-                ),
-                dcc.Store(
-                    id='flex-store',
-                    storage_type='session',
-                    data={}
                 ),
                 dcc.Store(
                     id='view-store',
@@ -473,23 +458,6 @@ def toggle_results_div_display(cur_view, cur_style):
 
 
 @app.callback(
-    Output('controls-div', 'style'),
-    [Input('view-store', 'data')],
-    [State('controls-div', 'style')]
-)
-def toggle_controls_div_display(cur_view, cur_style):
-    """Change the display of controls-div between the app's views."""
-    if cur_style is None:
-        cur_style = {'display': 'none'}
-
-    if cur_view['app_view'] == VIEW_GENERAL:
-        cur_style.update({'display': 'none'})
-    elif cur_view['app_view'] == VIEW_COUNTRY:
-        cur_style.update({'display': cur_view['controls_display']})
-    return cur_style
-
-
-@app.callback(
     Output('general-info-div', 'style'),
     [Input('view-store', 'data')],
     [State('general-info-div', 'style')]
@@ -530,138 +498,16 @@ def toggle_aggregate_div_display(cur_view, aggregate, cur_style):
 
 
 @app.callback(
-    Output('factor-div', 'style'),
-    [
-        Input('view-store', 'data'),
-        Input('factor-input', 'values'),
-    ],
-    [State('factor-div', 'style')]
-)
-def toggle_factor_div_display(cur_view, show, cur_style):
-    """Change the display of factor-div between the app's views."""
-    if cur_style is None:
-        cur_style = {'display': 'none'}
-
-    if cur_view['app_view'] == VIEW_GENERAL:
-        cur_style.update({'display': 'none'})
-    elif cur_view['app_view'] == VIEW_COUNTRY:
-        if show:
-            cur_style.update({'display': 'flex'})
-        else:
-            cur_style.update({'display': 'none'})
-
-    return cur_style
-
-
-impact_inputs = []
-for opt in [MG, SHS]:
-    for input_name in IMPACT_FACTORS.index.to_list():
-        impact_inputs.append(
-            Input('impact-{}-{}-input'.format(opt, input_name.replace('_', '-')), 'value')
-        )
-
-
-@app.callback(
-    Output('flex-store', 'data'),
-    [
-        Input('mentis-gdp-input', 'value'),
-        Input('mentis-mobile-money-input', 'value'),
-        Input('mentis-ease-doing-business-input', 'value'),
-        Input('mentis-corruption-input', 'value'),
-        Input('mentis-weak-grid-input', 'value'),
-    ] + impact_inputs + [
-        Input('rise-grid-input', 'value'),
-        Input('rise-mg-input', 'value'),
-        Input('rise-shs-input', 'value')
-    ],
-    [State('flex-store', 'data')]
-)
-def update_flex_store(
-        gdp_class,
-        mm_class,
-        edb_class,
-        corruption_class,
-        weak_grid_class,
-        impact_mg__gdp,
-        impact_mg__mobile_money,
-        impact_mg__ease_doing_business,
-        impact_mg_low_corruption,
-        impact_mg__grid_weakness,
-        impact_shs__gdp,
-        impact_shs__mobile_money,
-        impact_shs__ease_doing_business,
-        impact_shs_low_corruption,
-        impact_shs__grid_weakness,
-        rise_grid,
-        rise_mg,
-        rise_shs,
-        flex_data
-):
-    if gdp_class is not None:
-        flex_data.update({'gdp_class':  gdp_class})
-    if mm_class is not None:
-        flex_data.update({'mobile_money_class': mm_class})
-    if edb_class is not None:
-        flex_data.update({'ease_doing_business_class': edb_class})
-    if corruption_class is not None:
-        flex_data.update({'corruption_class': corruption_class})
-    if weak_grid_class is not None:
-        flex_data.update({'weak_grid_class': weak_grid_class})
-    if rise_grid is not None:
-        flex_data.update({'rise_grid': rise_grid})
-    if rise_mg is not None:
-        flex_data.update({'rise_mg': rise_mg})
-    if rise_shs is not None:
-        flex_data.update({'rise_shs': rise_shs})
-
-    # impact factors for the flex scenario
-    impact_mg = [
-        impact_mg__gdp,
-        impact_mg__mobile_money,
-        impact_mg__ease_doing_business,
-        impact_mg_low_corruption,
-        impact_mg__grid_weakness
-    ]
-
-    impact_shs = [
-        impact_shs__gdp,
-        impact_shs__mobile_money,
-        impact_shs__ease_doing_business,
-        impact_shs_low_corruption,
-        impact_shs__grid_weakness,
-    ]
-
-    impact_factor = pd.DataFrame(
-        {
-            MG: impact_mg,
-            SHS: impact_shs,
-            'labels': IMPACT_FACTORS.index.to_list()
-        }
-    )
-    impact_factor = impact_factor.set_index('labels')
-
-    flex_data['impact_factor'] = impact_factor.to_json()
-
-    return flex_data
-
-
-@app.callback(
     Output('country-basic-results-table', 'data'),
     [
         Input('country-input', 'value'),
         Input('scenario-input', 'value'),
-        Input('mentis-weight-input', 'value'),
-        Input('min-tier-input', 'value'),
-        Input('flex-store', 'data')
     ],
     [State('data-store', 'data')]
 )
 def update_country_basic_results_table(
         country_sel,
         scenario,
-        weight_mentis,
-        min_tier_level,
-        flex_data,
         cur_data,
 ):
     """Display information and study's results for a country."""
@@ -675,35 +521,9 @@ def update_country_basic_results_table(
     if country_iso is not None:
         if scenario in SCENARIOS:
 
-            # identify the prop which triggered the callback
-            ctx = dash.callback_context
-            prop_id = ctx.triggered[0]['prop_id']
-
             df = pd.read_json(cur_data[scenario])
             df = df.loc[df.country_iso == country_iso]
 
-            if scenario in [SE4ALL_FLEX_SCENARIO, SE4ALL_SCENARIO, PROG_SCENARIO]:
-                # TODO: only recompute the tier if it has changed (with context)
-                if min_tier_level is not None and 'min-tier-input' in prop_id:
-                    df = prepare_endogenous_variables(
-                        input_df=df,
-                        min_tier_level=min_tier_level
-                    )
-            if scenario == SE4ALL_FLEX_SCENARIO:
-                # assign the values of the impact parameters for mg and shs
-                impact_factor = pd.read_json(flex_data.pop('impact_factor', None))
-                # assign the values of the flex parameters
-                for k in flex_data:
-                    df.loc[:, k] = flex_data[k]
-
-                # recompute the results after updating the shift drives
-                df = prepare_se4all_data(
-                    input_df=df,
-                    weight_mentis=weight_mentis,
-                    fixed_shift_drives=False,
-                    impact_factor=impact_factor
-                )
-                df = extract_results_scenario(df, scenario, min_tier_level)
             # compute the percentage of population with electricity access
             df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
             # gather the values of the results to display in the table
@@ -735,18 +555,12 @@ def update_country_basic_results_table(
     [
         Input('country-input', 'value'),
         Input('scenario-input', 'value'),
-        Input('mentis-weight-input', 'value'),
-        Input('min-tier-input', 'value'),
-        Input('flex-store', 'data')
     ],
     [State('data-store', 'data')]
 )
 def update_country_ghg_results_table(
         country_sel,
         scenario,
-        weight_mentis,
-        min_tier_level,
-        flex_data,
         cur_data,
 ):
     """Display information and study's results for a country."""
@@ -761,41 +575,13 @@ def update_country_ghg_results_table(
     if country_iso is not None:
         if scenario in SCENARIOS:
 
-            # identify the prop which triggered the callback
-            ctx = dash.callback_context
-            prop_id = ctx.triggered[0]['prop_id']
-
             df = pd.read_json(cur_data[scenario])
             df = df.loc[df.country_iso == country_iso]
 
             if scenario in [SE4ALL_FLEX_SCENARIO, SE4ALL_SCENARIO, PROG_SCENARIO]:
-
                 # to compare greenhouse gas emissions with BaU scenario
                 df_comp = pd.read_json(cur_data[BAU_SCENARIO])
                 df_comp = df_comp.loc[df_comp.country_iso == country_iso]
-
-                # TODO: only recompute the tier if it has changed (with context)
-                if min_tier_level is not None and 'min-tier-input' in prop_id:
-                    df = prepare_endogenous_variables(
-                        input_df=df,
-                        min_tier_level=min_tier_level
-                    )
-
-            if scenario == SE4ALL_FLEX_SCENARIO:
-                # assign the values of the impact parameters for mg and shs
-                impact_factor = pd.read_json(flex_data.pop('impact_factor', None))
-                # assign the values of the flex parameters
-                for k in flex_data:
-                    df.loc[:, k] = flex_data[k]
-
-                # recompute the results after updating the shift drives
-                df = prepare_se4all_data(
-                    input_df=df,
-                    weight_mentis=weight_mentis,
-                    fixed_shift_drives=False,
-                    impact_factor=impact_factor
-                )
-                df = extract_results_scenario(df, scenario, min_tier_level)
 
             if df_comp is None:
                 ghg_rows = [
@@ -821,7 +607,8 @@ def update_country_ghg_results_table(
             else:
                 ghg_results_data = np.vstack([ghg_res, ghg2_res])
             # prepare a DataFrame
-            ghg_results_data = pd.DataFrame(data=ghg_results_data, columns=ELECTRIFICATION_OPTIONS)
+            ghg_results_data = pd.DataFrame(data=ghg_results_data,
+                                            columns=ELECTRIFICATION_OPTIONS)
             # label of the table rows
             ghg_results_data['labels'] = pd.Series(ghg_rows)
             answer_table = ghg_results_data[GHG_COLUMNS_ID].to_dict('records')
@@ -834,14 +621,12 @@ def update_country_ghg_results_table(
     [
         Input('region-input', 'value'),
         Input('scenario-input', 'value'),
-        Input('min-tier-input', 'value')
     ],
     [State('data-store', 'data')]
 )
 def update_aggregate_basic_results_table(
         region_id,
         scenario,
-        min_tier_level,
         cur_data,
 ):
     """Display information and study's results for a country."""
@@ -849,23 +634,10 @@ def update_aggregate_basic_results_table(
     if region_id is not None:
         if scenario in SCENARIOS:
 
-            # identify the prop which triggered the callback
-            ctx = dash.callback_context
-            prop_id = ctx.triggered[0]['prop_id']
-
             df = pd.read_json(cur_data[scenario])
             if region_id != WORLD_ID:
                 # narrow to the region if the scope is not on the whole world
                 df = df.loc[df.region == REGIONS_NDC[region_id]]
-
-            if scenario in [SE4ALL_FLEX_SCENARIO, SE4ALL_SCENARIO, PROG_SCENARIO]:
-
-                # TODO: only recompute the tier if it has changed (with context)
-                if min_tier_level is not None and 'min-tier-input' in prop_id:
-                    df = prepare_endogenous_variables(
-                        input_df=df,
-                        min_tier_level=min_tier_level
-                    )
 
             # aggregate the results
             df = df[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
@@ -901,24 +673,18 @@ def update_aggregate_basic_results_table(
     [
         Input('region-input', 'value'),
         Input('scenario-input', 'value'),
-        Input('min-tier-input', 'value')
     ],
     [State('data-store', 'data')]
 )
 def update_aggregate_ghg_results_table(
         region_id,
         scenario,
-        min_tier_level,
         cur_data,
 ):
     """Display information and study's results for a country."""
     answer_table = []
     if region_id is not None:
         if scenario in SCENARIOS:
-
-            # identify the prop which triggered the callback
-            ctx = dash.callback_context
-            prop_id = ctx.triggered[0]['prop_id']
 
             df = pd.read_json(cur_data[scenario])
             df_comp = None
@@ -934,13 +700,6 @@ def update_aggregate_ghg_results_table(
                 if region_id != WORLD_ID:
                     # narrow to the region if the scope is not on the whole world
                     df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[region_id]]
-
-                # TODO: only recompute the tier if it has changed (with context)
-                if min_tier_level is not None and 'min-tier-input' in prop_id:
-                    df = prepare_endogenous_variables(
-                        input_df=df,
-                        min_tier_level=min_tier_level
-                    )
 
             if df_comp is None:
                 ghg_rows = [
@@ -972,22 +731,14 @@ def update_aggregate_ghg_results_table(
             else:
                 ghg_results_data = np.vstack([ghg_res, ghg2_res])
             # prepare a DataFrame
-            ghg_results_data = pd.DataFrame(data=ghg_results_data, columns=ELECTRIFICATION_OPTIONS)
+            ghg_results_data = pd.DataFrame(data=ghg_results_data,
+                                            columns=ELECTRIFICATION_OPTIONS)
             ghg_results_data['labels'] = pd.Series(ghg_rows)
             # label of the table rows
             ghg_columns = ['labels'] + ELECTRIFICATION_OPTIONS
             answer_table = ghg_results_data[ghg_columns].to_dict('records')
 
     return answer_table
-
-
-# generate callbacks for the mentis drives dcc.Input
-for input_name in MENTI_DRIVES:
-    callback_generator(app, 'mentis-%s' % input_name.replace('_', '-'), '%s_class' % input_name)
-
-# generate callbacks for the mentis drives dcc.Input
-for input_name in [MG, SHS]:
-    callback_generator(app, 'rise-%s' % input_name.replace('_', '-'), 'rise_%s' % input_name)
 
 
 @app.callback(
@@ -1040,33 +791,13 @@ def update_country_info_div(scenario, country_iso, cur_data):
         State('scenario-input', 'value'),
         State('data-store', 'data')]
 )
-def country_basic_results_title(country_iso, scenario,  cur_data):
+def country_basic_results_title(country_iso, scenario, cur_data):
 
     answer = 'Results'
     if scenario in SCENARIOS and country_iso is not None:
         df = pd.read_json(cur_data[scenario])
-        answer = 'Results for {}'.format(df.loc[df.country_iso == country_iso].country.values[0])
-    return answer
-
-
-@app.callback(
-    Output('tier-value', 'children'),
-    [Input('country-input', 'value')],
-    [
-        State('scenario-input', 'value'),
-        State('data-store', 'data')]
-)
-def update_tier_value_div(country_iso, scenario, cur_data):
-    """Find the actual tier level of the country based on its yearly electricity consumption"""
-    answer = ''
-    if scenario in SCENARIOS and country_iso is not None:
-        df = pd.read_json(cur_data[scenario])
-        answer = '{}'.format(
-            _find_tier_level(
-                df.loc[df.country_iso == country_iso].hh_yearly_electricity_consumption.values[0],
-                1
-            )
-        )
+        answer = 'Results for {}'.format(
+            df.loc[df.country_iso == country_iso].country.values[0])
     return answer
 
 
@@ -1141,7 +872,6 @@ def update_scenario_description(scenario):
 )
 def update_electrification_description(elec_opt):
     return ELECTRIFICATION_DESCRIPTIONS[elec_opt]
-
 
 if __name__ == '__main__':
     app.run_server(debug=True)
