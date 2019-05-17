@@ -102,7 +102,7 @@ scl = [
     [1.0, 'rgb(84,39,143)']
 ]
 
-# Initial input data for the map
+# # Initial input data for the map
 data = [
     go.Choropleth(
         colorscale=scl,
@@ -113,9 +113,8 @@ data = [
             line=go.choropleth.marker.Line(
                 color='rgb(255,255,255)',
                 width=1.5
-            )),
-        colorbar=go.choropleth.ColorBar(title="Pop."),
-
+            )
+        ),
     )
 ]
 
@@ -268,15 +267,16 @@ def callbacks(app_handle):
         [
             Input('region-input', 'value'),
             Input('scenario-input', 'value'),
-            Input('electrification-input', 'value')
         ],
         [
             State('map', 'figure'),
             State('data-store', 'data')
         ]
     )
-    def update_map(region_id, scenario, elec_opt, fig, cur_data):
+    def update_map(region_id, scenario, fig, cur_data):
         """Plot color map of the percentage of people with a given electrification option."""
+
+        print('Here')
 
         # load the data of the scenario
         df = pd.read_json(cur_data[scenario])
@@ -286,18 +286,9 @@ def callbacks(app_handle):
         if region_id != WORLD_ID:
             # narrow to the region if the scope is not on the whole world
             df = df.loc[df.region == REGIONS_NDC[region_id]]
-            # color of country boundaries
-            line_color = 'rgb(255,255,255)'
-        else:
-            # color of country boundaries
-            line_color = 'rgb(179,179,179)'
-
-        # compute the percentage of people with the given electrification option
-        z = df['pop_get_%s_2030' % elec_opt].div(df.pop_newly_electrified_2030, axis=0).round(3)
 
         if region_id == 'SA':
             region_name = REGIONS_GPD[WORLD_ID]
-
             geo = 'geo2'
         else:
             region_name = REGIONS_GPD[region_id]
@@ -306,20 +297,11 @@ def callbacks(app_handle):
         fig['data'][0].update(
             {
                 'locations': df['country_iso'],
-                'z': z * 100,
-                'zmin': 0,
-                'zmax': 100,
+                'z': np.ones(len(df.index)),
                 'text': country_hover_text(df),
                 'geo': geo,
-                'marker': {'line': {'color': line_color}},
-                'colorbar': go.choropleth.ColorBar(
-                    title="2030<br>%% %s<br>access" % elec_opt,
-                    tickmode="array",
-                    tickvals=[10 * i for i in range(11)]
-                ),
             }
         )
-
         points = []
         i = 0
         if scenario == BAU_SCENARIO:
@@ -354,7 +336,7 @@ def callbacks(app_handle):
                 )
             i = i + 1
 
-        fig['data'][1:] = points
+        fig['data'][:1] = points
 
         fig['layout']['geo'].update({'scope': region_name.lower()})
         return fig
