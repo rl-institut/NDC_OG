@@ -76,7 +76,7 @@ def results_div(aggregate=False):
     # add a barplot above the tables with the results
     barplot = html.Div(
         id='{}-barplot-div'.format(id_name),
-        className='app__{}__barplot'.format(id_name),
+        className='app__barplot',
         title='Description',
         style={'width': '90%'},
         children=dcc.Graph(
@@ -117,7 +117,8 @@ def results_div(aggregate=False):
                     height=400,
                 )
             ),
-            style={'height': '300px'},
+            #style={'height': '300px'},
+            style={'width': '90vh'},
             config={
                 'displayModeBar': False,
                 'autosizable': True

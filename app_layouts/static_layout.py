@@ -250,9 +250,10 @@ layout = html.Div(
                             children=dcc.Graph(
                                 id='map',
                                 figure=fig_map,
-                                style={'width': '90vh', 'height': '90vh'},
+                                style={'width': '100vh', 'height': '100vh'},
                                 config={
                                     'displayModeBar': False,
+                                    'autosizable': True,
                                 }
                             ),
                         ),
