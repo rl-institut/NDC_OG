@@ -262,591 +262,577 @@ layout = html.Div(
 )
 
 
-@app.callback(
-    Output('map', 'figure'),
-    [
-        Input('region-input', 'value'),
-        Input('scenario-input', 'value'),
-        Input('electrification-input', 'value')
-    ],
-    [
-        State('map', 'figure'),
-        State('data-store', 'data')
-    ]
-)
-def update_map(region_id, scenario, elec_opt, fig, cur_data):
-    """Plot color map of the percentage of people with a given electrification option."""
-
-    # load the data of the scenario
-    df = pd.read_json(cur_data[scenario])
-
-    centroid = pd.read_json(cur_data[region_id])
-
-    if region_id != WORLD_ID:
-        # narrow to the region if the scope is not on the whole world
-        df = df.loc[df.region == REGIONS_NDC[region_id]]
-        # color of country boundaries
-        line_color = 'rgb(255,255,255)'
-    else:
-        # color of country boundaries
-        line_color = 'rgb(179,179,179)'
-
-    # compute the percentage of people with the given electrification option
-    z = df['pop_get_%s_2030' % elec_opt].div(df.pop_newly_electrified_2030, axis=0).round(3)
-
-    if region_id == 'SA':
-        region_name = REGIONS_GPD[WORLD_ID]
-
-        geo = 'geo2'
-    else:
-        region_name = REGIONS_GPD[region_id]
-        geo = 'geo'
-
-    fig['data'][0].update(
-        {
-            'locations': df['country_iso'],
-            'z': z * 100,
-            'zmin': 0,
-            'zmax': 100,
-            'text': country_hover_text(df),
-            'geo': geo,
-            'marker': {'line': {'color': line_color}},
-            'colorbar': go.choropleth.ColorBar(
-                title="2030<br>%% %s<br>access" % elec_opt,
-                tickmode="array",
-                tickvals=[10 * i for i in range(11)]
-            ),
-        }
-    )
-
-    points = []
-    i = 0
-    if scenario == BAU_SCENARIO:
-        z = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
-        z['no_ec'] = 1 - z.sum(axis=1)
-        n = 4
-        labels = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
-    else:
-        z = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
-        n = 3
-        labels = ELECTRIFICATION_OPTIONS.copy()
-    colors = ['blue', 'orange', 'green', 'red']
-    for idx, c in centroid.iterrows():
-        for j in range(n):
-            points.append(
-                go.Scattergeo(
-                    lon=[c['Longitude']],
-                    lat=[c['Latitude']],
-                    name=c['country_iso'],
-                    text=str(c['country_iso']),# country_hover_text(df[df.country_iso == c['country_iso']]),
-                    # text='{}: {:.1f}%%'.format(labels[j], z.iloc[i, j] * 100),
-                    hoverinfo='text+name',
-                    marker=go.scattergeo.Marker(
-                        size=z.iloc[i, j:n].sum() * 25,
-                        color=colors[j],
-                        line=go.scattergeo.marker.Line(width=0)
-                    ),
-                    showlegend=False,
-                    geo=geo
-                )
-            )
-        i = i + 1
-
-    fig['data'][1:] = points
-
-    fig['layout']['geo'].update({'scope': region_name.lower()})
-    return fig
-
-
-@app.callback(
-    Output('view-store', 'data'),
-    [
-        Input('scenario-input', 'value'),
-        Input('region-input', 'value'),
-        Input('country-input', 'value')
-    ],
-    [State('view-store', 'data')]
-)
-def update_view(scenario, region_id, country_sel, cur_view):
-    """Toggle between the different views of the app.
-
-    There are currently two views:
-    - VIEW_GENERAL : information panel on the left and map of the world with countries of the
-    study highlighted on the right panel. The user can hover over the countries and a piechart
-    will update on the right panel. The only controls available in this view are the scenario
-    and electrification option dropdowns.
-    - VIEW_COUNTRY : controls to change the value of the model parameters (model dependent) on
-    the left panel and results details as well as country-specific information on the right panel.
-
-    The app start in the VIEW_GENERAL. The VIEW_COUNTRY can be accessed by cliking on a
-    specific country or selecting it with the country dropdown,
-
-    The controls_display is set to 'flex' only for the se4all+shift scenario and is set to 'none'
-    for the other scenarios (these scenarios do not have variables).
-    """
-    ctx = dash.callback_context
-    if ctx.triggered:
-        prop_id = ctx.triggered[0]['prop_id']
-        # trigger comes from clicking on a country
-        if 'country-input' in prop_id:
-            if country_sel:
-                cur_view.update({'app_view': VIEW_COUNTRY})
-            else:
-                cur_view.update({'app_view': VIEW_GENERAL})
-
-        # trigger comes from selecting a region
-        elif 'region-input' in prop_id:
-            cur_view.update({'app_view': VIEW_GENERAL})
-
-    if scenario == SE4ALL_FLEX_SCENARIO:
-        cur_view.update({'controls_display': 'flex'})
-    else:
-        cur_view.update({'controls_display': 'none'})
-    return cur_view
-
-
-@app.callback(
-    Output('map-div', 'style'),
-    [Input('view-store', 'data')],
-    [State('map-div', 'style')]
-)
-def toggle_map_div_display(cur_view, cur_style):
-    """Change the display of map-div between the app's views."""
-    if cur_style is None:
-        cur_style = {'display': 'flex'}
-
-    if cur_view['app_view'] == VIEW_GENERAL:
-        cur_style.update({'display': 'flex'})
-    elif cur_view['app_view'] == VIEW_COUNTRY:
-        cur_style.update({'display': 'none'})
-    return cur_style
-
-
-@app.callback(
-    Output('country-div', 'style'),
-    [Input('view-store', 'data')],
-    [State('country-div', 'style')]
-)
-def toggle_results_div_display(cur_view, cur_style):
-    """Change the display of country-div between the app's views."""
-    if cur_style is None:
-        cur_style = {'display': 'none'}
-
-    if cur_view['app_view'] == VIEW_GENERAL:
-        cur_style.update({'display': 'none'})
-    elif cur_view['app_view'] == VIEW_COUNTRY:
-        cur_style.update({'display': 'flex'})
-    return cur_style
-
-
-@app.callback(
-    Output('general-info-div', 'style'),
-    [Input('view-store', 'data')],
-    [State('general-info-div', 'style')]
-)
-def toggle_general_info_div_display(cur_view, cur_style):
-    """Change the display of general-info-div between the app's views."""
-    if cur_style is None:
-        cur_style = {'display': 'flex'}
-
-    if cur_view['app_view'] == VIEW_GENERAL:
-        cur_style.update({'display': 'flex'})
-    elif cur_view['app_view'] == VIEW_COUNTRY:
-        cur_style.update({'display': 'none'})
-    return cur_style
-
-
-@app.callback(
-    Output('aggregate-div', 'style'),
-    [
-        Input('view-store', 'data'),
-        Input('aggregate-input', 'values'),
-    ],
-    [State('aggregate-div', 'style')]
-)
-def toggle_aggregate_div_display(cur_view, aggregate, cur_style):
-    """Change the display of aggregate-div between the app's views."""
-    if cur_style is None:
-        cur_style = {'display': 'none'}
-
-    if cur_view['app_view'] == VIEW_GENERAL:
-        if aggregate:
-            cur_style.update({'display': 'flex'})
-        else:
-            cur_style.update({'display': 'none'})
-    elif cur_view['app_view'] == VIEW_COUNTRY:
-        cur_style.update({'display': 'none'})
-    return cur_style
-
-
-@app.callback(
-    Output('country-basic-results-table', 'data'),
-    [
-        Input('country-input', 'value'),
-        Input('scenario-input', 'value'),
-    ],
-    [State('data-store', 'data')]
-)
-def update_country_basic_results_table(
-        country_sel,
-        scenario,
-        cur_data,
-):
-    """Display information and study's results for a country."""
-    answer_table = []
-    country_iso = country_sel
-    # in case of country_iso is a list of one element
-    if np.shape(country_iso) and len(country_iso) == 1:
-        country_iso = country_iso[0]
-
-    # extract the data from the selected scenario if a country was selected
-    if country_iso is not None:
-        if scenario in SCENARIOS:
-
-            df = pd.read_json(cur_data[scenario])
-            df = df.loc[df.country_iso == country_iso]
-
-            # compute the percentage of population with electricity access
-            df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
-            # gather the values of the results to display in the table
-            pop_res = np.squeeze(df[POP_GET].values * 100).round(1)
-            hh_res = np.squeeze(df[HH_GET].values).round(0)
-            cap_res = np.squeeze(df[HH_CAP].values * 1e-3).round(0)
-            cap2_res = np.squeeze(df[HH_SCN2].values * 1e-3).round(0)
-            invest_res = np.squeeze(df[INVEST].values).round(0)
-            invest_res = np.append(np.NaN, invest_res)
-            invest2_res = np.squeeze(df[INVEST_CAP].values).round(0)
-            invest2_res = np.append(np.NaN, invest2_res)
-            basic_results_data = np.vstack(
-                [pop_res, hh_res, cap_res, cap2_res, invest_res, invest2_res]
-            )
-            # prepare a DataFrame
-            basic_results_data = pd.DataFrame(
-                data=basic_results_data,
-                columns=ELECTRIFICATION_OPTIONS
-            )
-            # label of the table rows
-            basic_results_data['labels'] = pd.Series(BASIC_ROWS)
-            answer_table = basic_results_data[BASIC_COLUMNS_ID].to_dict('records')
-
-    return answer_table
-
-
-@app.callback(
-    Output('country-ghg-results-table', 'data'),
-    [
-        Input('country-input', 'value'),
-        Input('scenario-input', 'value'),
-    ],
-    [State('data-store', 'data')]
-)
-def update_country_ghg_results_table(
-        country_sel,
-        scenario,
-        cur_data,
-):
-    """Display information and study's results for a country."""
-    answer_table = []
-    df_comp = None
-    country_iso = country_sel
-    # in case of country_iso is a list of one element
-    if np.shape(country_iso) and len(country_iso) == 1:
-        country_iso = country_iso[0]
-
-    # extract the data from the selected scenario if a country was selected
-    if country_iso is not None:
-        if scenario in SCENARIOS:
-
-            df = pd.read_json(cur_data[scenario])
-            df = df.loc[df.country_iso == country_iso]
-
-            if scenario in [SE4ALL_FLEX_SCENARIO, SE4ALL_SCENARIO, PROG_SCENARIO]:
-                # to compare greenhouse gas emissions with BaU scenario
-                df_comp = pd.read_json(cur_data[BAU_SCENARIO])
-                df_comp = df_comp.loc[df_comp.country_iso == country_iso]
-
-            if df_comp is None:
-                ghg_rows = [
-                    'GHG (case 1)',
-                    'GHG (case 2)',
-                    # 'GHG CUMUL'
-                ]
-            else:
-                ghg_rows = [
-                    'GHG (case 1)',
-                    'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-                    'GHG (case 2)',
-                    'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-                ]
-
-            # gather the values of the results to display in the table
-            ghg_res = np.squeeze(df[GHG].values).round(0)
-            ghg2_res = np.squeeze(df[GHG_CAP].values).round(0)
-            if df_comp is not None:
-                ghg_comp_res = ghg_res - np.squeeze(df_comp[GHG].values).round(0)
-                ghg2_comp_res = ghg2_res - np.squeeze(df_comp[GHG_CAP].values).round(0)
-                ghg_results_data = np.vstack([ghg_res, ghg_comp_res, ghg2_res, ghg2_comp_res])
-            else:
-                ghg_results_data = np.vstack([ghg_res, ghg2_res])
-            # prepare a DataFrame
-            ghg_results_data = pd.DataFrame(data=ghg_results_data,
-                                            columns=ELECTRIFICATION_OPTIONS)
-            # label of the table rows
-            ghg_results_data['labels'] = pd.Series(ghg_rows)
-            answer_table = ghg_results_data[GHG_COLUMNS_ID].to_dict('records')
-
-    return answer_table
-
-
-@app.callback(
-    Output('aggregate-basic-results-table', 'data'),
-    [
-        Input('region-input', 'value'),
-        Input('scenario-input', 'value'),
-    ],
-    [State('data-store', 'data')]
-)
-def update_aggregate_basic_results_table(
-        region_id,
-        scenario,
-        cur_data,
-):
-    """Display information and study's results for a country."""
-    answer_table = []
-    if region_id is not None:
-        if scenario in SCENARIOS:
-
-            df = pd.read_json(cur_data[scenario])
-            if region_id != WORLD_ID:
-                # narrow to the region if the scope is not on the whole world
-                df = df.loc[df.region == REGIONS_NDC[region_id]]
-
-            # aggregate the results
-            df = df[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
-
-            # compute the percentage of population with electricity access
-            df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0)
-            # gather the values of the results to display in the table
-            pop_res = np.squeeze(df[POP_GET].values * 100).round(1)
-            hh_res = np.squeeze(df[HH_GET].values).round(0)
-            cap_res = np.squeeze(df[HH_CAP].values * 1e-3).round(0)
-            cap2_res = np.squeeze(df[HH_SCN2].values * 1e-3).round(0)
-            invest_res = np.squeeze(df[INVEST].values).round(0)
-            invest_res = np.append(np.NaN, invest_res)
-            invest2_res = np.squeeze(df[INVEST_CAP].values).round(0)
-            invest2_res = np.append(np.NaN, invest2_res)
-            basic_results_data = np.vstack(
-                [pop_res, hh_res, cap_res, cap2_res, invest_res, invest2_res]
-            )
-            # prepare a DataFrame
-            basic_results_data = pd.DataFrame(
-                data=basic_results_data,
-                columns=ELECTRIFICATION_OPTIONS
-            )
-            # label of the table rows
-            basic_results_data['labels'] = pd.Series(BASIC_ROWS)
-            answer_table = basic_results_data[BASIC_COLUMNS_ID].to_dict('records')
-
-    return answer_table
-
-
-@app.callback(
-    Output('aggregate-ghg-results-table', 'data'),
-    [
-        Input('region-input', 'value'),
-        Input('scenario-input', 'value'),
-    ],
-    [State('data-store', 'data')]
-)
-def update_aggregate_ghg_results_table(
-        region_id,
-        scenario,
-        cur_data,
-):
-    """Display information and study's results for a country."""
-    answer_table = []
-    if region_id is not None:
-        if scenario in SCENARIOS:
-
-            df = pd.read_json(cur_data[scenario])
-            df_comp = None
-            if region_id != WORLD_ID:
-                # narrow to the region if the scope is not on the whole world
-                df = df.loc[df.region == REGIONS_NDC[region_id]]
-
-            if scenario in [SE4ALL_FLEX_SCENARIO, SE4ALL_SCENARIO, PROG_SCENARIO]:
-
-                # to compare greenhouse gas emissions with BaU scenario
-                df_comp = pd.read_json(cur_data[BAU_SCENARIO])
-
-                if region_id != WORLD_ID:
-                    # narrow to the region if the scope is not on the whole world
-                    df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[region_id]]
-
-            if df_comp is None:
-                ghg_rows = [
-                    'GHG (case 1)',
-                    'GHG (case 2)',
-                    # 'GHG CUMUL'
-                ]
-            else:
-                ghg_rows = [
-                    'GHG (case 1)',
-                    'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-                    'GHG (case 2)',
-                    'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-                ]
-                # aggregate the results
-                df_comp = df_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
-
-            # aggregate the results
-            df = df[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
-
-            # gather the values of the results to display in the table
-            ghg_res = np.squeeze(df[GHG].values).round(0)
-            ghg2_res = np.squeeze(df[GHG_CAP].values).round(0)
-
-            if df_comp is not None:
-                ghg_comp_res = ghg_res - np.squeeze(df_comp[GHG].values).round(0)
-                ghg2_comp_res = ghg2_res - np.squeeze(df_comp[GHG_CAP].values).round(0)
-                ghg_results_data = np.vstack([ghg_res, ghg_comp_res, ghg2_res, ghg2_comp_res])
-            else:
-                ghg_results_data = np.vstack([ghg_res, ghg2_res])
-            # prepare a DataFrame
-            ghg_results_data = pd.DataFrame(data=ghg_results_data,
-                                            columns=ELECTRIFICATION_OPTIONS)
-            ghg_results_data['labels'] = pd.Series(ghg_rows)
-            # label of the table rows
-            ghg_columns = ['labels'] + ELECTRIFICATION_OPTIONS
-            answer_table = ghg_results_data[ghg_columns].to_dict('records')
-
-    return answer_table
-
-
-@app.callback(
-    Output('country-input', 'value'),
-    [Input('data-store', 'data')],
-    [State('country-input', 'value')]
-)
-def update_selected_country_on_map(cur_data, cur_val):
-
-    country_iso = cur_data.get('selected_country')
-    if country_iso is None:
-        country_iso = cur_val
-    return country_iso
-
-
-@app.callback(
-    Output('country-info-div', 'children'),
-    [
-        Input('scenario-input', 'value'),
-        Input('country-input', 'value')
-    ],
-    [State('data-store', 'data')]
-)
-def update_country_info_div(scenario, country_iso, cur_data):
-
-    divs = []
-    if scenario in SCENARIOS and country_iso is not None:
-        df = pd.read_json(cur_data[scenario])
-        pop_2017 = df.loc[df.country_iso == country_iso].pop_2017.values[0]
-
-        image_filename = 'icons/{}.png'.format(country_iso)
-        encoded_image = base64.b64encode(open(image_filename, 'rb').read())
-
-        divs = [
-            html.Img(
-                src='data:image/png;base64,{}'.format(encoded_image.decode()),
-                className='country__info__flag',
-                style={'width': '100%'}
-            ),
-            html.Div('Population (2017) : {}'.format(pop_2017)),
+def callbacks(app_handle):
+    @app_handle.callback(
+        Output('map', 'figure'),
+        [
+            Input('region-input', 'value'),
+            Input('scenario-input', 'value'),
+            Input('electrification-input', 'value')
+        ],
+        [
+            State('map', 'figure'),
+            State('data-store', 'data')
         ]
+    )
+    def update_map(region_id, scenario, elec_opt, fig, cur_data):
+        """Plot color map of the percentage of people with a given electrification option."""
 
-    return divs
-
-
-@app.callback(
-    Output('country-basic-results-title', 'children'),
-    [Input('country-input', 'value')],
-    [
-        State('scenario-input', 'value'),
-        State('data-store', 'data')]
-)
-def country_basic_results_title(country_iso, scenario, cur_data):
-
-    answer = 'Results'
-    if scenario in SCENARIOS and country_iso is not None:
-        df = pd.read_json(cur_data[scenario])
-        answer = 'Results for {}'.format(
-            df.loc[df.country_iso == country_iso].country.values[0])
-    return answer
-
-
-@app.callback(
-    Output('aggregate-info-div', 'children'),
-    [
-        Input('scenario-input', 'value'),
-        Input('region-input', 'value')
-    ],
-    [State('data-store', 'data')]
-)
-def update_aggregate_info_div(scenario, region_id, cur_data):
-
-    pop_2017 = ''
-    if scenario in SCENARIOS and region_id is not None:
-        df = pd.read_json(cur_data[scenario])
-        pop_2017 = df.pop_2017.sum(axis=0)
-
-    return html.Div('Population (2017) : {}'.format(pop_2017))
-
-
-@app.callback(
-    Output('country-input', 'options'),
-    [Input('region-input', 'value')],
-    [
-        State('scenario-input', 'value'),
-        State('data-store', 'data')
-    ]
-)
-def update_country_selection_options(region_id, scenario, cur_data):
-    """List the countries in a given region in alphabetical order."""
-    countries_in_region = []
-    if scenario is not None:
         # load the data of the scenario
         df = pd.read_json(cur_data[scenario])
+
+        centroid = pd.read_json(cur_data[region_id])
 
         if region_id != WORLD_ID:
             # narrow to the region if the scope is not on the whole world
             df = df.loc[df.region == REGIONS_NDC[region_id]]
+            # color of country boundaries
+            line_color = 'rgb(255,255,255)'
+        else:
+            # color of country boundaries
+            line_color = 'rgb(179,179,179)'
 
-        # sort alphabetically by country
-        df = df.sort_values('country')
-        for idx, row in df.iterrows():
-            countries_in_region.append({'label': row['country'], 'value': row['country_iso']})
+        # compute the percentage of people with the given electrification option
+        z = df['pop_get_%s_2030' % elec_opt].div(df.pop_newly_electrified_2030, axis=0).round(3)
 
-    return countries_in_region
+        if region_id == 'SA':
+            region_name = REGIONS_GPD[WORLD_ID]
 
+            geo = 'geo2'
+        else:
+            region_name = REGIONS_GPD[region_id]
+            geo = 'geo'
 
-@app.callback(
-    Output('data-store', 'data'),
-    [Input('map', 'clickData')],
-    [State('data-store', 'data')]
-)
-def update_data_store(clicked_data, cur_data):
-    if clicked_data is not None:
-        country_iso = clicked_data['points'][0]['location']
-        cur_data.update({'selected_country': country_iso})
-    return cur_data
+        fig['data'][0].update(
+            {
+                'locations': df['country_iso'],
+                'z': z * 100,
+                'zmin': 0,
+                'zmax': 100,
+                'text': country_hover_text(df),
+                'geo': geo,
+                'marker': {'line': {'color': line_color}},
+                'colorbar': go.choropleth.ColorBar(
+                    title="2030<br>%% %s<br>access" % elec_opt,
+                    tickmode="array",
+                    tickvals=[10 * i for i in range(11)]
+                ),
+            }
+        )
 
+        points = []
+        i = 0
+        if scenario == BAU_SCENARIO:
+            z = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
+            z['no_ec'] = 1 - z.sum(axis=1)
+            n = 4
+            labels = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
+        else:
+            z = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
+            n = 3
+            labels = ELECTRIFICATION_OPTIONS.copy()
+        colors = ['blue', 'orange', 'green', 'red']
+        for idx, c in centroid.iterrows():
+            for j in range(n):
+                points.append(
+                    go.Scattergeo(
+                        lon=[c['Longitude']],
+                        lat=[c['Latitude']],
+                        name=c['country_iso'],
+                        text=str(c['country_iso']),
+                        # country_hover_text(df[df.country_iso == c['country_iso']]),
+                        # text='{}: {:.1f}%%'.format(labels[j], z.iloc[i, j] * 100),
+                        hoverinfo='text+name',
+                        marker=go.scattergeo.Marker(
+                            size=z.iloc[i, j:n].sum() * 25,
+                            color=colors[j],
+                            line=go.scattergeo.marker.Line(width=0)
+                        ),
+                        showlegend=False,
+                        geo=geo
+                    )
+                )
+            i = i + 1
 
-@app.callback(
-    Output('scenario-input-div', 'title'),
-    [Input('scenario-input', 'value')]
-)
-def update_scenario_description(scenario):
-    return SCENARIOS_DESCRIPTIONS[scenario]
+        fig['data'][1:] = points
 
+        fig['layout']['geo'].update({'scope': region_name.lower()})
+        return fig
+
+    @app_handle.callback(
+        Output('view-store', 'data'),
+        [
+            Input('scenario-input', 'value'),
+            Input('region-input', 'value'),
+            Input('country-input', 'value')
+        ],
+        [State('view-store', 'data')]
+    )
+    def update_view(scenario, region_id, country_sel, cur_view):
+        """Toggle between the different views of the app.
+
+        There are currently two views:
+        - VIEW_GENERAL : information panel on the left and map of the world with countries of the
+        study highlighted on the right panel. The user can hover over the countries and a piechart
+        will update on the right panel. The only controls available in this view are the scenario
+        and electrification option dropdowns.
+        - VIEW_COUNTRY : controls to change the value of the model parameters (model dependent) on
+        the left panel and results details as well as country-specific information
+        on the right panel.
+
+        The app start in the VIEW_GENERAL. The VIEW_COUNTRY can be accessed by cliking on a
+        specific country or selecting it with the country dropdown,
+
+        The controls_display is set to 'flex' only for the se4all+shift scenario and is set to
+        'none' for the other scenarios (these scenarios do not have variables).
+        """
+        ctx = dash.callback_context
+        if ctx.triggered:
+            prop_id = ctx.triggered[0]['prop_id']
+            # trigger comes from clicking on a country
+            if 'country-input' in prop_id:
+                if country_sel:
+                    cur_view.update({'app_view': VIEW_COUNTRY})
+                else:
+                    cur_view.update({'app_view': VIEW_GENERAL})
+
+            # trigger comes from selecting a region
+            elif 'region-input' in prop_id:
+                cur_view.update({'app_view': VIEW_GENERAL})
+
+        if scenario == SE4ALL_FLEX_SCENARIO:
+            cur_view.update({'controls_display': 'flex'})
+        else:
+            cur_view.update({'controls_display': 'none'})
+        return cur_view
+
+    @app_handle.callback(
+        Output('map-div', 'style'),
+        [Input('view-store', 'data')],
+        [State('map-div', 'style')]
+    )
+    def toggle_map_div_display(cur_view, cur_style):
+        """Change the display of map-div between the app's views."""
+        if cur_style is None:
+            cur_style = {'display': 'flex'}
+
+        if cur_view['app_view'] == VIEW_GENERAL:
+            cur_style.update({'display': 'flex'})
+        elif cur_view['app_view'] == VIEW_COUNTRY:
+            cur_style.update({'display': 'none'})
+        return cur_style
+
+    @app_handle.callback(
+        Output('country-div', 'style'),
+        [Input('view-store', 'data')],
+        [State('country-div', 'style')]
+    )
+    def toggle_results_div_display(cur_view, cur_style):
+        """Change the display of country-div between the app's views."""
+        if cur_style is None:
+            cur_style = {'display': 'none'}
+
+        if cur_view['app_view'] == VIEW_GENERAL:
+            cur_style.update({'display': 'none'})
+        elif cur_view['app_view'] == VIEW_COUNTRY:
+            cur_style.update({'display': 'flex'})
+        return cur_style
+
+    @app_handle.callback(
+        Output('general-info-div', 'style'),
+        [Input('view-store', 'data')],
+        [State('general-info-div', 'style')]
+    )
+    def toggle_general_info_div_display(cur_view, cur_style):
+        """Change the display of general-info-div between the app's views."""
+        if cur_style is None:
+            cur_style = {'display': 'flex'}
+
+        if cur_view['app_view'] == VIEW_GENERAL:
+            cur_style.update({'display': 'flex'})
+        elif cur_view['app_view'] == VIEW_COUNTRY:
+            cur_style.update({'display': 'none'})
+        return cur_style
+
+    @app_handle.callback(
+        Output('aggregate-div', 'style'),
+        [
+            Input('view-store', 'data'),
+            Input('aggregate-input', 'values'),
+        ],
+        [State('aggregate-div', 'style')]
+    )
+    def toggle_aggregate_div_display(cur_view, aggregate, cur_style):
+        """Change the display of aggregate-div between the app's views."""
+        if cur_style is None:
+            cur_style = {'display': 'none'}
+
+        if cur_view['app_view'] == VIEW_GENERAL:
+            if aggregate:
+                cur_style.update({'display': 'flex'})
+            else:
+                cur_style.update({'display': 'none'})
+        elif cur_view['app_view'] == VIEW_COUNTRY:
+            cur_style.update({'display': 'none'})
+        return cur_style
+
+    @app_handle.callback(
+        Output('country-basic-results-table', 'data'),
+        [
+            Input('country-input', 'value'),
+            Input('scenario-input', 'value'),
+        ],
+        [State('data-store', 'data')]
+    )
+    def update_country_basic_results_table(
+            country_sel,
+            scenario,
+            cur_data,
+    ):
+        """Display information and study's results for a country."""
+        answer_table = []
+        country_iso = country_sel
+        # in case of country_iso is a list of one element
+        if np.shape(country_iso) and len(country_iso) == 1:
+            country_iso = country_iso[0]
+
+        # extract the data from the selected scenario if a country was selected
+        if country_iso is not None:
+            if scenario in SCENARIOS:
+
+                df = pd.read_json(cur_data[scenario])
+                df = df.loc[df.country_iso == country_iso]
+
+                # compute the percentage of population with electricity access
+                df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
+                # gather the values of the results to display in the table
+                pop_res = np.squeeze(df[POP_GET].values * 100).round(1)
+                hh_res = np.squeeze(df[HH_GET].values).round(0)
+                cap_res = np.squeeze(df[HH_CAP].values * 1e-3).round(0)
+                cap2_res = np.squeeze(df[HH_SCN2].values * 1e-3).round(0)
+                invest_res = np.squeeze(df[INVEST].values).round(0)
+                invest_res = np.append(np.NaN, invest_res)
+                invest2_res = np.squeeze(df[INVEST_CAP].values).round(0)
+                invest2_res = np.append(np.NaN, invest2_res)
+                basic_results_data = np.vstack(
+                    [pop_res, hh_res, cap_res, cap2_res, invest_res, invest2_res]
+                )
+                # prepare a DataFrame
+                basic_results_data = pd.DataFrame(
+                    data=basic_results_data,
+                    columns=ELECTRIFICATION_OPTIONS
+                )
+                # label of the table rows
+                basic_results_data['labels'] = pd.Series(BASIC_ROWS)
+                answer_table = basic_results_data[BASIC_COLUMNS_ID].to_dict('records')
+
+        return answer_table
+
+    @app_handle.callback(
+        Output('country-ghg-results-table', 'data'),
+        [
+            Input('country-input', 'value'),
+            Input('scenario-input', 'value'),
+        ],
+        [State('data-store', 'data')]
+    )
+    def update_country_ghg_results_table(
+            country_sel,
+            scenario,
+            cur_data,
+    ):
+        """Display information and study's results for a country."""
+        answer_table = []
+        df_comp = None
+        country_iso = country_sel
+        # in case of country_iso is a list of one element
+        if np.shape(country_iso) and len(country_iso) == 1:
+            country_iso = country_iso[0]
+
+        # extract the data from the selected scenario if a country was selected
+        if country_iso is not None:
+            if scenario in SCENARIOS:
+
+                df = pd.read_json(cur_data[scenario])
+                df = df.loc[df.country_iso == country_iso]
+
+                if scenario in [SE4ALL_FLEX_SCENARIO, SE4ALL_SCENARIO, PROG_SCENARIO]:
+                    # to compare greenhouse gas emissions with BaU scenario
+                    df_comp = pd.read_json(cur_data[BAU_SCENARIO])
+                    df_comp = df_comp.loc[df_comp.country_iso == country_iso]
+
+                if df_comp is None:
+                    ghg_rows = [
+                        'GHG (case 1)',
+                        'GHG (case 2)',
+                        # 'GHG CUMUL'
+                    ]
+                else:
+                    ghg_rows = [
+                        'GHG (case 1)',
+                        'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
+                        'GHG (case 2)',
+                        'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
+                    ]
+
+                # gather the values of the results to display in the table
+                ghg_res = np.squeeze(df[GHG].values).round(0)
+                ghg2_res = np.squeeze(df[GHG_CAP].values).round(0)
+                if df_comp is not None:
+                    ghg_comp_res = ghg_res - np.squeeze(df_comp[GHG].values).round(0)
+                    ghg2_comp_res = ghg2_res - np.squeeze(df_comp[GHG_CAP].values).round(0)
+                    ghg_results_data = np.vstack([ghg_res, ghg_comp_res, ghg2_res, ghg2_comp_res])
+                else:
+                    ghg_results_data = np.vstack([ghg_res, ghg2_res])
+                # prepare a DataFrame
+                ghg_results_data = pd.DataFrame(data=ghg_results_data,
+                                                columns=ELECTRIFICATION_OPTIONS)
+                # label of the table rows
+                ghg_results_data['labels'] = pd.Series(ghg_rows)
+                answer_table = ghg_results_data[GHG_COLUMNS_ID].to_dict('records')
+
+        return answer_table
+
+    @app_handle.callback(
+        Output('aggregate-basic-results-table', 'data'),
+        [
+            Input('region-input', 'value'),
+            Input('scenario-input', 'value'),
+        ],
+        [State('data-store', 'data')]
+    )
+    def update_aggregate_basic_results_table(
+            region_id,
+            scenario,
+            cur_data,
+    ):
+        """Display information and study's results for a country."""
+        answer_table = []
+        if region_id is not None:
+            if scenario in SCENARIOS:
+
+                df = pd.read_json(cur_data[scenario])
+                if region_id != WORLD_ID:
+                    # narrow to the region if the scope is not on the whole world
+                    df = df.loc[df.region == REGIONS_NDC[region_id]]
+
+                # aggregate the results
+                df = df[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
+
+                # compute the percentage of population with electricity access
+                df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0)
+                # gather the values of the results to display in the table
+                pop_res = np.squeeze(df[POP_GET].values * 100).round(1)
+                hh_res = np.squeeze(df[HH_GET].values).round(0)
+                cap_res = np.squeeze(df[HH_CAP].values * 1e-3).round(0)
+                cap2_res = np.squeeze(df[HH_SCN2].values * 1e-3).round(0)
+                invest_res = np.squeeze(df[INVEST].values).round(0)
+                invest_res = np.append(np.NaN, invest_res)
+                invest2_res = np.squeeze(df[INVEST_CAP].values).round(0)
+                invest2_res = np.append(np.NaN, invest2_res)
+                basic_results_data = np.vstack(
+                    [pop_res, hh_res, cap_res, cap2_res, invest_res, invest2_res]
+                )
+                # prepare a DataFrame
+                basic_results_data = pd.DataFrame(
+                    data=basic_results_data,
+                    columns=ELECTRIFICATION_OPTIONS
+                )
+                # label of the table rows
+                basic_results_data['labels'] = pd.Series(BASIC_ROWS)
+                answer_table = basic_results_data[BASIC_COLUMNS_ID].to_dict('records')
+
+        return answer_table
+
+    @app_handle.callback(
+        Output('aggregate-ghg-results-table', 'data'),
+        [
+            Input('region-input', 'value'),
+            Input('scenario-input', 'value'),
+        ],
+        [State('data-store', 'data')]
+    )
+    def update_aggregate_ghg_results_table(
+            region_id,
+            scenario,
+            cur_data,
+    ):
+        """Display information and study's results for a country."""
+        answer_table = []
+        if region_id is not None:
+            if scenario in SCENARIOS:
+
+                df = pd.read_json(cur_data[scenario])
+                df_comp = None
+                if region_id != WORLD_ID:
+                    # narrow to the region if the scope is not on the whole world
+                    df = df.loc[df.region == REGIONS_NDC[region_id]]
+
+                if scenario in [SE4ALL_FLEX_SCENARIO, SE4ALL_SCENARIO, PROG_SCENARIO]:
+
+                    # to compare greenhouse gas emissions with BaU scenario
+                    df_comp = pd.read_json(cur_data[BAU_SCENARIO])
+
+                    if region_id != WORLD_ID:
+                        # narrow to the region if the scope is not on the whole world
+                        df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[region_id]]
+
+                if df_comp is None:
+                    ghg_rows = [
+                        'GHG (case 1)',
+                        'GHG (case 2)',
+                        # 'GHG CUMUL'
+                    ]
+                else:
+                    ghg_rows = [
+                        'GHG (case 1)',
+                        'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
+                        'GHG (case 2)',
+                        'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
+                    ]
+                    # aggregate the results
+                    df_comp = df_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
+
+                # aggregate the results
+                df = df[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
+
+                # gather the values of the results to display in the table
+                ghg_res = np.squeeze(df[GHG].values).round(0)
+                ghg2_res = np.squeeze(df[GHG_CAP].values).round(0)
+
+                if df_comp is not None:
+                    ghg_comp_res = ghg_res - np.squeeze(df_comp[GHG].values).round(0)
+                    ghg2_comp_res = ghg2_res - np.squeeze(df_comp[GHG_CAP].values).round(0)
+                    ghg_results_data = np.vstack([ghg_res, ghg_comp_res, ghg2_res, ghg2_comp_res])
+                else:
+                    ghg_results_data = np.vstack([ghg_res, ghg2_res])
+                # prepare a DataFrame
+                ghg_results_data = pd.DataFrame(data=ghg_results_data,
+                                                columns=ELECTRIFICATION_OPTIONS)
+                ghg_results_data['labels'] = pd.Series(ghg_rows)
+                # label of the table rows
+                ghg_columns = ['labels'] + ELECTRIFICATION_OPTIONS
+                answer_table = ghg_results_data[ghg_columns].to_dict('records')
+
+        return answer_table
+
+    @app_handle.callback(
+        Output('country-input', 'value'),
+        [Input('data-store', 'data')],
+        [State('country-input', 'value')]
+    )
+    def update_selected_country_on_map(cur_data, cur_val):
+
+        country_iso = cur_data.get('selected_country')
+        if country_iso is None:
+            country_iso = cur_val
+        return country_iso
+
+    @app_handle.callback(
+        Output('country-info-div', 'children'),
+        [
+            Input('scenario-input', 'value'),
+            Input('country-input', 'value')
+        ],
+        [State('data-store', 'data')]
+    )
+    def update_country_info_div(scenario, country_iso, cur_data):
+
+        divs = []
+        if scenario in SCENARIOS and country_iso is not None:
+            df = pd.read_json(cur_data[scenario])
+            pop_2017 = df.loc[df.country_iso == country_iso].pop_2017.values[0]
+
+            image_filename = 'icons/{}.png'.format(country_iso)
+            encoded_image = base64.b64encode(open(image_filename, 'rb').read())
+
+            divs = [
+                html.Img(
+                    src='data:image/png;base64,{}'.format(encoded_image.decode()),
+                    className='country__info__flag',
+                    style={'width': '100%'}
+                ),
+                html.Div('Population (2017) : {}'.format(pop_2017)),
+            ]
+
+        return divs
+
+    @app_handle.callback(
+        Output('country-basic-results-title', 'children'),
+        [Input('country-input', 'value')],
+        [
+            State('scenario-input', 'value'),
+            State('data-store', 'data')]
+    )
+    def country_basic_results_title(country_iso, scenario, cur_data):
+
+        answer = 'Results'
+        if scenario in SCENARIOS and country_iso is not None:
+            df = pd.read_json(cur_data[scenario])
+            answer = 'Results for {}'.format(
+                df.loc[df.country_iso == country_iso].country.values[0])
+        return answer
+
+    @app_handle.callback(
+        Output('aggregate-info-div', 'children'),
+        [
+            Input('scenario-input', 'value'),
+            Input('region-input', 'value')
+        ],
+        [State('data-store', 'data')]
+    )
+    def update_aggregate_info_div(scenario, region_id, cur_data):
+
+        pop_2017 = ''
+        if scenario in SCENARIOS and region_id is not None:
+            df = pd.read_json(cur_data[scenario])
+            pop_2017 = df.pop_2017.sum(axis=0)
+
+        return html.Div('Population (2017) : {}'.format(pop_2017))
+
+    @app_handle.callback(
+        Output('country-input', 'options'),
+        [Input('region-input', 'value')],
+        [
+            State('scenario-input', 'value'),
+            State('data-store', 'data')
+        ]
+    )
+    def update_country_selection_options(region_id, scenario, cur_data):
+        """List the countries in a given region in alphabetical order."""
+        countries_in_region = []
+        if scenario is not None:
+            # load the data of the scenario
+            df = pd.read_json(cur_data[scenario])
+
+            if region_id != WORLD_ID:
+                # narrow to the region if the scope is not on the whole world
+                df = df.loc[df.region == REGIONS_NDC[region_id]]
+
+            # sort alphabetically by country
+            df = df.sort_values('country')
+            for idx, row in df.iterrows():
+                countries_in_region.append({'label': row['country'], 'value': row['country_iso']})
+
+        return countries_in_region
+
+    @app_handle.callback(
+        Output('data-store', 'data'),
+        [Input('map', 'clickData')],
+        [State('data-store', 'data')]
+    )
+    def update_data_store(clicked_data, cur_data):
+        if clicked_data is not None:
+            country_iso = clicked_data['points'][0]['location']
+            cur_data.update({'selected_country': country_iso})
+        return cur_data
+
+    @app_handle.callback(
+        Output('scenario-input-div', 'title'),
+        [Input('scenario-input', 'value')]
+    )
+    def update_scenario_description(scenario):
+        return SCENARIOS_DESCRIPTIONS[scenario]
 
 
 if __name__ == '__main__':

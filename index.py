@@ -11,6 +11,8 @@ app.layout = html.Div([
     html.Div(id='page-content')
 ])
 
+# define the callbacks
+static_layout.callbacks(app)
 
 @app.callback(Output('page-content', 'children'),
               [Input('url', 'pathname')])
