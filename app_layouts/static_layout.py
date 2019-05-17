@@ -115,6 +115,7 @@ data = [
                 width=1.5
             )
         ),
+
     )
 ]
 
@@ -308,6 +309,7 @@ def callbacks(app_handle):
                 'geo': geo,
             }
         )
+
         points = []
         i = 0
         if scenario == BAU_SCENARIO:
@@ -366,6 +368,7 @@ def callbacks(app_handle):
             y = np.append(y, 0)
             if sce == BAU_SCENARIO:
                 y[3] = 100 - y.sum()
+
             fig['data'][sce_id].update({'y': y})
         return fig
 
@@ -494,6 +497,7 @@ def callbacks(app_handle):
         elif cur_view['app_view'] == VIEW_COUNTRY:
             cur_style.update({'display': 'flex'})
         return cur_style
+
     @app_handle.callback(
         Output('general-info-div', 'style'),
         [Input('view-store', 'data')],
@@ -602,7 +606,7 @@ def callbacks(app_handle):
     ):
         """Display information and study's results for a country."""
         answer_table = []
-        df_comp = None
+        df_bau = None
         country_iso = country_sel
         # in case of country_iso is a list of one element
         if np.shape(country_iso) and len(country_iso) == 1:
@@ -617,10 +621,10 @@ def callbacks(app_handle):
 
                 if scenario in [SE4ALL_FLEX_SCENARIO, SE4ALL_SCENARIO, PROG_SCENARIO]:
                     # to compare greenhouse gas emissions with BaU scenario
-                    df_comp = pd.read_json(cur_data[BAU_SCENARIO])
-                    df_comp = df_comp.loc[df_comp.country_iso == country_iso]
+                    df_bau = pd.read_json(cur_data[BAU_SCENARIO])
+                    df_bau = df_bau.loc[df_bau.country_iso == country_iso]
 
-                if df_comp is None:
+                if df_bau is None:
                     ghg_rows = [
                         'GHG (case 1)',
                         'GHG (case 2)',
@@ -637,9 +641,9 @@ def callbacks(app_handle):
                 # gather the values of the results to display in the table
                 ghg_res = np.squeeze(df[GHG].values).round(0)
                 ghg2_res = np.squeeze(df[GHG_CAP].values).round(0)
-                if df_comp is not None:
-                    ghg_comp_res = ghg_res - np.squeeze(df_comp[GHG].values).round(0)
-                    ghg2_comp_res = ghg2_res - np.squeeze(df_comp[GHG_CAP].values).round(0)
+                if df_bau is not None:
+                    ghg_comp_res = ghg_res - np.squeeze(df_bau[GHG].values).round(0)
+                    ghg2_comp_res = ghg2_res - np.squeeze(df_bau[GHG_CAP].values).round(0)
                     ghg_results_data = np.vstack([ghg_res, ghg_comp_res, ghg2_res, ghg2_comp_res])
                 else:
                     ghg_results_data = np.vstack([ghg_res, ghg2_res])
@@ -726,7 +730,7 @@ def callbacks(app_handle):
             if scenario in SCENARIOS:
 
                 df = pd.read_json(cur_data[scenario])
-                df_comp = None
+                df_bau = None
                 if region_id != WORLD_ID:
                     # narrow to the region if the scope is not on the whole world
                     df = df.loc[df.region == REGIONS_NDC[region_id]]
@@ -734,13 +738,13 @@ def callbacks(app_handle):
                 if scenario in [SE4ALL_FLEX_SCENARIO, SE4ALL_SCENARIO, PROG_SCENARIO]:
 
                     # to compare greenhouse gas emissions with BaU scenario
-                    df_comp = pd.read_json(cur_data[BAU_SCENARIO])
+                    df_bau = pd.read_json(cur_data[BAU_SCENARIO])
 
                     if region_id != WORLD_ID:
                         # narrow to the region if the scope is not on the whole world
-                        df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[region_id]]
+                        df_bau = df_bau.loc[df_bau.region == REGIONS_NDC[region_id]]
 
-                if df_comp is None:
+                if df_bau is None:
                     ghg_rows = [
                         'GHG (case 1)',
                         'GHG (case 2)',
@@ -754,7 +758,7 @@ def callbacks(app_handle):
                         'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
                     ]
                     # aggregate the results
-                    df_comp = df_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
+                    df_bau = df_bau[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
 
                 # aggregate the results
                 df = df[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
@@ -763,9 +767,9 @@ def callbacks(app_handle):
                 ghg_res = np.squeeze(df[GHG].values).round(0)
                 ghg2_res = np.squeeze(df[GHG_CAP].values).round(0)
 
-                if df_comp is not None:
-                    ghg_comp_res = ghg_res - np.squeeze(df_comp[GHG].values).round(0)
-                    ghg2_comp_res = ghg2_res - np.squeeze(df_comp[GHG_CAP].values).round(0)
+                if df_bau is not None:
+                    ghg_comp_res = ghg_res - np.squeeze(df_bau[GHG].values).round(0)
+                    ghg2_comp_res = ghg2_res - np.squeeze(df_bau[GHG_CAP].values).round(0)
                     ghg_results_data = np.vstack([ghg_res, ghg_comp_res, ghg2_res, ghg2_comp_res])
                 else:
                     ghg_results_data = np.vstack([ghg_res, ghg2_res])
