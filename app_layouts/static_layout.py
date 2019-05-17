@@ -184,7 +184,13 @@ layout = html.Div(
                             className='app__aggregate',
                             children=results_div(aggregate=True),
                             style={'display': 'none'}
-                        )
+                        ),
+                        html.Div(
+                            id='country-div',
+                            className='app__country',
+                            children=results_div(),
+                            style={'display': 'none'}
+                        ),
                     ]
                 ),
                 html.Div(
@@ -234,6 +240,11 @@ layout = html.Div(
                             )
                         ),
                         html.Div(
+                            id='results-info-div',
+                            className='results__info',
+                            children=''
+                        ),
+                        html.Div(
                             id='map-div',
                             className='app__map',
                             title='Hover over a country to display information.\n'
@@ -246,12 +257,6 @@ layout = html.Div(
                                     'displayModeBar': False,
                                 }
                             ),
-                        ),
-                        html.Div(
-                            id='country-div',
-                            className='app__country',
-                            children=results_div(),
-                            style={'display': 'none'}
                         ),
                     ]
 
@@ -417,6 +422,21 @@ def callbacks(app_handle):
             cur_style.update({'display': 'flex'})
         return cur_style
 
+    @app_handle.callback(
+        Output('results-info-div', 'style'),
+        [Input('view-store', 'data')],
+        [State('results-info-div', 'style')]
+    )
+    def toggle_results_info_div_display(cur_view, cur_style):
+        """Change the display of country-div between the app's views."""
+        if cur_style is None:
+            cur_style = {'display': 'none'}
+
+        if cur_view['app_view'] == VIEW_GENERAL:
+            cur_style.update({'display': 'none'})
+        elif cur_view['app_view'] == VIEW_COUNTRY:
+            cur_style.update({'display': 'flex'})
+        return cur_style
     @app_handle.callback(
         Output('general-info-div', 'style'),
         [Input('view-store', 'data')],
@@ -716,30 +736,36 @@ def callbacks(app_handle):
         return country_iso
 
     @app_handle.callback(
-        Output('country-info-div', 'children'),
+        Output('results-info-div', 'children'),
         [
             Input('scenario-input', 'value'),
             Input('country-input', 'value')
         ],
         [State('data-store', 'data')]
     )
-    def update_country_info_div(scenario, country_iso, cur_data):
+    def update_results_info_div(scenario, country_iso, cur_data):
 
         divs = []
         if scenario in SCENARIOS and country_iso is not None:
             df = pd.read_json(cur_data[scenario])
             pop_2017 = df.loc[df.country_iso == country_iso].pop_2017.values[0]
-
+            name = df.loc[df.country_iso == country_iso].country.values[0]
             image_filename = 'icons/{}.png'.format(country_iso)
             encoded_image = base64.b64encode(open(image_filename, 'rb').read())
 
             divs = [
-                html.Img(
-                    src='data:image/png;base64,{}'.format(encoded_image.decode()),
-                    className='country__info__flag',
-                    style={'width': '100%'}
+                html.Div(
+                    id='results-info-header-div',
+                    children=[
+                        html.Div(name),
+                        html.Img(
+                            src='data:image/png;base64,{}'.format(encoded_image.decode()),
+                            className='country__info__flag',
+                            style={'width': '30%'}
+                        )
+                    ],
                 ),
-                html.Div('Population (2017) : {}'.format(pop_2017)),
+                html.P('Population (2017) : {} or whatever information we think pertinent to add'.format(pop_2017)),
             ]
 
         return divs

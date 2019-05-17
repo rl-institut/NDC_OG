@@ -172,10 +172,27 @@ width: 100%;
     align-items: center;
 }
 
-#country-info-div{
-    //border: solid 1px #E8F0F9;
+#results-info-div{
+    border: solid 1px #E8F0F9;
+    display: flex;
+    flex-direction: column;
 }
 
+#results-info-header-div{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+
+}
+
+#results-info-div p{
+    border: solid 1px black;
+    border-radius: 5px;
+    margin: 5px;
+    padding: 5px;
+
+}
 
 .country__results h4 {
     text-align: center;
