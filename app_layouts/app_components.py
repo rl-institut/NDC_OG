@@ -253,21 +253,7 @@ def scenario_div(init_scenario):
                 ],
                 values=[],
             )
-        ),
-        html.Div(
-            id='factor-input-div',
-            className='app__checkbox',
-            title='Tick this box to show the influence and impact factors',
-            children=dcc.Checklist(
-                id='factor-input',
-                className='app__input__checklist',
-                options=[
-                    {'label': 'Show influence factors', 'value': 'show'}
-                ],
-                values=[],
-            )
-        ),
-
+        )
     ]
     return divs
 
