@@ -186,8 +186,8 @@ layout = html.Div(
                             style={'display': 'none'}
                         ),
                         html.Div(
-                            id='country-div',
-                            className='app__country',
+                            id='results-div',
+                            className='app__results',
                             children=results_div(),
                             style={'display': 'none'}
                         ),
@@ -464,12 +464,12 @@ def callbacks(app_handle):
         return cur_style
 
     @app_handle.callback(
-        Output('country-div', 'style'),
+        Output('results-div', 'style'),
         [Input('view-store', 'data')],
-        [State('country-div', 'style')]
+        [State('results-div', 'style')]
     )
     def toggle_results_div_display(cur_view, cur_style):
-        """Change the display of country-div between the app's views."""
+        """Change the display of results-div between the app's views."""
         if cur_style is None:
             cur_style = {'display': 'none'}
 
@@ -485,7 +485,7 @@ def callbacks(app_handle):
         [State('results-info-div', 'style')]
     )
     def toggle_results_info_div_display(cur_view, cur_style):
-        """Change the display of country-div between the app's views."""
+        """Change the display of results-info-div between the app's views."""
         if cur_style is None:
             cur_style = {'display': 'none'}
 
