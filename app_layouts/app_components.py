@@ -78,7 +78,7 @@ def results_div(aggregate=False):
         id='{}-barplot-div'.format(id_name),
         className='app__barplot',
         title='Description',
-        style={'width': '90%'},
+        style={'width': '100%'},
         children=dcc.Graph(
             id='{}-barplot'.format(id_name),
             figure=go.Figure(
@@ -109,19 +109,25 @@ def results_div(aggregate=False):
                     )
                 ],
                 layout=go.Layout(
-                    title='% pop. newly electrified in 2030',
+                    title='',
                     barmode='group',
                     paper_bgcolor='#EBF2FA',
-                    plot_bgcolor='rgba(245, 246, 249, 1)',
+                    plot_bgcolor='#EBF2FA',
                     showlegend=False,
                     height=400,
+                    autosize=True,
+                    margin=dict(
+                        l=30,
+                        r=0,
+                        b=30,
+                        t=30
+                    ),
+                    font=dict(size=20, family='Roboto'),
+                    titlefont=dict(size=20),
                 )
             ),
-            #style={'height': '300px'},
-            style={'width': '90vh'},
             config={
                 'displayModeBar': False,
-                'autosizable': True
             }
         ),
     )

@@ -124,7 +124,15 @@ data = [
 ]
 
 layout = go.Layout(
+    # plot_bgcolor='red',
     paper_bgcolor='#EBF2FA',
+    autosize=True,
+    margin=dict(
+        l=15,
+        r=15,
+        b=5,
+        t=5
+    ),
     geo=go.layout.Geo(
         scope='world',
         showlakes=True,
@@ -263,10 +271,8 @@ layout = html.Div(
                             children=dcc.Graph(
                                 id='map',
                                 figure=fig_map,
-                                style={'width': '100vh', 'height': '100vh'},
                                 config={
-                                    'displayModeBar': False,
-                                    'autosizable': True,
+                                    'displayModeBar': True,
                                 }
                             ),
                         ),
