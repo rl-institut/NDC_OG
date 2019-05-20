@@ -250,9 +250,6 @@ def compare_div():
 
     id_name = 'compare'
 
-    x_vals = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
-    fs = 12
-
     # add a barplot above the tables with the results
     barplot = html.Div(
         id='{}-barplot-div'.format(id_name),
