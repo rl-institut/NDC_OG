@@ -241,6 +241,156 @@ def results_div(aggregate=False):
     return divs
 
 
+def compare_div():
+    """Fill and return a comparison to specific country exogenous results.
+
+    :param ref_country: (str) iso code of the reference country
+    :return: the content of the results-div
+    """
+
+    id_name = 'compare'
+
+    x_vals = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
+    fs = 12
+
+    # add a barplot above the tables with the results
+    barplot = html.Div(
+        id='{}-barplot-div'.format(id_name),
+        className='app__barplot',
+        style={'width': '100%'},
+        children=dcc.Graph(
+            id='{}-barplot'.format(id_name),
+            figure=go.Figure(
+                data=[],
+                layout=go.Layout(
+                    title='',
+                    barmode='group',
+                    paper_bgcolor='#EBF2FA',
+                    plot_bgcolor='#EBF2FA',
+                    showlegend=False,
+                    height=400,
+                    autosize=True,
+                    margin=dict(
+                        l=30,
+                        r=0,
+                        b=30,
+                        t=30
+                    ),
+                    font=dict(size=20, family='Roboto'),
+                    titlefont=dict(size=20),
+                    yaxis=dict(
+                        hoverformat='.1f'
+                    )
+                )
+            ),
+            config={
+                'displayModeBar': False,
+            }
+        ),
+    )
+
+    # add tables with the results
+    # align number on the right
+    number_styling = [
+        {
+            'if': {
+                'column_id': c,
+                'filter': 'labels eq "{}"'.format(label)
+            },
+            'textAlign': 'right'
+        }
+        for c in ELECTRIFICATION_OPTIONS
+        for label in BASIC_ROWS
+    ]
+    # align row labels on the left
+    label_styling = [
+        {
+            'if': {'column_id': 'labels'},
+            'textAlign': 'left'
+        }
+    ]
+    # align column width
+    columns_width = [
+        {'if': {'column_id': 'labels'},
+         'width': '40%'},
+        {'if': {'column_id': GRID},
+         'width': '20%'},
+        {'if': {'column_id': MG},
+         'width': '20%'},
+        {'if': {'column_id': SHS},
+         'width': '20%'},
+        {'if': {'row_index': 'odd'},
+         'backgroundColor': 'rgb(248, 248, 248)'}
+    ]
+
+    basic_columns_ids = []
+    for col in BASIC_COLUMNS_ID:
+        basic_columns_ids.append({'name': LABEL_COLUMNS[col], 'id': col})
+        if col != 'labels':
+            basic_columns_ids.append({'name': 'rel.', 'id': 'comp_{}'.format(col)})
+
+    ghg_columns_ids = []
+    for col in GHG_COLUMNS_ID:
+        ghg_columns_ids.append({'name': LABEL_COLUMNS[col], 'id': col})
+        if col != 'labels':
+            ghg_columns_ids.append({'name': 'rel.', 'id': 'comp_{}'.format(col)})
+
+    # tables containing the results
+    results_divs = [
+        html.Div(
+            id='{}-barplot-title'.format(id_name),
+            children='HERE GRAPH TITLE, for example "% pop. newly electrified in 2030"',
+        ),
+        barplot,
+        html.Div(
+            id='{}-basic-results-div'.format(id_name),
+            className='{}__results__basic'.format(id_name),
+            style={'width': '90%'},
+            children=[
+                html.H4(id='{}-basic-results-title'.format(id_name), children='Results'),
+                dash_table.DataTable(
+                    id='{}-basic-results-table'.format(id_name),
+                    columns=basic_columns_ids,
+                    style_data_conditional=number_styling + label_styling,
+                    style_cell_conditional=columns_width,
+                    style_header={'textAlign': 'center'},
+                    style_cell={
+                        'fontFamily': "Roboto"
+                    },
+                )
+            ]
+        ),
+        html.Div(
+            id='{}-ghg-results-div'.format(id_name),
+            className='{}__results'.format(id_name),
+            style={'width': '90%'},
+            children=[
+                html.H4('Greenhouse Gases emissions'),
+                dash_table.DataTable(
+                    id='{}-ghg-results-table'.format(id_name),
+                    columns=ghg_columns_ids,
+                    style_data_conditional=number_styling + label_styling,
+                    style_cell_conditional=columns_width,
+                    style_header={'textAlign': 'center'},
+                    style_cell={
+                        'fontFamily': "Roboto"
+                    },
+                )
+            ]
+        ),
+    ]
+
+    divs = [
+        html.Div(
+            id='{}-results-div'.format(id_name),
+            className='{}__results'.format(id_name),
+            children=results_divs
+        )
+    ]
+
+    return divs
+
+
 def scenario_div(init_scenario):
     """Return controls for choice of scenario and electrification options."""
 
