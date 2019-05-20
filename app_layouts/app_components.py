@@ -191,6 +191,10 @@ def results_div(aggregate=False):
 
     # tables containing the results
     results_divs = [
+        html.Div(
+            id='{}-barplot-title'.format(id_name),
+            children='HERE GRAPH TITLE, for example "% pop. newly electrified in 2030"',
+        ),
         barplot,
         html.Div(
             id='{}-basic-results-div'.format(id_name),
@@ -253,11 +257,10 @@ def scenario_div(init_scenario):
         html.Div(
             id='scenario-label',
             className='app__input__label',
-            children='Scenario:'
+            children='Explore a scenario:'
         ),
         html.Div(
             id='scenario-input-div',
-            title='scenarios description',
             children=dcc.RadioItems(
                 id='scenario-input',
                 className='app__input__radio',
