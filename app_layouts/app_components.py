@@ -74,32 +74,12 @@ def results_div(aggregate=False):
         id_name = 'country'
 
     x_vals = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
-    annot = []
-    for i in range(len(x_vals)):
-        for j, sce in enumerate(SCENARIOS):
-            annot.append(
-                dict(
-                    x=i + (j-1) * 0.26,
-                    y=0,
-                    yshift=25,
-                    textangle=-90,
-                    font={'size':15},
-                    xref='x',
-                    yref='y',
-                    text=sce,
-                    showarrow=False,
-                    # align='left',
-                    # valign='bottom',
-                    # bgcolor='red',
-                )
-            )
-
+    fs = 12
 
     # add a barplot above the tables with the results
     barplot = html.Div(
         id='{}-barplot-div'.format(id_name),
         className='app__barplot',
-        title='Description',
         style={'width': '100%'},
         children=dcc.Graph(
             id='{}-barplot'.format(id_name),
@@ -108,26 +88,35 @@ def results_div(aggregate=False):
                     go.Bar(
                         x=x_vals,
                         y=[0, 0, 0, 0],
+                        text=[BAU_SCENARIO for i in range(4)],
+                        insidetextfont={'size': fs},
+                        textposition='auto',
                         marker=dict(
                             color=['#0000ff', '#ffa500', '#008000', 'red']
                         ),
-                        name=BAU_SCENARIO
+                        hoverinfo='y+text'
                     ),
                     go.Bar(
                         x=x_vals,
                         y=[0, 0, 0, 0],
+                        text=[SE4ALL_SCENARIO for i in range(4)],
+                        insidetextfont={'size': fs},
+                        textposition='auto',
                         marker=dict(
                             color=['#8080ff', '#ffd280', '#1aff1a', 'red']
                         ),
-                        name=SE4ALL_SCENARIO
+                        hoverinfo='y+text'
                     ),
                     go.Bar(
                         x=x_vals,
                         y=[0, 0, 0, 0],
+                        text=[PROG_SCENARIO for i in range(4)],
+                        insidetextfont={'size': fs},
+                        textposition='auto',
                         marker=dict(
                             color=['#ccccff', '#ffedcc', '#99ff99', 'red']
                         ),
-                        name=PROG_SCENARIO
+                        hoverinfo='y+text'
                     )
                 ],
                 layout=go.Layout(
@@ -146,7 +135,9 @@ def results_div(aggregate=False):
                     ),
                     font=dict(size=20, family='Roboto'),
                     titlefont=dict(size=20),
-                    annotations=annot
+                    yaxis=dict(
+                        hoverformat='.1f'
+                    )
                 )
             ),
             config={
