@@ -67,6 +67,7 @@ REGIONS_NDC = dict(WD=['LA', 'SSA', 'DA'], SA='LA', AF='SSA', AS='DA')
 
 VIEW_GENERAL = 'general'
 VIEW_COUNTRY = 'specific'
+VIEW_COMPARE = 'compare'
 
 # A dict with the data for each scenario in json format
 SCENARIOS_DATA = {
@@ -81,6 +82,12 @@ logos = [
     base64.b64encode(open('logos/{}'.format(fn), 'rb').read())
     for fn in os.listdir('logos') if fn.endswith('.png')
 ]
+
+# list all region and countries to sompare with a single country
+COMPARE_OPTIONS = []
+for _, r in pd.read_json(SCENARIOS_DATA[BAU_SCENARIO]).sort_values('country').iterrows():
+    COMPARE_OPTIONS.append({'label': r['country'], 'value': r['country_iso']})
+COMPARE_OPTIONS = [{'label': v, 'value': k} for k, v in REGIONS_GPD.items()] + COMPARE_OPTIONS
 
 
 def country_hover_text(input_df):
@@ -260,7 +267,25 @@ layout = html.Div(
                                     options=[],
                                     value=None,
                                     multi=False
+                                ),
+                                html.Div(
+                                    id='compare-input-div',
+                                    children=[
+                                        html.Div(
+                                            id='country-comp-label',
+                                            className='app__input__label',
+                                            children='compare with:'
+                                        ),
+                                        dcc.Dropdown(
+                                            id='compare-input',
+                                            className='app__input__dropdown__country',
+                                            options=COMPARE_OPTIONS,
+                                            value=None,
+                                            multi=False
+                                        )
+                                    ]
                                 )
+
                             ]
                         ),
                         html.Div(
@@ -428,11 +453,12 @@ def callbacks(app_handle):
         [
             Input('scenario-input', 'value'),
             Input('region-input', 'value'),
-            Input('country-input', 'value')
+            Input('country-input', 'value'),
+            Input('compare-input', 'value')
         ],
         [State('view-store', 'data')]
     )
-    def update_view(scenario, region_id, country_sel, cur_view):
+    def update_view(scenario, region_id, country_sel, comp_sel, cur_view):
         """Toggle between the different views of the app.
 
         There are currently two views:
@@ -464,10 +490,15 @@ def callbacks(app_handle):
             elif 'region-input' in prop_id:
                 cur_view.update({'app_view': VIEW_GENERAL})
 
-        if scenario == SE4ALL_FLEX_SCENARIO:
-            cur_view.update({'controls_display': 'flex'})
-        else:
-            cur_view.update({'controls_display': 'none'})
+            # trigger comes from selection a comparison region/country
+            elif 'compare-input' in prop_id:
+                if comp_sel:
+                    cur_view.update({'app_view': VIEW_COMPARE})
+                else:
+                    if country_sel:
+                        cur_view.update({'app_view': VIEW_COUNTRY})
+                    else:
+                        cur_view.update({'app_view': VIEW_GENERAL})
         return cur_view
 
     @app_handle.callback(
@@ -516,6 +547,8 @@ def callbacks(app_handle):
             cur_style.update({'display': 'none'})
         elif cur_view['app_view'] == VIEW_COUNTRY:
             cur_style.update({'display': 'flex'})
+        elif cur_view['app_view'] == VIEW_COMPARE:
+            cur_style.update({'display': 'none'})
         return cur_style
 
     @app_handle.callback(
@@ -552,6 +585,24 @@ def callbacks(app_handle):
             cur_style.update({'display': 'flex'})
         elif cur_view['app_view'] == VIEW_COUNTRY:
             cur_style.update({'display': 'none'})
+        return cur_style
+
+    @app_handle.callback(
+        Output('compare-input-div', 'style'),
+        [
+            Input('view-store', 'data'),
+        ],
+        [State('compare-input-div', 'style')]
+    )
+    def toggle_compare_input_div_display(cur_view, cur_style):
+        """Change the display of compare-input-div between the app's views."""
+        if cur_style is None:
+            cur_style = {'display': 'none'}
+
+        if cur_view['app_view'] == VIEW_GENERAL:
+            cur_style.update({'display': 'none'})
+        elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
+            cur_style.update({'display': 'flex'})
         return cur_style
 
     @app_handle.callback(
@@ -952,6 +1003,7 @@ def callbacks(app_handle):
     )
     def update_scenario_description(scenario):
         return SCENARIOS_DESCRIPTIONS[scenario]
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)
