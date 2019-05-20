@@ -361,11 +361,9 @@ def callbacks(app_handle):
             z = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
             z['no_ec'] = 1 - z.sum(axis=1)
             n = 4
-            labels = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
         else:
             z = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
             n = 3
-            labels = ELECTRIFICATION_OPTIONS.copy()
         colors = ['blue', 'orange', 'green', 'red']
         for idx, c in centroid.iterrows():
             for j in range(n):
