@@ -27,6 +27,18 @@
     align-items: center
 }
 
+#header-div {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.app__logo{
+    height: 10vh;
+    margin: 0px 10px 0px 10px;
+}
+
 .app__results {
     border: solid 2px #E8F0F9;
     display: flex;
@@ -165,11 +177,7 @@ width: 100%;
     width: 20%;
 }
 
-#header-div {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-}
+
 
 
 

@@ -1,4 +1,5 @@
 import base64
+import os
 import numpy as np
 import pandas as pd
 import dash
@@ -75,6 +76,12 @@ SCENARIOS_DATA = {
 SCENARIOS_DATA.update(
     {reg: extract_centroids(REGIONS_NDC[reg]).to_json() for reg in REGIONS_NDC}
 )
+
+
+logos = [
+    base64.b64encode(open('logos/{}'.format(fn), 'rb').read())
+    for fn in os.listdir('logos') if fn.endswith('.png')
+]
 
 
 def country_hover_text(input_df):
@@ -220,8 +227,14 @@ layout = html.Div(
                                 ),
                                 html.Div(
                                     id='logo-div',
-                                    className='app__logo',
-                                    children='ORG LOGO'
+                                    children=[
+                                        html.Img(
+                                            src='data:image/png;base64,{}'.format(logo.decode()),
+                                            className='app__logo',
+                                            # style={'height': '5vh', 'padding': '10px'}
+                                        )
+                                        for logo in logos
+                                    ]
                                 ),
                             ]
                         ),
