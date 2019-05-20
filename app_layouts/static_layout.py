@@ -248,15 +248,21 @@ layout = html.Div(
                         ),
                         html.Div(
                             id='country-input-div',
-                            className='app__dropdown',
                             title='country selection description',
-                            children=dcc.Dropdown(
-                                id='country-input',
-                                className='app__input__dropdown__country',
-                                options=[],
-                                value=None,
-                                multi=False
-                            )
+                            children=[
+                                html.Div(
+                                    id='country-label',
+                                    className='app__input__label',
+                                    children='Country:'
+                                ),
+                                dcc.Dropdown(
+                                    id='country-input',
+                                    className='app__input__dropdown__country',
+                                    options=[],
+                                    value=None,
+                                    multi=False
+                                )
+                            ]
                         ),
                         html.Div(
                             id='results-info-div',
