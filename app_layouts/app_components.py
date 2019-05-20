@@ -238,19 +238,6 @@ def scenario_div(init_scenario):
                 ],
                 value=init_scenario,
             )
-        ),
-        html.Div(
-            id='aggregate-input-div',
-            className='app__checkbox',
-            title='Tick this box to enable the aggregation of the results',
-            children=dcc.Checklist(
-                id='aggregate-input',
-                className='app__input__checklist',
-                options=[
-                    {'label': 'Aggregate results', 'value': 'aggregate'}
-                ],
-                values=[],
-            )
         )
     ]
     return divs
