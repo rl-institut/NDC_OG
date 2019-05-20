@@ -454,6 +454,77 @@ def callbacks(app_handle):
         return fig
 
     @app_handle.callback(
+        Output('compare-barplot', 'figure'),
+        [
+            Input('country-input', 'value'),
+            Input('compare-input', 'value'),
+            Input('scenario-input', 'value'),
+        ],
+        [
+            State('data-store', 'data'),
+            State('compare-barplot', 'figure')
+        ]
+    )
+    def update_compare_barplot(country_sel, comp_sel, scenario, cur_data, fig):
+        """update the barplot whenever the country changes"""
+        print(comp_sel)
+        if country_sel is not None:
+            if comp_sel is not None:
+
+                comp_name = comp_sel
+                df = pd.read_json(cur_data[scenario])
+                df_comp = df.copy()
+                df = df.loc[df.country_iso == country_sel]
+                if comp_sel in REGIONS_NDC:
+                    # compare the reference country to a region
+                    df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[comp_sel]]
+                    df_comp = df_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
+                    comp_name = REGIONS_GPD[comp_sel]
+                else:
+                    # compare the reference country to a country
+                    df_comp = df_comp.loc[df_comp.country_iso == comp_sel]
+
+                # compute the percentage of population with electricity access
+                y = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0) * 100
+                y_comp = df_comp[POP_GET].div(df_comp.pop_newly_electrified_2030, axis=0) * 100
+
+                y = np.append(y, 0)
+                y_comp = np.append(y_comp, 0)
+                if scenario == BAU_SCENARIO:
+                    y[3] = 100 - y.sum()
+                    y_comp[3] = 100 - y_comp.sum()
+
+                x_vals = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
+                fs = 12
+
+                fig['data'] = [
+                           go.Bar(
+                               x=x_vals,
+                               y=y,
+                               text=[country_sel for i in range(4)],
+                               insidetextfont={'size': fs},
+                               textposition='auto',
+                               marker=dict(
+                                   color=['#0000ff', '#ffa500', '#008000', 'red']
+                               ),
+                               hoverinfo='y+text'
+                           ),
+                           go.Bar(
+                               x=x_vals,
+                               y=y_comp,
+                               text=[comp_name for i in range(4)],
+                               insidetextfont={'size': fs},
+                               textposition='auto',
+                               marker=dict(
+                                   color=['#8080ff', '#ffd280', '#1aff1a', 'red']
+                               ),
+                               hoverinfo='y+text'
+                           ),
+                       ]
+
+        return fig
+
+    @app_handle.callback(
         Output('view-store', 'data'),
         [
             Input('scenario-input', 'value'),
