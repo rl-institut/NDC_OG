@@ -113,7 +113,7 @@ def country_hover_text(input_df):
 
 
 # # Initial input data for the map
-data = [
+map_data = [
     go.Choropleth(
         colorscale=[[0, '#a5dbc2'], [1, '#a5dbc2']],
         autocolorscale=False,
@@ -159,7 +159,7 @@ layout = go.Layout(
     )
 )
 
-fig_map = go.Figure(data=data, layout=layout)
+fig_map = go.Figure(data=map_data, layout=layout)
 
 
 layout = html.Div(
