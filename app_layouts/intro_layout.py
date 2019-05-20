@@ -15,27 +15,26 @@ layout = html.Div(
         ),
         html.Div(
             id='intro-text-div',
-            children='Here is a disclaimer which remains to be written. '
-                     'Here is a disclaimer which remains to be written. '
-                     'Here is a disclaimer which remains to be written. '
-                     'Here is a disclaimer which remains to be written. '
-                     'Here is a disclaimer which remains to be written. '
-                     'Here is a disclaimer which remains to be written. '
-                     'Here is a disclaimer which remains to be written. '
-                     'Here is a disclaimer which remains to be written. '
-                     'Here is a disclaimer which remains to be written. '
-                     'Here is a disclaimer which remains to be written. '
-                     'Here is a disclaimer which remains to be written. '
-                     'Here is a disclaimer which remains to be written. '
-                     'Here is a disclaimer which remains to be written. '
-                     'Here is a disclaimer which remains to be written. '
-                     'Here is a disclaimer which remains to be written. '
-                     'Here is a disclaimer which remains to be written. '
-                     'Here is a disclaimer which remains to be written. '
-                     'Here is a disclaimer which remains to be written. '
-                     'Here is a disclaimer which remains to be written. '
-                     'Here is a disclaimer which remains to be written. '
-                     'Here is a disclaimer which remains to be written',
+            children=[
+                html.P(
+                    'In the Study on Renewable Energy Off-Grid Components of NDCs and their Role \
+                    for Climate Change Mitigation financed by GIZ,  Reiner Lemoine Institute and \
+                    the greenwerk develop strategies for the use of renewable energy that can \
+                    support climate protection in developing countries.'
+                ),
+                html.P(
+                    'The study targets the inclusion of off-grid components \
+                   in the Nationally Determined Contributions (NDCs), in which the signatory \
+                   states to the Paris Climate Change Convention commit themselves to elaborate \
+                   national climate protection targets, should be achieved.'
+                ),
+                html.P(
+                    'In this visualization tool a quantification of four different new \
+                electrification until 2030 scenarios are presented for 52 countries. \
+                These countries were selected through the criteria of having > 1 million people \
+                without electricity access in 2017.'
+                )
+            ]
         ),
         html.Div(
             id='intro-link-div',

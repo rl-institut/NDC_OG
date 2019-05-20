@@ -38,7 +38,6 @@ from data.data_preparation import (
 from .app_components import (
     results_div,
     scenario_div,
-    general_info_div,
 )
 
 URL_PATHNAME = 'static'
@@ -190,7 +189,7 @@ layout = html.Div(
                         html.Div(
                             id='general-info-div',
                             className='app__info',
-                            children=general_info_div()
+                            children=''
                         ),
                         html.Div(
                             id='aggregate-div',
@@ -532,9 +531,9 @@ def callbacks(app_handle):
             cur_style = {'display': 'none'}
 
         if cur_view['app_view'] == VIEW_GENERAL:
-            cur_style.update({'display': 'none'})
+            cur_style.update({'display': 'flex'})
         elif cur_view['app_view'] == VIEW_COUNTRY:
-            cur_style.update({'display': 'none'})
+            cur_style.update({'display': 'flex'})
         return cur_style
 
     @app_handle.callback(
@@ -948,12 +947,11 @@ def callbacks(app_handle):
         return cur_data
 
     @app_handle.callback(
-        Output('scenario-input-div', 'title'),
+        Output('general-info-div', 'children'),
         [Input('scenario-input', 'value')]
     )
     def update_scenario_description(scenario):
         return SCENARIOS_DESCRIPTIONS[scenario]
-
 
 if __name__ == '__main__':
     app.run_server(debug=True)
