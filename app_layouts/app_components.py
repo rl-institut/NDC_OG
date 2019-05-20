@@ -73,6 +73,28 @@ def results_div(aggregate=False):
     else:
         id_name = 'country'
 
+    x_vals = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
+    annot = []
+    for i in range(len(x_vals)):
+        for j, sce in enumerate(SCENARIOS):
+            annot.append(
+                dict(
+                    x=i + (j-1) * 0.26,
+                    y=0,
+                    yshift=25,
+                    textangle=-90,
+                    font={'size':15},
+                    xref='x',
+                    yref='y',
+                    text=sce,
+                    showarrow=False,
+                    # align='left',
+                    # valign='bottom',
+                    # bgcolor='red',
+                )
+            )
+
+
     # add a barplot above the tables with the results
     barplot = html.Div(
         id='{}-barplot-div'.format(id_name),
@@ -84,7 +106,7 @@ def results_div(aggregate=False):
             figure=go.Figure(
                 data=[
                     go.Bar(
-                        x=ELECTRIFICATION_OPTIONS.copy() + ['No electricity'],
+                        x=x_vals,
                         y=[0, 0, 0, 0],
                         marker=dict(
                             color=['#0000ff', '#ffa500', '#008000', 'red']
@@ -92,7 +114,7 @@ def results_div(aggregate=False):
                         name=BAU_SCENARIO
                     ),
                     go.Bar(
-                        x=ELECTRIFICATION_OPTIONS.copy() + ['No electricity'],
+                        x=x_vals,
                         y=[0, 0, 0, 0],
                         marker=dict(
                             color=['#8080ff', '#ffd280', '#1aff1a', 'red']
@@ -100,7 +122,7 @@ def results_div(aggregate=False):
                         name=SE4ALL_SCENARIO
                     ),
                     go.Bar(
-                        x=ELECTRIFICATION_OPTIONS.copy() + ['No electricity'],
+                        x=x_vals,
                         y=[0, 0, 0, 0],
                         marker=dict(
                             color=['#ccccff', '#ffedcc', '#99ff99', 'red']
@@ -124,6 +146,7 @@ def results_div(aggregate=False):
                     ),
                     font=dict(size=20, family='Roboto'),
                     titlefont=dict(size=20),
+                    annotations=annot
                 )
             ),
             config={
