@@ -36,8 +36,9 @@ from data.data_preparation import (
 )
 
 from .app_components import (
-    results_div,
     scenario_div,
+    results_div,
+    compare_div,
 )
 
 URL_PATHNAME = 'static'
@@ -283,10 +284,16 @@ layout = html.Div(
                                             value=None,
                                             multi=False
                                         )
-                                    ]
+                                    ],
+                                    style={'display': 'none'}
                                 )
 
                             ]
+                        ),
+                        html.Div(
+                            id='compare-div',
+                            children=compare_div(),
+                            style={'display': 'none'}
                         ),
                         html.Div(
                             id='results-info-div',
@@ -511,7 +518,7 @@ def callbacks(app_handle):
 
         if cur_view['app_view'] == VIEW_GENERAL:
             cur_style.update({'display': 'flex'})
-        elif cur_view['app_view'] == VIEW_COUNTRY:
+        elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
             cur_style.update({'display': 'none'})
         return cur_style
 
@@ -581,7 +588,7 @@ def callbacks(app_handle):
 
         if cur_view['app_view'] == VIEW_GENERAL:
             cur_style.update({'display': 'flex'})
-        elif cur_view['app_view'] == VIEW_COUNTRY:
+        elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
             cur_style.update({'display': 'none'})
         return cur_style
 
@@ -600,6 +607,24 @@ def callbacks(app_handle):
         if cur_view['app_view'] == VIEW_GENERAL:
             cur_style.update({'display': 'none'})
         elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
+            cur_style.update({'display': 'flex'})
+        return cur_style
+
+    @app_handle.callback(
+        Output('compare-div', 'style'),
+        [
+            Input('view-store', 'data'),
+        ],
+        [State('compare-div', 'style')]
+    )
+    def toggle_compare_div_display(cur_view, cur_style):
+        """Change the display of compare-input-div between the app's views."""
+        if cur_style is None:
+            cur_style = {'display': 'none'}
+
+        if cur_view['app_view'] in [VIEW_GENERAL, VIEW_COUNTRY]:
+            cur_style.update({'display': 'none'})
+        elif cur_view['app_view'] == VIEW_COMPARE:
             cur_style.update({'display': 'flex'})
         return cur_style
 
