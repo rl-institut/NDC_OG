@@ -467,7 +467,6 @@ def callbacks(app_handle):
     )
     def update_compare_barplot(country_sel, comp_sel, scenario, cur_data, fig):
         """update the barplot whenever the country changes"""
-        print(comp_sel)
         if country_sel is not None:
             if comp_sel is not None:
 
@@ -528,13 +527,12 @@ def callbacks(app_handle):
         Output('view-store', 'data'),
         [
             Input('scenario-input', 'value'),
-            Input('region-input', 'value'),
             Input('country-input', 'value'),
             Input('compare-input', 'value')
         ],
         [State('view-store', 'data')]
     )
-    def update_view(scenario, region_id, country_sel, comp_sel, cur_view):
+    def update_view(scenario, country_sel, comp_sel, cur_view):
         """Toggle between the different views of the app.
 
         There are currently two views:
@@ -558,7 +556,10 @@ def callbacks(app_handle):
             # trigger comes from clicking on a country
             if 'country-input' in prop_id:
                 if country_sel:
-                    cur_view.update({'app_view': VIEW_COUNTRY})
+                    if comp_sel:
+                        cur_view.update({'app_view': VIEW_COMPARE})
+                    else:
+                        cur_view.update({'app_view': VIEW_COUNTRY})
                 else:
                     cur_view.update({'app_view': VIEW_GENERAL})
 
@@ -605,7 +606,7 @@ def callbacks(app_handle):
 
         if cur_view['app_view'] == VIEW_GENERAL:
             cur_style.update({'display': 'none'})
-        elif cur_view['app_view'] == VIEW_COUNTRY:
+        elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
             cur_style.update({'display': 'flex'})
         return cur_style
 
@@ -969,14 +970,23 @@ def callbacks(app_handle):
 
     @app_handle.callback(
         Output('country-input', 'value'),
-        [Input('data-store', 'data')],
+        [
+            Input('data-store', 'data'),
+            Input('region-input', 'value'),
+        ],
         [State('country-input', 'value')]
     )
-    def update_selected_country_on_map(cur_data, cur_val):
+    def update_selected_country_on_map(cur_data, region_id, cur_val):
 
-        country_iso = cur_data.get('selected_country')
-        if country_iso is None:
-            country_iso = cur_val
+        # return None if the trigger is the region-input
+        country_iso = None
+        ctx = dash.callback_context
+        if ctx.triggered:
+            prop_id = ctx.triggered[0]['prop_id']
+            if 'data_store' in prop_id:
+                country_iso = cur_data.get('selected_country')
+                if country_iso is None:
+                    country_iso = cur_val
         return country_iso
 
     @app_handle.callback(
