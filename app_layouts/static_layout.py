@@ -495,7 +495,7 @@ def callbacks(app_handle):
             State('compare-barplot', 'figure')
         ]
     )
-    def update_compare_barplot(country_sel, comp_sel, scenario, cur_data, fig):
+    def update_compare_barplot(country_sel, comp_sel, scenario, y_sel, cur_data, fig):
         """update the barplot whenever the country changes"""
         if country_sel is not None:
             if comp_sel is not None:
@@ -513,17 +513,20 @@ def callbacks(app_handle):
                     # compare the reference country to a country
                     df_comp = df_comp.loc[df_comp.country_iso == comp_sel]
 
-                # compute the percentage of population with electricity access
-                y = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0) * 100
-                y_comp = df_comp[POP_GET].div(df_comp.pop_newly_electrified_2030, axis=0) * 100
+                basic_results_data = prepare_results_tables(df)
+                comp_results_data = prepare_results_tables(df_comp)
 
-                y = np.append(y, 0)
-                y_comp = np.append(y_comp, 0)
+                y = basic_results_data[BASIC_ROWS.index(y_sel)]
+                y_comp = comp_results_data[BASIC_ROWS.index(y_sel)]
+
+                x_vals = ELECTRIFICATION_OPTIONS.copy()
+
                 if scenario == BAU_SCENARIO:
+                    y = np.append(y, 0)
+                    y_comp = np.append(y_comp, 0)
                     y[3] = 100 - y.sum()
                     y_comp[3] = 100 - y_comp.sum()
-
-                x_vals = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
+                    x_vals = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
                 fs = 12
 
                 fig['data'] = [
@@ -1021,8 +1024,8 @@ def callbacks(app_handle):
                 basic_results_data['comp_total'] = pd.Series(total)
                 # label of the table rows
                 basic_results_data['labels'] = pd.Series(BASIC_ROWS)
-                basic_results_data.iloc[1:, 0:8] = \
-                    basic_results_data.iloc[1:, 0:8].applymap(
+                basic_results_data.iloc[:, 0:8] = \
+                    basic_results_data.iloc[:, 0:8].applymap(
                         add_comma
                     )
                 basic_results_data.iloc[0, 0:8] = basic_results_data.iloc[0, 0:8].map(
@@ -1234,6 +1237,31 @@ def callbacks(app_handle):
             df = pd.read_json(cur_data[scenario])
             answer = 'Results for {}'.format(
                 df.loc[df.country_iso == country_iso].country.values[0])
+        return answer
+
+    @app_handle.callback(
+        Output('compare-basic-results-title', 'children'),
+        [
+            Input('country-input', 'value'),
+            Input('compare-input', 'value')
+        ],
+        [
+            State('scenario-input', 'value'),
+            State('data-store', 'data')]
+    )
+    def country_basic_results_title(country_iso, comp_sel, scenario, cur_data):
+
+        answer = 'Results'
+        if scenario in SCENARIOS and comp_sel is not None:
+            df = pd.read_json(cur_data[scenario])
+            if comp_sel in REGIONS_NDC:
+                comp_name = REGIONS_NDC[comp_sel]
+            else:
+                comp_name = df.loc[df.country_iso == comp_sel].country.values[0]
+            answer = 'Results of comparison between {} and {}'.format(
+                comp_name,
+                df.loc[df.country_iso == country_iso].country.values[0]
+            )
         return answer
 
     @app_handle.callback(

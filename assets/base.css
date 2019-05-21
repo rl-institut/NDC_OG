@@ -226,15 +226,11 @@ width: 100%;
 
 }
 
-.country__results h4 {
+.country__results h4,
+.aggregate__results h4,
+.compare__results h4{
     text-align: center;
-
 }
-.aggregate__results h4 {
-    text-align: center;
-
-}
-
 
 .country__results__pop__hdr{
     display: flex;

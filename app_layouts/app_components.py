@@ -274,7 +274,7 @@ def compare_div():
                     height=400,
                     autosize=True,
                     margin=dict(
-                        l=30,
+                        l=55,
                         r=0,
                         b=30,
                         t=30
