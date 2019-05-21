@@ -33,6 +33,7 @@ from data.data_preparation import (
     BASIC_COLUMNS_ID,
     GHG_COLUMNS_ID,
     compute_ndc_results_from_raw_data,
+    prepare_results_tables,
 )
 
 from .app_components import (
@@ -401,7 +402,7 @@ def callbacks(app_handle):
         [
             Input('country-input', 'value'),
             Input('country-barplot-yaxis-input', 'value')
-         ],
+        ],
         [
             State('data-store', 'data'),
             State('country-barplot', 'figure')
@@ -417,20 +418,30 @@ def callbacks(app_handle):
                 # narrow to the country's results
                 df = df.loc[df.country_iso == country_iso]
                 # compute the percentage of population with electricity access
-                y = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0) * 100
+                basic_results_data = prepare_results_tables(df)
 
-                y = np.append(y, 0)
-                if sce == BAU_SCENARIO:
+                y = basic_results_data[BASIC_ROWS.index(y_sel)]
+
+                if sce == BAU_SCENARIO and y_sel == BASIC_ROWS[0]:
+                    y = np.append(y, 0)
                     y[3] = 100 - y.sum()
-
+                    ELECTRIFICATION_OPTIONS.copy()
+                    fig['data'][sce_id].update(
+                        {'x': ELECTRIFICATION_OPTIONS.copy() + ['No electricity']}
+                    )
+                else:
+                    fig['data'][sce_id].update(
+                        {'x': ELECTRIFICATION_OPTIONS.copy()}
+                    )
                 fig['data'][sce_id].update({'y': y})
+
         return fig
 
     @app_handle.callback(
         Output('aggregate-barplot', 'figure'),
         [
             Input('region-input', 'value'),
-            Input('country-barplot-yaxis-input', 'value')
+            Input('aggregate-barplot-yaxis-input', 'value')
         ],
         [
             State('data-store', 'data'),
@@ -451,12 +462,21 @@ def callbacks(app_handle):
                 df = df[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
 
                 # compute the percentage of population with electricity access
-                y = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0) * 100
+                basic_results_data = prepare_results_tables(df)
 
-                y = np.append(y, 0)
-                if sce == BAU_SCENARIO:
+                y = basic_results_data[BASIC_ROWS.index(y_sel)]
+
+                if sce == BAU_SCENARIO and y_sel == BASIC_ROWS[0]:
+                    y = np.append(y, 0)
                     y[3] = 100 - y.sum()
-
+                    ELECTRIFICATION_OPTIONS.copy()
+                    fig['data'][sce_id].update(
+                        {'x': ELECTRIFICATION_OPTIONS.copy() + ['No electricity']}
+                    )
+                else:
+                    fig['data'][sce_id].update(
+                        {'x': ELECTRIFICATION_OPTIONS.copy()}
+                    )
                 fig['data'][sce_id].update({'y': y})
         return fig
 
