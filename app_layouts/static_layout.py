@@ -414,6 +414,7 @@ def callbacks(app_handle):
         country_iso = country_sel
         if country_iso is not None:
             for sce_id, sce in enumerate(SCENARIOS):
+
                 df = pd.read_json(cur_data[sce])
                 # narrow to the country's results
                 df = df.loc[df.country_iso == country_iso]
@@ -655,7 +656,6 @@ def callbacks(app_handle):
             cur_style.update({'display': 'none'})
         return cur_style
 
-
     @app_handle.callback(
         Output('aggregate-div', 'style'),
         [
@@ -737,21 +737,7 @@ def callbacks(app_handle):
                 df = pd.read_json(cur_data[scenario])
                 df = df.loc[df.country_iso == country_iso]
 
-                pop =np.squeeze(df[POP_GET].values * 1e-3).round(0)
-                # compute the percentage of population with electricity access
-                df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
-                # gather the values of the results to display in the table
-                pop_res = np.squeeze(df[POP_GET].values * 100).round(1)
-                hh_res = np.squeeze(df[HH_GET].values * 1e-3).round(0)
-                cap_res = np.squeeze(df[HH_CAP].values * 1e-3).round(0)
-                cap2_res = np.squeeze(df[HH_SCN2].values * 1e-3).round(0)
-                invest_res = np.squeeze(df[INVEST].values * 1e-6).round(0)
-                invest_res = np.append(np.NaN, invest_res)
-                invest2_res = np.squeeze(df[INVEST_CAP].values * 1e-6).round(0)
-                invest2_res = np.append(np.NaN, invest2_res)
-                basic_results_data = np.vstack(
-                    [pop_res, pop, hh_res, cap_res, cap2_res, invest_res, invest2_res]
-                )
+                basic_results_data = prepare_results_tables(df)
 
                 total = np.nansum(basic_results_data, axis=1)
 
@@ -872,21 +858,7 @@ def callbacks(app_handle):
                 # aggregate the results
                 df = df[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
 
-                pop = np.squeeze(df[POP_GET].values * 1e-3).round(0)
-                # compute the percentage of population with electricity access
-                df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0)
-                # gather the values of the results to display in the table
-                pop_res = np.squeeze(df[POP_GET].values * 100).round(1)
-                hh_res = np.squeeze(df[HH_GET].values * 1e-3).round(1)
-                cap_res = np.squeeze(df[HH_CAP].values * 1e-3).round(0)
-                cap2_res = np.squeeze(df[HH_SCN2].values * 1e-3).round(0)
-                invest_res = np.squeeze(df[INVEST].values * 1e-6).round(0)
-                invest_res = np.append(np.NaN, invest_res)
-                invest2_res = np.squeeze(df[INVEST_CAP].values).round(0)
-                invest2_res = np.append(np.NaN, invest2_res * 1e-6)
-                basic_results_data = np.vstack(
-                    [pop_res, pop, hh_res, cap_res, cap2_res, invest_res, invest2_res]
-                )
+                basic_results_data = prepare_results_tables(df)
 
                 total = np.nansum(basic_results_data, axis=1)
 
