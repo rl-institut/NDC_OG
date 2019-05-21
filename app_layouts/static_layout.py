@@ -32,6 +32,7 @@ from data.data_preparation import (
     BASIC_ROWS,
     BASIC_COLUMNS_ID,
     GHG_COLUMNS_ID,
+    COMPARE_COLUMNS_ID,
     compute_ndc_results_from_raw_data,
     prepare_results_tables,
 )
@@ -58,7 +59,7 @@ def add_comma(val):
     if np.isnan(val):
         answer = ''
     else:
-        answer = "{:,}".format(val)#np.round(val, 0))
+        answer = "{:,}".format(val)
         answer = answer.split('.')[0]
     return answer
 
@@ -487,6 +488,7 @@ def callbacks(app_handle):
             Input('country-input', 'value'),
             Input('compare-input', 'value'),
             Input('scenario-input', 'value'),
+            Input('compare-barplot-yaxis-input', 'value')
         ],
         [
             State('data-store', 'data'),
@@ -875,7 +877,7 @@ def callbacks(app_handle):
                     add_comma
                 )
                 basic_results_data.iloc[0, 0:4] = basic_results_data.iloc[0, 0:4].map(
-                    lambda x: '{}%'.format(x)
+                    lambda x: '' if x == '' else '{}%'.format(x)
                 )
                 answer_table = basic_results_data[BASIC_COLUMNS_ID].to_dict('records')
 
@@ -955,6 +957,203 @@ def callbacks(app_handle):
                 # label of the table rows
                 ghg_results_data.iloc[:, 0:4] = ghg_results_data.iloc[:, 0:4].applymap(add_comma)
                 answer_table = ghg_results_data[GHG_COLUMNS_ID].to_dict('records')
+
+        return answer_table
+
+    @app_handle.callback(
+        Output('compare-basic-results-table', 'data'),
+        [
+            Input('country-input', 'value'),
+            Input('compare-input', 'value'),
+            Input('scenario-input', 'value'),
+        ],
+        [State('data-store', 'data')]
+    )
+    def update_compare_basic_results_table(country_sel, comp_sel, scenario, cur_data):
+        """Display information and study's results comparison between countries."""
+        answer_table = []
+        country_iso = country_sel
+        # in case of country_iso is a list of one element
+        if np.shape(country_iso) and len(country_iso) == 1:
+            country_iso = country_iso[0]
+
+        # extract the data from the selected scenario if a country was selected
+        if country_iso is not None:
+            if scenario in SCENARIOS:
+                df = pd.read_json(cur_data[scenario])
+                df_comp = df.copy()
+                df = df.loc[df.country_iso == country_sel]
+                if comp_sel in REGIONS_NDC:
+                    # compare the reference country to a region
+                    df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[comp_sel]]
+                    df_comp = df_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
+                else:
+                    # compare the reference country to a country
+                    df_comp = df_comp.loc[df_comp.country_iso == comp_sel]
+
+                basic_results_data = prepare_results_tables(df)
+                comp_results_data = prepare_results_tables(df_comp)
+
+                total = np.nansum(basic_results_data, axis=1)
+                comp_total = np.nansum(comp_results_data, axis=1)
+
+                basic_results_data = 100 * np.divide(
+                    comp_results_data - basic_results_data,
+                    comp_results_data
+                )
+
+                total = 100 * np.divide(
+                    comp_total - total,
+                    comp_total
+                )
+
+                basic_results_data = np.hstack([comp_results_data, basic_results_data])
+
+                comp_ids = ['comp_{}'.format(c) for c in ELECTRIFICATION_OPTIONS]
+                # prepare a DataFrame
+                basic_results_data = pd.DataFrame(
+                    data=basic_results_data,
+                    columns=ELECTRIFICATION_OPTIONS + comp_ids
+                )
+
+                # sums of the rows
+                basic_results_data['total'] = pd.Series(comp_total)
+                basic_results_data['comp_total'] = pd.Series(total)
+                # label of the table rows
+                basic_results_data['labels'] = pd.Series(BASIC_ROWS)
+                basic_results_data.iloc[1:, 0:8] = \
+                    basic_results_data.iloc[1:, 0:8].applymap(
+                        add_comma
+                    )
+                basic_results_data.iloc[0, 0:8] = basic_results_data.iloc[0, 0:8].map(
+                    lambda x: '{}%'.format(x)
+                )
+                basic_results_data[comp_ids + ['comp_total']] = \
+                    basic_results_data[comp_ids + ['comp_total']].applymap(
+                        lambda x: '' if x == '' else str(x) if '%' in x else '{}%'.format(x)
+                    )
+                answer_table = basic_results_data[COMPARE_COLUMNS_ID].to_dict('records')
+
+        return answer_table
+
+    @app_handle.callback(
+        Output('compare-ghg-results-table', 'data'),
+        [
+            Input('country-input', 'value'),
+            Input('compare-input', 'value'),
+            Input('scenario-input', 'value'),
+        ],
+        [State('data-store', 'data')]
+    )
+    def update_compare_ghg_results_table(country_sel, comp_sel, scenario, cur_data):
+        """Display information and study's results for a country."""
+        answer_table = []
+        df_bau_ref = None
+        country_iso = country_sel
+        # in case of country_iso is a list of one element
+        if np.shape(country_iso) and len(country_iso) == 1:
+            country_iso = country_iso[0]
+
+        # extract the data from the selected scenario if a country was selected
+        if country_iso is not None:
+            if scenario in SCENARIOS:
+                df = pd.read_json(cur_data[scenario])
+                df_comp = df.copy()
+                df = df.loc[df.country_iso == country_sel]
+                if comp_sel in REGIONS_NDC:
+                    # compare the reference country to a region
+                    df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[comp_sel]]
+                    df_comp = df_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
+                else:
+                    # compare the reference country to a country
+                    df_comp = df_comp.loc[df_comp.country_iso == comp_sel]
+                df = df.loc[df.country_iso == country_iso]
+
+                if scenario in [SE4ALL_SCENARIO, PROG_SCENARIO]:
+                    # to compare greenhouse gas emissions with BaU scenario
+                    df_bau = pd.read_json(cur_data[BAU_SCENARIO])
+                    df_bau_ref = df_bau.loc[df_bau.country_iso == country_iso]
+
+                    if comp_sel in REGIONS_NDC:
+                        # compare the reference country to a region
+                        df_bau_comp = df_bau.loc[df_bau.region == REGIONS_NDC[comp_sel]]
+                        df_bau_comp = df_bau_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(
+                            axis=0)
+                    else:
+                        # compare the reference country to a country
+                        df_bau_comp = df_bau.loc[df_bau.country_iso == comp_sel]
+
+                if df_bau_ref is None:
+                    ghg_rows = [
+                        'GHG (case 1)',
+                        'GHG (case 2)',
+                        # 'GHG CUMUL'
+                    ]
+                else:
+                    ghg_rows = [
+                        'GHG (case 1)',
+                        'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
+                        'GHG (case 2)',
+                        'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
+                    ]
+
+                # gather the values of the results to display in the table
+                ghg_res = np.squeeze(df[GHG].values).round(0)
+                ghg2_res = np.squeeze(df[GHG_CAP].values).round(0)
+
+                comp_res = np.squeeze(df_comp[GHG].values).round(0)
+                comp2_res = np.squeeze(df_comp[GHG_CAP].values).round(0)
+
+                if df_bau_ref is not None:
+                    ghg_diff_res = ghg_res - np.squeeze(df_bau_ref[GHG].values).round(0)
+                    ghg2_diff_res = ghg2_res - np.squeeze(df_bau_ref[GHG_CAP].values).round(0)
+                    ghg_results_data = np.vstack([ghg_res, ghg_diff_res, ghg2_res, ghg2_diff_res])
+                else:
+                    ghg_results_data = np.vstack([ghg_res, ghg2_res])
+
+                if df_bau_ref is not None:
+                    ghg_diff_res = comp_res - np.squeeze(df_bau_comp[GHG].values).round(0)
+                    ghg2_diff_res = comp2_res - np.squeeze(df_bau_comp[GHG_CAP].values).round(0)
+                    ghg_comp_data = np.vstack([comp_res, ghg_diff_res, comp2_res, ghg2_diff_res])
+                else:
+                    ghg_comp_data = np.vstack([comp_res, comp2_res])
+
+                total = np.nansum(ghg_results_data, axis=1)
+                comp_total = np.nansum(ghg_comp_data, axis=1)
+
+                ghg_results_data = 100 * np.divide(
+                    ghg_comp_data - ghg_results_data,
+                    ghg_comp_data
+                )
+
+                total = 100 * np.divide(
+                    comp_total - total,
+                    comp_total
+                )
+
+                ghg_results_data = np.hstack([ghg_comp_data, ghg_results_data])
+
+                comp_ids = ['comp_{}'.format(c) for c in ELECTRIFICATION_OPTIONS]
+                # prepare a DataFrame
+                ghg_results_data = pd.DataFrame(
+                    data=ghg_results_data,
+                    columns=ELECTRIFICATION_OPTIONS + comp_ids
+                )
+                print(ghg_results_data)
+                # sums of the rows
+                ghg_results_data['total'] = pd.Series(comp_total)
+                ghg_results_data['comp_total'] = pd.Series(total)
+                # label of the table rows
+                ghg_results_data['labels'] = pd.Series(ghg_rows)
+                ghg_results_data.iloc[:, 0:8] = \
+                    ghg_results_data.iloc[:, 0:8].applymap(
+                        add_comma
+                    )
+                ghg_results_data[comp_ids + ['comp_total']] = \
+                    ghg_results_data[comp_ids + ['comp_total']].applymap(
+                        lambda x: '' if x == '' else '{}%'.format(x)
+                    )
+                answer_table = ghg_results_data[COMPARE_COLUMNS_ID].to_dict('records')
 
         return answer_table
 

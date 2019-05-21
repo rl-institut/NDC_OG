@@ -171,6 +171,10 @@ LABEL_COLUMNS['labels'] = ''
 LABEL_COLUMNS['total'] = 'Total'
 BASIC_COLUMNS_ID = ['labels'] + ELECTRIFICATION_OPTIONS + ['total']
 GHG_COLUMNS_ID = ['labels'] + ELECTRIFICATION_OPTIONS + ['total']
+COMPARE_COLUMNS_ID = ['labels']
+for opt in ELECTRIFICATION_OPTIONS + ['total']:
+    COMPARE_COLUMNS_ID.append(opt)
+    COMPARE_COLUMNS_ID.append('comp_{}'.format(opt))
 
 
 def prepare_results_tables(df):
