@@ -141,7 +141,7 @@ def results_div(aggregate=False):
                 )
             ),
             config={
-                'displayModeBar': False,
+                'displayModeBar': True,
             }
         ),
     )
@@ -287,7 +287,7 @@ def compare_div():
                 )
             ),
             config={
-                'displayModeBar': False,
+                'displayModeBar': True,
             }
         ),
     )
