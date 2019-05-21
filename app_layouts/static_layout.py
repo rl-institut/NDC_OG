@@ -398,13 +398,16 @@ def callbacks(app_handle):
 
     @app_handle.callback(
         Output('country-barplot', 'figure'),
-        [Input('country-input', 'value')],
+        [
+            Input('country-input', 'value'),
+            Input('country-barplot-yaxis-input', 'value')
+         ],
         [
             State('data-store', 'data'),
             State('country-barplot', 'figure')
         ]
     )
-    def update_country_barplot(country_sel, cur_data, fig):
+    def update_country_barplot(country_sel, y_sel, cur_data, fig):
         """update the barplot for every scenario"""
 
         country_iso = country_sel
@@ -425,13 +428,16 @@ def callbacks(app_handle):
 
     @app_handle.callback(
         Output('aggregate-barplot', 'figure'),
-        [Input('region-input', 'value')],
+        [
+            Input('region-input', 'value'),
+            Input('country-barplot-yaxis-input', 'value')
+        ],
         [
             State('data-store', 'data'),
             State('aggregate-barplot', 'figure')
         ]
     )
-    def update_aggregate_barplot(region_id, cur_data, fig):
+    def update_aggregate_barplot(region_id, y_sel, cur_data, fig):
         """update the barplot for every scenario"""
         if region_id is not None:
             for sce_id, sce in enumerate(SCENARIOS):

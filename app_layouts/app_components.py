@@ -186,7 +186,14 @@ def results_div(aggregate=False):
     results_divs = [
         html.Div(
             id='{}-barplot-title'.format(id_name),
-            children='HERE GRAPH TITLE, for example "% pop. newly electrified in 2030"',
+            children=[
+                html.P('HERE GRAPH TITLE, for example "% pop. newly electrified in 2030"'),
+                dcc.Dropdown(
+                    id='{}-barplot-yaxis-input'.format(id_name),
+                    options=[{'label': r, 'value': r} for r in BASIC_ROWS],
+                    value=BASIC_ROWS[0],
+                )
+            ],
         ),
         barplot,
         html.Div(
