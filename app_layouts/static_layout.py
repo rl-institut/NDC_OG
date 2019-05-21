@@ -1001,7 +1001,7 @@ def callbacks(app_handle):
         ctx = dash.callback_context
         if ctx.triggered:
             prop_id = ctx.triggered[0]['prop_id']
-            if 'data_store' in prop_id:
+            if 'data-store' in prop_id:
                 country_iso = cur_data.get('selected_country')
                 if country_iso is None:
                     country_iso = cur_val
