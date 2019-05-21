@@ -53,10 +53,11 @@ def extract_centroids(reg):
 
 
 def add_comma(val):
+    """Formats number by separating thousands with a comma."""
     if np.isnan(val):
         answer = ''
     else:
-        answer = "{:,}".format(np.round(val, 0))
+        answer = "{:,}".format(val)#np.round(val, 0))
         answer = answer.split('.')[0]
     return answer
 
@@ -710,19 +711,20 @@ def callbacks(app_handle):
                 df = pd.read_json(cur_data[scenario])
                 df = df.loc[df.country_iso == country_iso]
 
+                pop =np.squeeze(df[POP_GET].values * 1e-3).round(0)
                 # compute the percentage of population with electricity access
                 df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
                 # gather the values of the results to display in the table
                 pop_res = np.squeeze(df[POP_GET].values * 100).round(1)
-                hh_res = np.squeeze(df[HH_GET].values).round(0)
+                hh_res = np.squeeze(df[HH_GET].values * 1e-3).round(0)
                 cap_res = np.squeeze(df[HH_CAP].values * 1e-3).round(0)
                 cap2_res = np.squeeze(df[HH_SCN2].values * 1e-3).round(0)
-                invest_res = np.squeeze(df[INVEST].values).round(0)
+                invest_res = np.squeeze(df[INVEST].values * 1e-6).round(0)
                 invest_res = np.append(np.NaN, invest_res)
-                invest2_res = np.squeeze(df[INVEST_CAP].values).round(0)
+                invest2_res = np.squeeze(df[INVEST_CAP].values * 1e-6).round(0)
                 invest2_res = np.append(np.NaN, invest2_res)
                 basic_results_data = np.vstack(
-                    [pop_res, hh_res, cap_res, cap2_res, invest_res, invest2_res]
+                    [pop_res, pop, hh_res, cap_res, cap2_res, invest_res, invest2_res]
                 )
 
                 total = np.nansum(basic_results_data, axis=1)
@@ -738,6 +740,9 @@ def callbacks(app_handle):
                 basic_results_data['labels'] = pd.Series(BASIC_ROWS)
                 basic_results_data.iloc[1:, 0:4] = basic_results_data.iloc[1:, 0:4].applymap(
                     add_comma
+                )
+                basic_results_data.iloc[0, 0:4] = basic_results_data.iloc[0, 0:4].map(
+                    lambda x: '{}%'.format(x)
                 )
                 answer_table = basic_results_data[BASIC_COLUMNS_ID].to_dict('records')
 
@@ -841,19 +846,20 @@ def callbacks(app_handle):
                 # aggregate the results
                 df = df[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
 
+                pop = np.squeeze(df[POP_GET].values * 1e-3).round(0)
                 # compute the percentage of population with electricity access
                 df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0)
                 # gather the values of the results to display in the table
                 pop_res = np.squeeze(df[POP_GET].values * 100).round(1)
-                hh_res = np.squeeze(df[HH_GET].values).round(0)
+                hh_res = np.squeeze(df[HH_GET].values * 1e-3).round(1)
                 cap_res = np.squeeze(df[HH_CAP].values * 1e-3).round(0)
                 cap2_res = np.squeeze(df[HH_SCN2].values * 1e-3).round(0)
-                invest_res = np.squeeze(df[INVEST].values).round(0)
+                invest_res = np.squeeze(df[INVEST].values * 1e-6).round(0)
                 invest_res = np.append(np.NaN, invest_res)
                 invest2_res = np.squeeze(df[INVEST_CAP].values).round(0)
-                invest2_res = np.append(np.NaN, invest2_res)
+                invest2_res = np.append(np.NaN, invest2_res * 1e-6)
                 basic_results_data = np.vstack(
-                    [pop_res, hh_res, cap_res, cap2_res, invest_res, invest2_res]
+                    [pop_res, pop, hh_res, cap_res, cap2_res, invest_res, invest2_res]
                 )
 
                 total = np.nansum(basic_results_data, axis=1)
@@ -869,6 +875,9 @@ def callbacks(app_handle):
                 basic_results_data['labels'] = pd.Series(BASIC_ROWS)
                 basic_results_data.iloc[1:, 0:4] = basic_results_data.iloc[1:, 0:4].applymap(
                     add_comma
+                )
+                basic_results_data.iloc[0, 0:4] = basic_results_data.iloc[0, 0:4].map(
+                    lambda x: '{}%'.format(x)
                 )
                 answer_table = basic_results_data[BASIC_COLUMNS_ID].to_dict('records')
 

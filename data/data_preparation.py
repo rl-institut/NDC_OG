@@ -156,13 +156,13 @@ RISE_INDICES = ['rise_%s' % opt for opt in ELECTRIFICATION_OPTIONS]
 SHIFT_MENTI = ['shift_menti_mg', 'shift_menti_shs']
 
 BASIC_ROWS = [
-    '% pop. newly electrified in 2030',
-    'people newly electrified in 2030',
-    'HH newly electrified in 2030',
+    'People share',
+    'People (k)',
+    'HH (k)',
     'HH cap. (MW)',
     'HH cap. (MW) (TIER + 1)',
-    'Total investment USD',
-    'Total investment (TIER + 1) USD',
+    'Investment MUSD',
+    'Investment (TIER + 1) MUSD',
 ]
 # labels of the columns of the result tables
 LABEL_COLUMNS = ELECTRIFICATION_DICT.copy()

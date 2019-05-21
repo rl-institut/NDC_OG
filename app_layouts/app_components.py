@@ -169,13 +169,15 @@ def results_div(aggregate=False):
     # align column width
     columns_width = [
         {'if': {'column_id': 'labels'},
-         'width': '40%'},
+         'width': '30%'},
         {'if': {'column_id': GRID},
-         'width': '20%'},
+         'width': '15%'},
         {'if': {'column_id': MG},
-         'width': '20%'},
+         'width': '15%'},
         {'if': {'column_id': SHS},
-         'width': '20%'},
+         'width': '15%'},
+        {'if': {'column_id': 'total'},
+         'width': '250px'},
         {'if': {'row_index': 'odd'},
          'backgroundColor': 'rgb(248, 248, 248)'}
     ]
@@ -190,7 +192,6 @@ def results_div(aggregate=False):
         html.Div(
             id='{}-basic-results-div'.format(id_name),
             className='{}__results__basic'.format(id_name),
-            style={'width': '90%'},
             children=[
                 html.H4(id='{}-basic-results-title'.format(id_name), children='Results'),
                 dash_table.DataTable(
@@ -210,7 +211,6 @@ def results_div(aggregate=False):
         html.Div(
             id='{}-ghg-results-div'.format(id_name),
             className='{}__results'.format(id_name),
-            style={'width': '90%'},
             children=[
                 html.H4('Greenhouse Gases emissions'),
                 dash_table.DataTable(
