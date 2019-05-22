@@ -506,7 +506,8 @@ def callbacks(app_handle):
                 df = df.loc[df.country_iso == country_sel]
                 if comp_sel in REGIONS_NDC:
                     # compare the reference country to a region
-                    df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[comp_sel]]
+                    if comp_sel != WORLD_ID:
+                        df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[comp_sel]]
                     df_comp = df_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
                     comp_name = REGIONS_GPD[comp_sel]
                 else:
@@ -521,7 +522,7 @@ def callbacks(app_handle):
 
                 x_vals = ELECTRIFICATION_OPTIONS.copy()
 
-                if scenario == BAU_SCENARIO:
+                if scenario == BAU_SCENARIO and y_sel == BASIC_ROWS[0]:
                     y = np.append(y, 0)
                     y_comp = np.append(y_comp, 0)
                     y[3] = 100 - y.sum()
@@ -988,7 +989,8 @@ def callbacks(app_handle):
                 df = df.loc[df.country_iso == country_sel]
                 if comp_sel in REGIONS_NDC:
                     # compare the reference country to a region
-                    df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[comp_sel]]
+                    if comp_sel != WORLD_ID:
+                        df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[comp_sel]]
                     df_comp = df_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
                 else:
                     # compare the reference country to a country
@@ -1065,7 +1067,8 @@ def callbacks(app_handle):
                 df = df.loc[df.country_iso == country_sel]
                 if comp_sel in REGIONS_NDC:
                     # compare the reference country to a region
-                    df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[comp_sel]]
+                    if comp_sel != WORLD_ID:
+                        df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[comp_sel]]
                     df_comp = df_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
                 else:
                     # compare the reference country to a country
@@ -1235,7 +1238,7 @@ def callbacks(app_handle):
         answer = 'Results'
         if scenario in SCENARIOS and country_iso is not None:
             df = pd.read_json(cur_data[scenario])
-            answer = 'Results for {}'.format(
+            answer = 'Results for {}: electrification options'.format(
                 df.loc[df.country_iso == country_iso].country.values[0])
         return answer
 
@@ -1249,16 +1252,16 @@ def callbacks(app_handle):
             State('scenario-input', 'value'),
             State('data-store', 'data')]
     )
-    def country_basic_results_title(country_iso, comp_sel, scenario, cur_data):
+    def compare_basic_results_title(country_iso, comp_sel, scenario, cur_data):
 
         answer = 'Results'
         if scenario in SCENARIOS and comp_sel is not None:
             df = pd.read_json(cur_data[scenario])
             if comp_sel in REGIONS_NDC:
-                comp_name = REGIONS_NDC[comp_sel]
+                comp_name = REGIONS_GPD[comp_sel]
             else:
                 comp_name = df.loc[df.country_iso == comp_sel].country.values[0]
-            answer = 'Results of comparison between {} and {}'.format(
+            answer = 'Results for {} and relative difference with {}'.format(
                 comp_name,
                 df.loc[df.country_iso == country_iso].country.values[0]
             )
