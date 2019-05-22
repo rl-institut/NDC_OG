@@ -1,27 +1,39 @@
 import numpy as np
 import pandas as pd
+import textwrap
 import dash_html_components as html
 import dash_core_components as dcc
 from dash.dependencies import Output, Input, State
 import dash_daq as daq
 import dash_table
 import plotly.graph_objs as go
-from data_preparation import (
+from data.data_preparation import (
     ELECTRIFICATION_OPTIONS,
-    ELECTRIFICATION_DICT,
     BAU_SCENARIO,
+    SE4ALL_SCENARIO,
     SCENARIOS_DICT,
     SE4ALL_FLEX_SCENARIO,
+    PROG_SCENARIO,
     GRID,
     MG,
     SHS,
     BASIC_ROWS,
+    BASIC_ROWS_FULL,
     LABEL_COLUMNS,
     BASIC_COLUMNS_ID,
     GHG_COLUMNS_ID,
     MENTI_DRIVES,
     IMPACT_FACTORS,
 )
+
+
+def create_tooltip(cell):
+    """Create tooltips for tables"""
+    return textwrap.dedent(
+        '''
+        **{value}**.
+        '''.format(value=cell)
+    )
 
 
 def callback_generator(app, input_name, df_name):
@@ -64,9 +76,239 @@ def results_div(aggregate=False):
 
     if aggregate is True:
         id_name = 'aggregate'
+
     else:
         id_name = 'country'
 
+    x_vals = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
+    fs = 12
+
+    # add a barplot above the tables with the results
+    barplot = html.Div(
+        id='{}-barplot-div'.format(id_name),
+        className='app__barplot',
+        style={'width': '100%'},
+        children=dcc.Graph(
+            id='{}-barplot'.format(id_name),
+            figure=go.Figure(
+                data=[
+                    go.Bar(
+                        x=x_vals,
+                        y=[0, 0, 0, 0],
+                        text=[BAU_SCENARIO for i in range(4)],
+                        insidetextfont={'size': fs},
+                        textposition='auto',
+                        marker=dict(
+                            color=['#0000ff', '#ffa500', '#008000', 'red']
+                        ),
+                        hoverinfo='y+text'
+                    ),
+                    go.Bar(
+                        x=x_vals,
+                        y=[0, 0, 0, 0],
+                        text=[SE4ALL_SCENARIO for i in range(4)],
+                        insidetextfont={'size': fs},
+                        textposition='auto',
+                        marker=dict(
+                            color=['#8080ff', '#ffd280', '#1aff1a', 'red']
+                        ),
+                        hoverinfo='y+text'
+                    ),
+                    go.Bar(
+                        x=x_vals,
+                        y=[0, 0, 0, 0],
+                        text=[PROG_SCENARIO for i in range(4)],
+                        insidetextfont={'size': fs},
+                        textposition='auto',
+                        marker=dict(
+                            color=['#ccccff', '#ffedcc', '#99ff99', 'red']
+                        ),
+                        hoverinfo='y+text'
+                    )
+                ],
+                layout=go.Layout(
+                    title='',
+                    barmode='group',
+                    paper_bgcolor='#EBF2FA',
+                    plot_bgcolor='#EBF2FA',
+                    showlegend=False,
+                    height=400,
+                    autosize=True,
+                    margin=dict(
+                        l=55,
+                        r=0,
+                        b=30,
+                        t=30
+                    ),
+                    font=dict(size=20, family='Roboto'),
+                    titlefont=dict(size=20),
+                    yaxis=dict(
+                        hoverformat='.1f'
+                    )
+                )
+            ),
+            config={
+                'displayModeBar': True,
+            }
+        ),
+    )
+
+    # add tables with the results
+    # align number on the right
+    number_styling = [
+        {
+            'if': {
+                'column_id': c,
+                'filter': 'labels eq "{}"'.format(label)
+            },
+            'textAlign': 'right'
+        }
+        for c in ELECTRIFICATION_OPTIONS
+        for label in BASIC_ROWS
+    ]
+    # align row labels on the left
+    label_styling = [
+        {
+            'if': {'column_id': 'labels'},
+            'textAlign': 'left'
+        }
+    ]
+    # align column width
+    columns_width = [
+        {'if': {'column_id': 'labels'},
+         'width': '30%'},
+        {'if': {'column_id': GRID},
+         'width': '15%'},
+        {'if': {'column_id': MG},
+         'width': '15%'},
+        {'if': {'column_id': SHS},
+         'width': '15%'},
+        {'if': {'column_id': 'total'},
+         'width': '250px'},
+        {'if': {'row_index': 'odd'},
+         'backgroundColor': 'rgb(248, 248, 248)'}
+    ]
+
+    # tables containing the results
+    results_divs = [
+        html.Div(
+            id='{}-barplot-title'.format(id_name),
+            children=[
+                dcc.Dropdown(
+                    id='{}-barplot-yaxis-input'.format(id_name),
+                    options=[{'label': r, 'value': r} for r in BASIC_ROWS],
+                    value=BASIC_ROWS[0],
+                )
+            ],
+        ),
+        barplot,
+        html.Div(
+            id='{}-basic-results-div'.format(id_name),
+            className='{}__results__basic'.format(id_name),
+            children=[
+                html.H4(id='{}-basic-results-title'.format(id_name), children='Results'),
+                dash_table.DataTable(
+                    id='{}-basic-results-table'.format(id_name),
+                    columns=[
+                        {'name': LABEL_COLUMNS[col], 'id': col} for col in BASIC_COLUMNS_ID
+                    ],
+                    style_data_conditional=number_styling + label_styling,
+                    style_cell_conditional=columns_width,
+                    style_header={'textAlign': 'center'},
+                    style_cell={
+                        'fontFamily': "Roboto"
+                    },
+                    tooltips={
+                        'labels': [
+                            {
+                                'type': 'markdown',
+                                'value': create_tooltip(BASIC_ROWS_FULL[lbl])
+                            }
+                            for lbl in BASIC_ROWS
+                        ]
+
+                    }
+                )
+            ]
+        ),
+        html.Div(
+            id='{}-ghg-results-div'.format(id_name),
+            className='{}__results'.format(id_name),
+            children=[
+                html.H4('Greenhouse Gases emissions'),
+                dash_table.DataTable(
+                    id='{}-ghg-results-table'.format(id_name),
+                    columns=[
+                        {'name': LABEL_COLUMNS[col], 'id': col}
+                        for col in GHG_COLUMNS_ID
+                    ],
+                    style_data_conditional=number_styling + label_styling,
+                    style_cell_conditional=columns_width,
+                    style_header={'textAlign': 'center'},
+                    style_cell={
+                        'fontFamily': "Roboto"
+                    },
+                )
+            ]
+        ),
+    ]
+
+    divs = [
+        html.Div(
+            id='{}-results-div'.format(id_name),
+            className='{}__results'.format(id_name),
+            children=results_divs
+        )
+    ]
+
+    return divs
+
+
+def compare_div():
+    """Fill and return a comparison to specific country exogenous results.
+
+    :return: the content of the compare-div
+    """
+
+    id_name = 'compare'
+
+    # add a barplot above the tables with the results
+    barplot = html.Div(
+        id='{}-barplot-div'.format(id_name),
+        className='app__barplot',
+        style={'width': '100%'},
+        children=dcc.Graph(
+            id='{}-barplot'.format(id_name),
+            figure=go.Figure(
+                data=[],
+                layout=go.Layout(
+                    title='',
+                    barmode='group',
+                    paper_bgcolor='#EBF2FA',
+                    plot_bgcolor='#EBF2FA',
+                    showlegend=False,
+                    height=400,
+                    autosize=True,
+                    margin=dict(
+                        l=55,
+                        r=0,
+                        b=30,
+                        t=30
+                    ),
+                    font=dict(size=20, family='Roboto'),
+                    titlefont=dict(size=20),
+                    yaxis=dict(
+                        hoverformat='.1f'
+                    )
+                )
+            ),
+            config={
+                'displayModeBar': True,
+            }
+        ),
+    )
+
+    # add tables with the results
     # align number on the right
     number_styling = [
         {
@@ -96,10 +338,43 @@ def results_div(aggregate=False):
          'width': '20%'},
         {'if': {'column_id': SHS},
          'width': '20%'},
+        {'if': {'row_index': 'odd'},
+         'backgroundColor': 'rgb(248, 248, 248)'}
     ]
+
+    basic_columns_ids = []
+    for col in BASIC_COLUMNS_ID:
+        if col != 'labels':
+            basic_columns_ids.append({'name': [LABEL_COLUMNS[col], 'value'], 'id': col})
+            basic_columns_ids.append(
+                {'name': [LABEL_COLUMNS[col], 'rel.'], 'id': 'comp_{}'.format(col)}
+            )
+        else:
+            basic_columns_ids.append({'name': LABEL_COLUMNS[col], 'id': col})
+
+    ghg_columns_ids = []
+    for col in GHG_COLUMNS_ID:
+        if col != 'labels':
+            ghg_columns_ids.append({'name': [LABEL_COLUMNS[col], 'value'], 'id': col})
+            ghg_columns_ids.append(
+                {'name': [LABEL_COLUMNS[col], 'rel.'], 'id': 'comp_{}'.format(col)}
+            )
+        else:
+            ghg_columns_ids.append({'name': LABEL_COLUMNS[col], 'id': col})
 
     # tables containing the results
     results_divs = [
+        html.Div(
+            id='{}-barplot-title'.format(id_name),
+            children=[
+                dcc.Dropdown(
+                    id='{}-barplot-yaxis-input'.format(id_name),
+                    options=[{'label': r, 'value': r} for r in BASIC_ROWS],
+                    value=BASIC_ROWS[0],
+                )
+            ],
+        ),
+        barplot,
         html.Div(
             id='{}-basic-results-div'.format(id_name),
             className='{}__results__basic'.format(id_name),
@@ -108,12 +383,24 @@ def results_div(aggregate=False):
                 html.H4(id='{}-basic-results-title'.format(id_name), children='Results'),
                 dash_table.DataTable(
                     id='{}-basic-results-table'.format(id_name),
-                    columns=[
-                        {'name': LABEL_COLUMNS[col], 'id': col} for col in BASIC_COLUMNS_ID
-                    ],
+                    columns=basic_columns_ids,
                     style_data_conditional=number_styling + label_styling,
                     style_cell_conditional=columns_width,
-                    style_header={'textAlign': 'center'}
+                    style_header={'textAlign': 'center'},
+                    style_cell={
+                        'fontFamily': "Roboto"
+                    },
+                    merge_duplicate_headers=True,
+                    tooltips={
+                        'labels': [
+                            {
+                                'type': 'markdown',
+                                'value': create_tooltip(BASIC_ROWS_FULL[lbl])
+                            }
+                            for lbl in BASIC_ROWS
+                        ]
+
+                    }
                 )
             ]
         ),
@@ -125,43 +412,25 @@ def results_div(aggregate=False):
                 html.H4('Greenhouse Gases emissions'),
                 dash_table.DataTable(
                     id='{}-ghg-results-table'.format(id_name),
-                    columns=[
-                        {'name': LABEL_COLUMNS[col], 'id': col}
-                        for col in GHG_COLUMNS_ID
-                    ],
+                    columns=ghg_columns_ids,
                     style_data_conditional=number_styling + label_styling,
                     style_cell_conditional=columns_width,
-                    style_header={'textAlign': 'center'}
+                    style_header={'textAlign': 'center'},
+                    style_cell={
+                        'fontFamily': "Roboto"
+                    },
+                    merge_duplicate_headers=True,
                 )
             ]
         ),
     ]
-    if aggregate is False:
-        # add a barplot below the tables with the results
-        barplot = html.Div(
-            id='barplot-div',
-            className='app__{}__barplot'.format(id_name),
-            title='Description',
-            children=dcc.Graph(
-                id='barplot',
-                figure=go.Figure(data=[go.Bar(x=ELECTRIFICATION_OPTIONS, y=[20, 14, 23])]),
-                style={'height': '200px'}
-            ),
-        )
-
-        results_divs = results_divs + [barplot]
 
     divs = [
-        html.Div(
-            id='{}-info-div'.format(id_name),
-            className='{}__info'.format(id_name),
-            children='Population (2017)'
-        ),
         html.Div(
             id='{}-results-div'.format(id_name),
             className='{}__results'.format(id_name),
             children=results_divs
-        ),
+        )
     ]
 
     return divs
@@ -174,46 +443,20 @@ def scenario_div(init_scenario):
         html.Div(
             id='scenario-label',
             className='app__input__label',
-            children='Scenario:'
+            children='Explore a scenario:'
         ),
         html.Div(
             id='scenario-input-div',
-            title='scenarios description',
-            children=dcc.Dropdown(
+            children=dcc.RadioItems(
                 id='scenario-input',
-                className='app__input__dropdown',
+                className='app__input__radio',
                 options=[
                     {'label': v, 'value': k}
                     for k, v in SCENARIOS_DICT.items()
                 ],
                 value=init_scenario,
             )
-        ),
-        html.Div(
-            id='aggregate-input-div',
-            title='Tick this box to enable the aggregation of the results',
-            children=dcc.Checklist(
-                id='aggregate-input',
-                className='app__input__checklist',
-                options=[
-                    {'label': 'Aggregate results', 'value': 'aggregate'}
-                ],
-                values=[],
-            )
-        ),
-        html.Div(
-            id='factor-input-div',
-            title='Tick this box to show the influence and impact factors',
-            children=dcc.Checklist(
-                id='factor-input',
-                className='app__input__checklist',
-                options=[
-                    {'label': 'Show influence factors', 'value': 'show'}
-                ],
-                values=[],
-            )
-        ),
-
+        )
     ]
     return divs
 
@@ -272,6 +515,7 @@ def controls_div():
                 ),
                 html.Div(
                     id='min-tier-input-div',
+                    className='app__input__input',
                     title='min tier level description',
                     children=dcc.Input(
                         id='min-tier-input',
@@ -443,27 +687,3 @@ def controls_div():
         )
     ]
     return divs
-
-
-def general_info_div():
-    """Return text displayed for the user."""
-    return [
-        html.P(
-            'In the Study on Renewable Energy Off-Grid Components of NDCs and their Role for \
-            Climate Change Mitigation financed by GIZ,  Reiner Lemoine Institute and the \
-            greenwerk develop strategies for the use of renewable energy that can support \
-            climate protection in developing countries.'
-        ),
-        html.P(
-            'The study targets the inclusion of off-grid components \
-           in the Nationally Determined Contributions (NDCs), in which the signatory states \
-           to the Paris Climate Change Convention commit themselves to elaborate national \
-           climate protection targets, should be achieved.'
-        ),
-        html.P(
-            'In this visualization tool a quantification of four different new \
-        electrification until 2030 scenarios are presented for 52 countries. These countries were \
-        selected through the criteria of having > 1 million people without electricity \
-        access in 2017.'
-        )
-    ]

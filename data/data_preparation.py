@@ -50,13 +50,12 @@ BAU_SCENARIO = 'bau'
 SE4ALL_SCENARIO = 'se4all'
 SE4ALL_FLEX_SCENARIO = 'se4all_shift'
 PROG_SCENARIO = 'prog'
-SCENARIOS = [BAU_SCENARIO, SE4ALL_SCENARIO, SE4ALL_FLEX_SCENARIO, PROG_SCENARIO]
+SCENARIOS = [BAU_SCENARIO, SE4ALL_SCENARIO, PROG_SCENARIO]
 
 # Names for display
 SCENARIOS_DICT = {
     BAU_SCENARIO: 'BaU',
     SE4ALL_SCENARIO: 'SE4All',
-    SE4ALL_FLEX_SCENARIO: 'SE4All Flex',
     PROG_SCENARIO: 'prOG',
 }
 SCENARIOS_DESCRIPTIONS = {
@@ -65,7 +64,7 @@ SCENARIOS_DESCRIPTIONS = {
 "New Policies" Scenario. Regional projections of electrification rates and technologies \
 are applied to the country-level to derive country-specific values. It quantifies new \
 electrification until 2030.' + '\n'
-        + 'In this scenario Sustainable Development Goal 7 is not reached.',
+        + 'In this scenario, Sustainable Development Goal 7 is not reached.',
     SE4ALL_SCENARIO:
         'The Sustainable-Energy-for-all (Se4all) scenario is based on a geospatial infrastructure \
 analysis (GIS) combined with country-specific frameworks and game-changers currently \
@@ -74,7 +73,7 @@ plus the following indicators: Mobile Money Availability, GDP, Corruption Percep
 Index, Ease of Doing Business Index, Number of power outages in a typical month. \
 The game-changers result in a shift from grid electrification to the other \
 electrification options (MG, SHS).' + '\n'
-        + ' In this scenario Sustainable Development Goal 7 is reached.',
+        + ' In this scenario, Sustainable Development Goal 7 is reached.',
     SE4ALL_FLEX_SCENARIO:
         'The Flexible-Sustainable-Energy-for-all (Se4all-flex) scenario is based on a geospatial \
 infrastructure analysis (GIS) combined with country-specific \
@@ -90,7 +89,7 @@ final results',
 analysis (GIS) combined with country-specific frameworks and game-changers currently \
 (between 2014 and 2018) in place. The game-changers are derived from RISE factors, assuming \
 that the frameworks for MG and SHS are 100 (highest possible RISE score).' + '\n'
-        + 'In this scenario Sustainable Development Goal 7 is reached.'
+        + 'In this scenario, Sustainable Development Goal 7 is reached.'
 }
 
 
@@ -132,10 +131,6 @@ RATIO_CAP_CONSUMPTION = {}
 # unit is USD per household
 MEDIAN_INVESTMENT_COST = {1: 742, 2: 1273, 3: 2516, 4: 5277, 5: 5492}
 
-# Currency conversion
-USD_TO_EUR = 0.87
-FCFA_TO_EUR = 0.0015
-
 # drives for the socio-economic model
 IMPACT_FACTORS = pd.DataFrame(
     {
@@ -161,19 +156,57 @@ RISE_INDICES = ['rise_%s' % opt for opt in ELECTRIFICATION_OPTIONS]
 SHIFT_MENTI = ['shift_menti_mg', 'shift_menti_shs']
 
 BASIC_ROWS = [
-    '% population newly electrified in 2030',
-    '# household newly electrified in 2030',
-    'MW household capacity',
-    'MW household capacity (TIER capped)',
-    'Total investment (case 1) EUR',
-    'Total investment (case 2) EUR',
+    'People share',
+    'People (thousands)',
+    'HH (thousands)',
+    'HH demand (MW)',
+    'HH demand (TIER + 1) (MW)',
+    'Investment MUSD',
+    'Investment (TIER + 1) MUSD',
 ]
+
+BASIC_ROWS_FULL = {
+    'People share': 'Percentage of people getting electricity access by 2030',
+    'People (thousands)': 'Number of people getting electricity access by 2030',
+    'HH (thousands)': 'Number of households getting electricity access by 2030',
+    'HH demand (MW)': 'Expected household electricity demand by 2030, in MW',
+    'HH demand (TIER + 1) (MW)':
+        'Expected household electricity demand by 2030 for one TIER level up, in MW',
+    'Investment MUSD':
+        'Needed initial investments to supply expected demand by 2030, in million USD',
+    'Investment (TIER + 1) MUSD':
+        'Needed initial investments to supply expected demand by 2030 for one TIER level up, '
+        'in million USD',
+}
 # labels of the columns of the result tables
 LABEL_COLUMNS = ELECTRIFICATION_DICT.copy()
 # a column for the row labels
 LABEL_COLUMNS['labels'] = ''
-BASIC_COLUMNS_ID = ['labels'] + ELECTRIFICATION_OPTIONS
-GHG_COLUMNS_ID = ['labels'] + ELECTRIFICATION_OPTIONS
+LABEL_COLUMNS['total'] = 'Total'
+BASIC_COLUMNS_ID = ['labels'] + ELECTRIFICATION_OPTIONS + ['total']
+GHG_COLUMNS_ID = ['labels'] + ELECTRIFICATION_OPTIONS + ['total']
+COMPARE_COLUMNS_ID = ['labels']
+for opt in ELECTRIFICATION_OPTIONS + ['total']:
+    COMPARE_COLUMNS_ID.append(opt)
+    COMPARE_COLUMNS_ID.append('comp_{}'.format(opt))
+
+
+def prepare_results_tables(df):
+    pop = np.squeeze(df[POP_GET].values * 1e-3).round(0)
+    # compute the percentage of population with electricity access
+    df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0)
+    # gather the values of the results to display in the table
+    pop_res = np.squeeze(df[POP_GET].values * 100).round(1)
+    hh_res = np.squeeze(df[HH_GET].values * 1e-3).round(1)
+    cap_res = np.squeeze(df[HH_CAP].values * 1e-3).round(0)
+    cap2_res = np.squeeze(df[HH_SCN2].values * 1e-3).round(0)
+    invest_res = np.squeeze(df[INVEST].values * 1e-6).round(0)
+    invest_res = np.append(np.NaN, invest_res)
+    invest2_res = np.squeeze(df[INVEST_CAP].values).round(0)
+    invest2_res = np.append(np.NaN, invest2_res * 1e-6)
+    return np.vstack(
+        [pop_res, pop, hh_res, cap_res, cap2_res, invest_res, invest2_res]
+    )
 
 
 def _slope_capacity_vs_yearly_consumption(tier_level):
@@ -679,10 +712,10 @@ def _compute_ghg_emissions(df, min_tier_level):
 
 
 def _compute_investment_cost(df):
-    """Compute investment costs in EUR in `extract_results_scenario."""
+    """Compute investment costs in USD in `extract_results_scenario."""
     m, h = _linear_investment_cost()
 
-    df['mg_investment_cost_per_kW'] = (df.hh_mg_tier_peak_demand * m + h) * USD_TO_EUR
+    df['mg_investment_cost_per_kW'] = df.hh_mg_tier_peak_demand * m + h
     df['mg_investment_cost'] = df.mg_investment_cost_per_kW * df.hh_mg_capacity
     df['shs_investment_cost'] = df.hh_shs_capacity * SHS_AVERAGE_INVESTMENT_COST
     df['tier_capped_mg_investment_cost'] = \
