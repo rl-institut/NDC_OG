@@ -348,15 +348,24 @@ def compare_div():
 
     basic_columns_ids = []
     for col in BASIC_COLUMNS_ID:
-        basic_columns_ids.append({'name': LABEL_COLUMNS[col], 'id': col})
         if col != 'labels':
-            basic_columns_ids.append({'name': 'rel.', 'id': 'comp_{}'.format(col)})
+            basic_columns_ids.append({'name': [LABEL_COLUMNS[col], 'value'], 'id': col})
+            basic_columns_ids.append(
+                {'name': [LABEL_COLUMNS[col], 'rel.'], 'id': 'comp_{}'.format(col)}
+            )
+        else:
+            basic_columns_ids.append({'name': LABEL_COLUMNS[col], 'id': col})
 
     ghg_columns_ids = []
     for col in GHG_COLUMNS_ID:
-        ghg_columns_ids.append({'name': LABEL_COLUMNS[col], 'id': col})
         if col != 'labels':
-            ghg_columns_ids.append({'name': 'rel.', 'id': 'comp_{}'.format(col)})
+            ghg_columns_ids.append({'name': [LABEL_COLUMNS[col], 'value'], 'id': col})
+            ghg_columns_ids.append(
+                {'name': [LABEL_COLUMNS[col], 'rel.'], 'id': 'comp_{}'.format(col)}
+            )
+        else:
+            ghg_columns_ids.append({'name': LABEL_COLUMNS[col], 'id': col})
+
 
     # tables containing the results
     results_divs = [
@@ -386,6 +395,7 @@ def compare_div():
                     style_cell={
                         'fontFamily': "Roboto"
                     },
+                    merge_duplicate_headers=True,
                     tooltips={
                         'labels': [
                             {
@@ -414,6 +424,7 @@ def compare_div():
                     style_cell={
                         'fontFamily': "Roboto"
                     },
+                    merge_duplicate_headers=True,
                 )
             ]
         ),
