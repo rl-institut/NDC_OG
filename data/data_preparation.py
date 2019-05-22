@@ -64,7 +64,7 @@ SCENARIOS_DESCRIPTIONS = {
 "New Policies" Scenario. Regional projections of electrification rates and technologies \
 are applied to the country-level to derive country-specific values. It quantifies new \
 electrification until 2030.' + '\n'
-        + 'In this scenario Sustainable Development Goal 7 is not reached.',
+        + 'In this scenario, Sustainable Development Goal 7 is not reached.',
     SE4ALL_SCENARIO:
         'The Sustainable-Energy-for-all (Se4all) scenario is based on a geospatial infrastructure \
 analysis (GIS) combined with country-specific frameworks and game-changers currently \
@@ -73,7 +73,7 @@ plus the following indicators: Mobile Money Availability, GDP, Corruption Percep
 Index, Ease of Doing Business Index, Number of power outages in a typical month. \
 The game-changers result in a shift from grid electrification to the other \
 electrification options (MG, SHS).' + '\n'
-        + ' In this scenario Sustainable Development Goal 7 is reached.',
+        + ' In this scenario, Sustainable Development Goal 7 is reached.',
     SE4ALL_FLEX_SCENARIO:
         'The Flexible-Sustainable-Energy-for-all (Se4all-flex) scenario is based on a geospatial \
 infrastructure analysis (GIS) combined with country-specific \
@@ -89,7 +89,7 @@ final results',
 analysis (GIS) combined with country-specific frameworks and game-changers currently \
 (between 2014 and 2018) in place. The game-changers are derived from RISE factors, assuming \
 that the frameworks for MG and SHS are 100 (highest possible RISE score).' + '\n'
-        + 'In this scenario Sustainable Development Goal 7 is reached.'
+        + 'In this scenario, Sustainable Development Goal 7 is reached.'
 }
 
 
