@@ -698,10 +698,10 @@ def _compute_ghg_emissions(df, min_tier_level):
 
 
 def _compute_investment_cost(df):
-    """Compute investment costs in EUR in `extract_results_scenario."""
+    """Compute investment costs in USD in `extract_results_scenario."""
     m, h = _linear_investment_cost()
 
-    df['mg_investment_cost_per_kW'] = (df.hh_mg_tier_peak_demand * m + h)
+    df['mg_investment_cost_per_kW'] = df.hh_mg_tier_peak_demand * m + h
     df['mg_investment_cost'] = df.mg_investment_cost_per_kW * df.hh_mg_capacity
     df['shs_investment_cost'] = df.hh_shs_capacity * SHS_AVERAGE_INVESTMENT_COST
     df['tier_capped_mg_investment_cost'] = \
