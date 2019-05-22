@@ -33,6 +33,10 @@ layout = html.Div(
                 electrification until 2030 scenarios are presented for 52 countries. \
                 These countries were selected through the criteria of having > 1 million people \
                 without electricity access in 2017.'
+                ),
+                html.P(
+                    'The presented scenarios and figures are meant to support informed policy \
+                    and planning decisions, but do not represent official planning.'
                 )
             ]
         ),
