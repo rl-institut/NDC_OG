@@ -160,7 +160,7 @@ BASIC_ROWS = [
     'People (thousands)',
     'HH (thousands)',
     'HH demand (MW)',
-    'HH demand (MW) (TIER + 1)',
+    'HH demand (TIER + 1) (MW)',
     'Investment MUSD',
     'Investment (TIER + 1) MUSD',
 ]
@@ -170,7 +170,7 @@ BASIC_ROWS_FULL = {
     'People (thousands)': 'Number of people getting electricity access by 2030',
     'HH (thousands)': 'Number of households getting electricity access by 2030',
     'HH demand (MW)': 'Expected household electricity demand by 2030, in MW',
-    'HH demand (MW) (TIER + 1)':
+    'HH demand (TIER + 1) (MW)':
         'Expected household electricity demand by 2030 for one TIER level up, in MW',
     'Investment MUSD':
         'Needed initial investments to supply expected demand by 2030, in million USD',
