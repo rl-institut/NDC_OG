@@ -801,15 +801,15 @@ def callbacks(app_handle):
 
                 if df_bau is None:
                     ghg_rows = [
-                        'GHG (case 1)',
-                        'GHG (case 2)',
+                        'GHG (Mio tCO2)',
+                        'GHG (TIER + 1) (Mio tCO2)',
                         # 'GHG CUMUL'
                     ]
                 else:
                     ghg_rows = [
-                        'GHG (case 1)',
+                        'GHG (Mio tCO2)',
                         'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-                        'GHG (case 2)',
+                        'GHG (TIER +1) (Mio tCO2)',
                         'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
                     ]
 
@@ -922,15 +922,15 @@ def callbacks(app_handle):
 
                 if df_bau is None:
                     ghg_rows = [
-                        'GHG (case 1)',
-                        'GHG (case 2)',
+                        'GHG (Mio tCO2)',
+                        'GHG (TIER +1) (Mio tCO2)',
                         # 'GHG CUMUL'
                     ]
                 else:
                     ghg_rows = [
-                        'GHG (case 1)',
+                        'GHG (Mio tCO2)',
                         'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-                        'GHG (case 2)',
+                        'GHG (TIER +1) (Mio tCO2)',
                         'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
                     ]
                     # aggregate the results
@@ -1091,15 +1091,15 @@ def callbacks(app_handle):
 
                 if df_bau_ref is None:
                     ghg_rows = [
-                        'GHG (case 1)',
-                        'GHG (case 2)',
+                        'GHG (Mio tCO2)',
+                        'GHG (TIER +1) (Mio tCO2)',
                         # 'GHG CUMUL'
                     ]
                 else:
                     ghg_rows = [
-                        'GHG (case 1)',
+                        'GHG (Mio tCO2)',
                         'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-                        'GHG (case 2)',
+                        'GHG (TIER +1) (Mio tCO2)',
                         'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
                     ]
 
