@@ -9,18 +9,14 @@ import dash_table
 import plotly.graph_objs as go
 from data.data_preparation import (
     ELECTRIFICATION_OPTIONS,
-    ELECTRIFICATION_DICT,
     BAU_SCENARIO,
     SE4ALL_SCENARIO,
-    SCENARIOS,
     SCENARIOS_DICT,
     SE4ALL_FLEX_SCENARIO,
     PROG_SCENARIO,
     GRID,
     MG,
     SHS,
-    EXO_RESULTS,
-    POP_GET,
     BASIC_ROWS,
     BASIC_ROWS_FULL,
     LABEL_COLUMNS,
@@ -29,6 +25,7 @@ from data.data_preparation import (
     MENTI_DRIVES,
     IMPACT_FACTORS,
 )
+
 
 def create_tooltip(cell):
     """Create tooltips for tables"""
@@ -270,8 +267,7 @@ def results_div(aggregate=False):
 def compare_div():
     """Fill and return a comparison to specific country exogenous results.
 
-    :param ref_country: (str) iso code of the reference country
-    :return: the content of the results-div
+    :return: the content of the compare-div
     """
 
     id_name = 'compare'
@@ -365,7 +361,6 @@ def compare_div():
             )
         else:
             ghg_columns_ids.append({'name': LABEL_COLUMNS[col], 'id': col})
-
 
     # tables containing the results
     results_divs = [
