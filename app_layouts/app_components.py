@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import textwrap
 import dash_html_components as html
 import dash_core_components as dcc
 from dash.dependencies import Output, Input, State
@@ -21,12 +22,21 @@ from data.data_preparation import (
     EXO_RESULTS,
     POP_GET,
     BASIC_ROWS,
+    BASIC_ROWS_FULL,
     LABEL_COLUMNS,
     BASIC_COLUMNS_ID,
     GHG_COLUMNS_ID,
     MENTI_DRIVES,
     IMPACT_FACTORS,
 )
+
+def create_tooltip(cell):
+    """Create tooltips for tables"""
+    return textwrap.dedent(
+        '''
+        **{value}**.
+        '''.format(value=cell)
+    )
 
 
 def callback_generator(app, input_name, df_name):
@@ -211,6 +221,16 @@ def results_div(aggregate=False):
                     style_cell={
                         'fontFamily': "Roboto"
                     },
+                    tooltips={
+                        'labels': [
+                            {
+                                'type': 'markdown',
+                                'value': create_tooltip(BASIC_ROWS_FULL[lbl])
+                            }
+                            for lbl in BASIC_ROWS
+                        ]
+
+                    }
                 )
             ]
         ),
@@ -366,6 +386,16 @@ def compare_div():
                     style_cell={
                         'fontFamily': "Roboto"
                     },
+                    tooltips={
+                        'labels': [
+                            {
+                                'type': 'markdown',
+                                'value': create_tooltip(BASIC_ROWS_FULL[lbl])
+                            }
+                            for lbl in BASIC_ROWS
+                        ]
+
+                    }
                 )
             ]
         ),

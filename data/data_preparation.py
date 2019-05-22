@@ -157,13 +157,27 @@ SHIFT_MENTI = ['shift_menti_mg', 'shift_menti_shs']
 
 BASIC_ROWS = [
     'People share',
-    'People (k)',
-    'HH (k)',
-    'HH cap. (MW)',
-    'HH cap. (MW) (TIER + 1)',
+    'People (thousands)',
+    'HH (thousands)',
+    'HH demand (MW)',
+    'HH demand (MW) (TIER + 1)',
     'Investment MUSD',
     'Investment (TIER + 1) MUSD',
 ]
+
+BASIC_ROWS_FULL = {
+    'People share': 'Percentage of people getting electricity access by 2030',
+    'People (thousands)': 'Number of people getting electricity access by 2030',
+    'HH (thousands)': 'Number of households getting electricity access by 2030',
+    'HH demand (MW)': 'Expected household electricity demand by 2030, in MW',
+    'HH demand (MW) (TIER + 1)':
+        'Expected household electricity demand by 2030 for one TIER level up, in MW',
+    'Investment MUSD':
+        'Needed initial investments to supply expected demand by 2030, in million USD',
+    'Investment (TIER + 1) MUSD':
+        'Needed initial investments to supply expected demand by 2030 for one TIER level up, '
+        'in million USD',
+}
 # labels of the columns of the result tables
 LABEL_COLUMNS = ELECTRIFICATION_DICT.copy()
 # a column for the row labels
