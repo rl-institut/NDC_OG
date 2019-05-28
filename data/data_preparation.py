@@ -647,7 +647,7 @@ def extract_results_scenario(
 
             # predicted number of people getting access to electricity (regional detail level)
             df['pop_get_%s_2030' % opt] = df.bau_pop_newly_electrified * df['temp_%s' % opt]
-    elif scenario in [SE4ALL_SCENARIO, SE4ALL_FLEX_SCENARIO, PROG_SCENARIO]:
+    elif scenario == PROG_SCENARIO:
         # SUMME(AA4:AB4) --> df.loc[:,['shift_pop_grid_to_mg' 'shift_pop_grid_to_shs']].sum(axis=1)
         # grid =D4-SUMME(AA4:AB4)
         opt = 'grid'
@@ -668,6 +668,11 @@ def extract_results_scenario(
         df['pop_get_%s_2030' % opt] = \
             df['endo_pop_get_%s_2030' % opt] \
             + df['shift_pop_grid_to_%s' % opt]
+    elif scenario == SE4ALL_SCENARIO:
+
+        for opt in ELECTRIFICATION_OPTIONS:
+            df['pop_get_%s_2030' % opt] = \
+                df['endo_pop_get_%s_2030' % opt] * (1 + df['shift_%s_share' % opt])
     else:
         raise ValueError
 
