@@ -131,29 +131,7 @@ RATIO_CAP_CONSUMPTION = {}
 # unit is USD per household
 MEDIAN_INVESTMENT_COST = {1: 742, 2: 1273, 3: 2516, 4: 5277, 5: 5492}
 
-# drives for the socio-economic model
-IMPACT_FACTORS = pd.DataFrame(
-    {
-        MG: [3, 13. / 6, 19. / 6, 3.25, 11. / 3],
-        SHS: [23. / 12, 4.5, 37. / 12, 17. / 6, 41. / 12],
-        'labels': [
-            'high_gdp',
-            'high_mobile_money',
-            'high_ease_doing_business',
-            'low_corruption',
-            'high_grid_weakness'
-        ]
-    }
-)
-IMPACT_FACTORS = IMPACT_FACTORS.set_index('labels')
-
-MENTI_DRIVES = ['gdp', 'mobile_money', 'ease_doing_business', 'corruption', 'weak_grid']
-
-# $RT_shift_factors.$P$2
-WEIGHT_MENTIS = 0.2
-# -->WEIGHT_GRID = 0.8 ($RT_shift_factors.$O$2)  and  WEIGHT_GRID = 1 - WEIGHT_MENTIS
 RISE_INDICES = ['rise_%s' % opt for opt in ELECTRIFICATION_OPTIONS]
-SHIFT_MENTI = ['shift_menti_mg', 'shift_menti_shs']
 
 BASIC_ROWS = [
     'People share',
@@ -286,56 +264,6 @@ def get_peak_capacity_from_yearly_consumption(yearly_consumption, min_tier_level
     x_i = MIN_ANNUAL_CONSUMPTION[tier_level]
     y_i = MIN_RATED_CAPACITY[tier_level]
     return (m * (x - x_i) + y_i) * 1e-3
-
-
-def map_gdp_class(gdp_per_capita):
-    """Assign an index value to differentiate gdp per capita."""
-    answer = 1
-    if gdp_per_capita < 1500:
-        answer = 0.5
-    if gdp_per_capita < 700:
-        answer = 0
-    return answer
-
-
-def map_mobile_money_class(mobile_money):
-    """Assign an index value to differentiate mobile_money."""
-    answer = 1
-    if mobile_money <= 0.21:
-        answer = 0.5
-    if mobile_money <= 0.12:
-        answer = 0
-    return answer
-
-
-def map_ease_doing_business_class(business_ease):
-    """Assign an index value to differentiate ease of doing business."""
-    answer = 1
-    if business_ease <= 164:
-        answer = 0.5
-    if business_ease < 131:
-        answer = 0
-    return answer
-
-
-def map_corruption_class(corruption_idx):
-    """Assign an index value to differentiate corruption."""
-    answer = 1
-    if corruption_idx <= 33:
-        answer = 0.5
-    if corruption_idx < 26:
-        answer = 0
-    return answer
-
-
-def map_weak_grid_class(weak_grid_idx):
-    """Assign an index value to differentiate weak grid."""
-    answer = 1
-    if weak_grid_idx <= 9:
-        answer = 0.5
-    if weak_grid_idx < 4.5:
-        answer = 0
-    return answer
 
 
 def map_tier_yearly_consumption(
@@ -496,46 +424,12 @@ def prepare_bau_data(input_df, bau_data=None):
     return df
 
 
-def prepare_se4all_shift_drives(df):
-    # compute the shift drives
-    df['weak_grid_class'] = df['weak_grid_index'].map(map_weak_grid_class, na_action='ignore')
-    df['corruption_class'] = df['corruption_index'].map(map_corruption_class, na_action='ignore')
-    df['ease_doing_business_class'] = df['ease_doing_business_index'].map(
-        map_ease_doing_business_class, na_action='ignore')
-    df['gdp_class'] = df['gdp_per_capita'].map(map_gdp_class, na_action='ignore')
-    df['mobile_money'] = df['mobile_money_2017'].fillna(df['mobile_money_2014'])
-    df['mobile_money_class'] = df['mobile_money'].map(
-        map_mobile_money_class, na_action='ignore').fillna(0)
-
-
-def apply_se4all_shift_drives(df, impact_factor=None):
-    if impact_factor is None:
-        impact_factor = IMPACT_FACTORS
-    # apply the shift drives
-    for opt in [MG, SHS]:
-        df['shift_menti_%s' % opt] = \
-            df.gdp_class * impact_factor[opt]['high_gdp'] \
-            + df.mobile_money_class * impact_factor[opt]['high_mobile_money'] \
-            + df.ease_doing_business_class * impact_factor[opt]['high_ease_doing_business'] \
-            + df.corruption_class * impact_factor[opt]['low_corruption'] \
-            + df.weak_grid_class * impact_factor[opt]['high_grid_weakness']
-
-
 def prepare_se4all_data(
         input_df,
-        weight_mentis=WEIGHT_MENTIS,
-        fixed_shift_drives=True,
-        impact_factor=None
 ):
     # for se4all+SHIFT
 
     df = input_df.copy()
-
-    weight_grid = 1 - weight_mentis
-
-    if fixed_shift_drives:
-        prepare_se4all_shift_drives(df)
-    apply_se4all_shift_drives(df, impact_factor)
 
     for opt in ELECTRIFICATION_OPTIONS:
         df['endo_pop_get_%s_2030' % opt] = df['pop_%s_share' % opt] * df.pop_newly_electrified_2030
