@@ -434,17 +434,17 @@ def prepare_se4all_data(
     for opt in ELECTRIFICATION_OPTIONS:
         df['endo_pop_get_%s_2030' % opt] = df['pop_%s_share' % opt] * df.pop_newly_electrified_2030
 
-    # indexes for which
+    # indexes for which all three RISE scores are 0
     nz_idxs = df.loc[:, RISE_INDICES].sum(axis=1) != 0
-
+    # sum of the RISE scores for the electrification options, used as normalization's factor
     norm = df.loc[nz_idxs, RISE_INDICES].sum(axis=1)
 
-    for col in ['shift_grid_share', 'shift_grid_to_mg_share', 'shift_grid_to_shs_share']:
-        # if the sum of the RISE indices and shift MENTI is 0 the corresponding rows
+    for col in ['shift_grid_share', 'shift_mg_share', 'shift_shs_share']:
+        # if the sum of the RISE scores is 0, the corresponding rows
         # in the given columns are set to 0
         df.loc[df.loc[:, RISE_INDICES].sum(axis=1) == 0, col] = 0
 
-    # share of population which will be on the grid in the se4all+SHIFT scenario
+    # compute the weight of the shift to an electricity option
     df.loc[nz_idxs, 'shift_grid_share'] = \
         2 * df.loc[nz_idxs, 'rise_grid'] \
         - df.loc[nz_idxs, 'rise_mg'] \
