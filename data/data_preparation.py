@@ -434,41 +434,47 @@ def prepare_se4all_data(
     for opt in ELECTRIFICATION_OPTIONS:
         df['endo_pop_get_%s_2030' % opt] = df['pop_%s_share' % opt] * df.pop_newly_electrified_2030
 
-    # to normalize the senarii weigthed sum
-    weighted_norm = \
-        df.loc[:, RISE_INDICES].sum(axis=1) * weight_grid \
-        + df.loc[:, SHIFT_MENTI].sum(axis=1) * weight_mentis
+    # indexes for which
+    nz_idxs = df.loc[:, RISE_INDICES].sum(axis=1) != 0
 
-    non_zero_indices = df.loc[:, RISE_INDICES + SHIFT_MENTI].sum(axis=1) != 0
+    norm = df.loc[nz_idxs, RISE_INDICES].sum(axis=1)
 
     for col in ['shift_grid_share', 'shift_grid_to_mg_share', 'shift_grid_to_shs_share']:
         # if the sum of the RISE indices and shift MENTI is 0 the corresponding rows
         # in the given columns are set to 0
-        df.loc[df.loc[:, RISE_INDICES + SHIFT_MENTI].sum(axis=1) == 0, col] = 0
+        df.loc[df.loc[:, RISE_INDICES].sum(axis=1) == 0, col] = 0
 
     # share of population which will be on the grid in the se4all+SHIFT scenario
-    df.loc[non_zero_indices, 'shift_grid_share'] = df.rise_grid * weight_grid / weighted_norm
+    df.loc[nz_idxs, 'shift_grid_share'] = \
+        2 * df.loc[nz_idxs, 'rise_grid'] \
+        - df.loc[nz_idxs, 'rise_mg'] \
+        - df.loc[nz_idxs, 'rise_shs']
+    df.loc[nz_idxs, 'shift_grid_share'] = df.loc[nz_idxs, 'shift_grid_share'].div(norm)
 
-    # share of population which will have changed from grid to mg in the se4all+SHIFT scenario
-    df.loc[non_zero_indices, 'shift_grid_to_mg_share'] = \
-        (df.rise_mg * weight_grid + df.shift_menti_mg * weight_mentis) / weighted_norm
+    df.loc[nz_idxs, 'shift_mg_share'] = \
+        2 * df.loc[nz_idxs, 'rise_mg'] \
+        - df.loc[nz_idxs, 'rise_grid'] \
+        - df.loc[nz_idxs, 'rise_shs']
+    df.loc[nz_idxs, 'shift_mg_share'] = df.loc[nz_idxs, 'shift_mg_share'].div(norm)
 
-    # share of population which will have changed from grid to shs in the se4all+SHIFT scenario
-    df.loc[non_zero_indices, 'shift_grid_to_shs_share'] = \
-        (df.rise_shs * weight_grid + df.shift_menti_shs * weight_mentis) / weighted_norm
+    df.loc[nz_idxs, 'shift_shs_share'] = \
+        2 * df.loc[nz_idxs, 'rise_shs'] \
+        - df.loc[nz_idxs, 'rise_grid'] \
+        - df.loc[nz_idxs, 'rise_mg']
+    df.loc[nz_idxs, 'shift_shs_share'] = df.loc[nz_idxs, 'shift_shs_share'].div(norm)
 
     # SHARED WITH prOG
     # if the predicted mg share is larger than the predicted grid share, the number of people
     # predicted to use mg in the se4all+SHIFT scenario is returned, otherwise it is set to 0
-    df.loc[df.shift_grid_to_mg_share >= df.shift_grid_share, 'shift_pop_grid_to_mg'] = \
-        df.shift_grid_to_mg_share * df.endo_pop_get_grid_2030
-    df.loc[df.shift_grid_to_mg_share < df.shift_grid_share, 'shift_pop_grid_to_mg'] = 0
+    # df.loc[df.shift_grid_to_mg_share >= df.shift_grid_share, 'shift_pop_grid_to_mg'] = \
+    #     df.shift_grid_to_mg_share * df.endo_pop_get_grid_2030
+    # df.loc[df.shift_grid_to_mg_share < df.shift_grid_share, 'shift_pop_grid_to_mg'] = 0
 
     # if the predicted shs share is larger than the predicted grid share, the number of people
     # predicted to use shs in the se4all+SHIFT scenario is returned, otherwise it is set to 0
-    df.loc[df.shift_grid_to_shs_share >= df.shift_grid_share, 'shift_pop_grid_to_shs'] = \
-        df.shift_grid_to_shs_share * df.endo_pop_get_grid_2030
-    df.loc[df.shift_grid_to_shs_share < df.shift_grid_share, 'shift_pop_grid_to_shs'] = 0
+    # df.loc[df.shift_grid_to_shs_share >= df.shift_grid_share, 'shift_pop_grid_to_shs'] = \
+    #     df.shift_grid_to_shs_share * df.endo_pop_get_grid_2030
+    # df.loc[df.shift_grid_to_shs_share < df.shift_grid_share, 'shift_pop_grid_to_shs'] = 0
 
     return df
 
