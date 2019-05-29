@@ -77,11 +77,6 @@ SCENARIOS_DATA.update(
 )
 
 
-logos = [
-    base64.b64encode(open('logos/{}'.format(fn), 'rb').read())
-    for fn in os.listdir('logos') if fn.endswith('.png')
-]
-
 # list all region and countries to sompare with a single country
 COMPARE_OPTIONS = []
 for _, r in pd.read_json(SCENARIOS_DATA[BAU_SCENARIO]).sort_values('country').iterrows():
@@ -164,12 +159,6 @@ layout = html.Div(
     id='main-div',
     children=[
         html.Div(
-            id='app-title',
-            className='title',
-            children='Visualization of New Electrification Scenarios by 2030 and the'
-                     ' Relevance of Off-Grid Components in the NDCs'
-        ),
-        html.Div(
             id='app-div',
             className='app',
             children=[
@@ -237,17 +226,6 @@ layout = html.Div(
                                         ],
                                         value=WORLD_ID
                                     )
-                                ),
-                                html.Div(
-                                    id='logo-div',
-                                    children=[
-                                        html.Img(
-                                            src='data:image/png;base64,{}'.format(logo.decode()),
-                                            className='app__logo',
-                                            # style={'height': '5vh', 'padding': '10px'}
-                                        )
-                                        for logo in logos
-                                    ]
                                 ),
                             ]
                         ),
