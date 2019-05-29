@@ -8,36 +8,57 @@ from app_layouts import intro_layout, static_layout, flex_layout
 server = app.server
 
 # the app and its options are defined in the main_app module
-app.layout = html.Div([
-    dcc.Location(id='url', refresh=False),
-    html.Div(
-        id='header-div',
-        className='grid-x grid-margin-x',
-        children=[
-            html.Div(
-                className='cell small-4 text-justify',
-                children='NDC Off-Grid alternatives'
-            ),
-            html.Div(
-                className='cell small-8 text-justify',
-                children='Visualization of New Electrification Scenarios by 2030 and the'
-                         ' Relevance of Off-Grid Components in the NDCs',
-            ),
-        ]
-    ),
-    html.Div(id='page-content'),
-    html.Div(
-        id='footer-div',
-        className='grid-x grid-margin-x',
-        children=[
-            html.Img(
-                src='data:image/png;base64,{}'.format(logo.decode()),
-                className='cell auto',
-            )
-            for logo in LOGOS
-        ]
-    )
-])
+app.layout = html.Div(
+    className='grid-y medium-grid-frame',
+    children=[
+        dcc.Location(id='url', refresh=False),
+        html.Div(
+            id='header-div',
+            className='cell shrink header',
+            children=[
+                html.Div(
+                    id='header-content',
+                    className='grid-x grid-margin-x',
+                    children=[
+                        html.Div(
+                            className='cell small-4 text-justify',
+                            children='NDC Off-Grid alternatives'
+                        ),
+                        html.Div(
+                            className='cell small-8 text-justify',
+                            children='Visualization of New Electrification Scenarios by 2030 and the'
+                                     ' Relevance of Off-Grid Components in the NDCs',
+                        ),
+                    ]
+                ),
+            ]
+        ),
+        html.Div(
+            id='page-div',
+            className='cell medium-10',
+            children=[
+                html.Div(id='page-content'),
+            ]
+        ),
+        html.Div(
+            id='footer-div',
+            className='cell shrink footer',
+            children=[
+                html.Div(
+                    id='footer-content',
+                    className='grid-x grid-margin-x',
+                    children=[
+                        html.Img(
+                            src='data:image/png;base64,{}'.format(logo.decode()),
+                            className='cell auto',
+                        )
+                        for logo in LOGOS
+                    ]
+                )
+            ]
+        ),
+    ]
+)
 
 # define the callbacks
 static_layout.callbacks(app)
