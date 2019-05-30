@@ -67,7 +67,7 @@ def callback_generator(app, input_name, df_name):
     return update_drive_input
 
 
-def results_div(aggregate=False):
+def results_div(aggregate=False, scenario_type=''):
     """Fill and return a specific country exogenous results and information.
 
     :param aggregate: (bool) determine whether the results should be summed country wise
@@ -79,6 +79,8 @@ def results_div(aggregate=False):
 
     else:
         id_name = 'country'
+
+    id_name = '{}{}'.format(scenario_type, id_name)
 
     x_vals = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
     fs = 12
@@ -264,13 +266,13 @@ def results_div(aggregate=False):
     return divs
 
 
-def compare_div():
+def compare_div(scenario_type=''):
     """Fill and return a comparison to specific country exogenous results.
 
     :return: the content of the compare-div
     """
 
-    id_name = 'compare'
+    id_name = '{}compare'.format(scenario_type)
 
     # add a barplot above the tables with the results
     barplot = html.Div(
@@ -436,19 +438,21 @@ def compare_div():
     return divs
 
 
-def scenario_div(init_scenario):
+def scenario_div(init_scenario, scenario_type=''):
     """Return controls for choice of scenario and electrification options."""
+
+    id_name = scenario_type
 
     divs = [
         html.Div(
-            id='scenario-label',
+            id='{}scenario-label'.format(id_name),
             className='app__input__label',
             children='Explore a scenario:'
         ),
         html.Div(
-            id='scenario-input-div',
+            id='{}scenario-input-div'.format(id_name),
             children=dcc.RadioItems(
-                id='scenario-input',
+                id='{}scenario-input'.format(id_name),
                 className='app__input__radio',
                 options=[
                     {'label': v, 'value': k}
