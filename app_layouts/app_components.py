@@ -470,20 +470,20 @@ def controls_div():
 
     divs = [
         html.Div(
-            id='tier-div',
+            id='flex-tier-div',
             className='app__input',
             children=[
                 html.Div(
-                    id='min-tier-label',
+                    id='flex-min-tier-label',
                     className='app__input__label',
                     children='Min TIER level'
                 ),
                 html.Div(
-                    id='min-tier-input-div',
+                    id='flex-min-tier-input-div',
                     className='app__input__input',
                     title='min tier level description',
                     children=dcc.Input(
-                        id='min-tier-input',
+                        id='flex-min-tier-input',
                         className='app__input__tier',
                         value=3,
                         type='number',
@@ -493,15 +493,15 @@ def controls_div():
                     )
                 ),
                 html.Div(
-                    id='tier-label',
+                    id='flex-tier-label',
                     className='app__input__label',
                     children='Lower TIER level'
                 ),
                 html.Div(
-                    id='tier-value-div',
+                    id='flex-tier-value-div',
                     title='tier level description',
                     children=html.Div(
-                        id='tier-value',
+                        id='flex-tier-value',
                         className='app__display__tier',
                         children=''
                     )
@@ -509,21 +509,21 @@ def controls_div():
             ]
         ),
         html.Div(
-            id='rise-div',
+            id='flex-rise-div',
             className='app__input',
             children=[
                 html.Div(
-                    id='rise-grid-div',
+                    id='flex-rise-grid-div',
                     className='app__input__slider',
                     title='rise grid description',
                     children=[
                         html.Div(
-                            id='rise-grid-label',
+                            id='flex-rise-grid-label',
                             className='app__input__label',
                             children='RISE-GRID'
                         ),
                         daq.Slider(
-                            id='rise-grid-input',
+                            id='flex-rise-grid-input',
                             className='daq__slider',
                             min=0,
                             max=100,
@@ -535,17 +535,17 @@ def controls_div():
                     ]
                 ),
                 html.Div(
-                    id='rise-shs-div',
+                    id='flex-rise-shs-div',
                     className='app__input__slider',
                     title='rise shs description',
                     children=[
                         html.Div(
-                            id='rise-shs-label',
+                            id='flex-rise-shs-label',
                             className='app__input__label',
                             children='RISE-SHS'
                         ),
                         daq.Slider(
-                            id='rise-shs-input',
+                            id='flex-rise-shs-input',
                             className='daq__slider',
                             min=0,
                             max=100,
@@ -557,17 +557,17 @@ def controls_div():
                     ]
                 ),
                 html.Div(
-                    id='rise-mg-div',
+                    id='flex-rise-mg-div',
                     className='app__input__slider',
                     title='rise mg description',
                     children=[
                         html.Div(
-                            id='rise-label',
+                            id='flex-rise-label',
                             className='app__input__label',
                             children='RISE-MG'
                         ),
                         daq.Slider(
-                            id='rise-mg-input',
+                            id='flex-rise-mg-input',
                             className='daq__slider',
                             min=0,
                             max=100,
