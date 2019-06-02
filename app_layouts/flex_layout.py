@@ -17,12 +17,7 @@ from data.data_preparation import (
     SE4ALL_FLEX_SCENARIO,
     PROG_SCENARIO,
     SCENARIOS_DICT,
-    SCENARIOS_DESCRIPTIONS,
     ELECTRIFICATION_OPTIONS,
-    ELECTRIFICATION_DICT,
-    GRID,
-    MG,
-    SHS,
     POP_GET,
     GHG,
     GHG_CAP,
@@ -79,6 +74,13 @@ SCENARIOS_DATA.update(
     {reg: extract_centroids(REGIONS_NDC[reg]).to_json() for reg in REGIONS_NDC}
 )
 
+list_countries_dropdown = []
+DF = pd.read_json(SCENARIOS_DATA[SE4ALL_SCENARIO])
+DF = DF.sort_values('country')
+for idx, row in DF.iterrows():
+    list_countries_dropdown.append({'label': row['country'], 'value': row['country_iso']})
+
+
 def country_hover_text(input_df):
     """Format the text displayed by the hover."""
     df = input_df.copy()
@@ -86,18 +88,18 @@ def country_hover_text(input_df):
     df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0)
 
     return df.country + '<br>' \
-           + '2017 <br>' \
-           + '  Pop : ' + df.pop_2017.div(1e6).map('{:.1f} MIO'.format) + '<br>' \
-           + '  Household electric consumption: ' + '<br>' \
-           + '  ' + df.hh_yearly_electricity_consumption.map('{:.1f} kWh/year'.format) + '<br>' \
-           + '  Grid share: ' + df.pop_grid_share.map('{:.1%}'.format) + '<br>' \
-           + '  MG: ' + df.pop_mg_share.map('{:.1%}'.format) + '<br>' \
-           + '  SHS: ' + df.pop_shs_share.map('{:.1%}'.format) + '<br>' \
-           + '2030 <br>' \
-           + '  Est Pop (2030): ' + df.pop_2030.div(1e6).map('{:.1f} MIO'.format) + '<br>' \
-           + '  Grid share: ' + df.pop_get_grid_2030.map('{:.1%}'.format) + '<br>' \
-           + '  MG: ' + df.pop_get_mg_2030.map('{:.1%}'.format) + '<br>' \
-           + '  SHS: ' + df.pop_get_shs_2030.map('{:.1%}'.format) + '<br>'
+        + '2017 <br>' \
+        + '  Pop : ' + df.pop_2017.div(1e6).map('{:.1f} MIO'.format) + '<br>' \
+        + '  Household electric consumption: ' + '<br>' \
+        + '  ' + df.hh_yearly_electricity_consumption.map('{:.1f} kWh/year'.format) + '<br>' \
+        + '  Grid share: ' + df.pop_grid_share.map('{:.1%}'.format) + '<br>' \
+        + '  MG: ' + df.pop_mg_share.map('{:.1%}'.format) + '<br>' \
+        + '  SHS: ' + df.pop_shs_share.map('{:.1%}'.format) + '<br>' \
+        + '2030 <br>' \
+        + '  Est Pop (2030): ' + df.pop_2030.div(1e6).map('{:.1f} MIO'.format) + '<br>' \
+        + '  Grid share: ' + df.pop_get_grid_2030.map('{:.1%}'.format) + '<br>' \
+        + '  MG: ' + df.pop_get_mg_2030.map('{:.1%}'.format) + '<br>' \
+        + '  SHS: ' + df.pop_get_shs_2030.map('{:.1%}'.format) + '<br>'
 
 
 scl = [
@@ -324,12 +326,10 @@ def callbacks(app_handle):
         Output('flex-country-barplot', 'figure'),
         [
             Input('flex-country-input', 'value'),
-            Input('flex-country-barplot-yaxis-input', 'value')
+            Input('flex-country-barplot-yaxis-input', 'value'),
+            Input('flex-store', 'data')
         ],
-        [
-            State('flex-data-store', 'data'),
-            State('flex-country-barplot', 'figure')
-        ]
+        [State('flex-country-barplot', 'figure')]
     )
     def update_country_barplot(country_sel, y_sel, cur_data, fig):
         """update the barplot for every scenario"""
@@ -367,10 +367,10 @@ def callbacks(app_handle):
             Input('flex-country-input', 'value'),
             Input('flex-compare-input', 'value'),
             Input('flex-scenario-input', 'value'),
-            Input('flex-compare-barplot-yaxis-input', 'value')
+            Input('flex-compare-barplot-yaxis-input', 'value'),
+            Input('flex-store', 'data')
         ],
         [
-            State('flex-data-store', 'data'),
             State('flex-compare-barplot', 'figure')
         ]
     )
@@ -561,10 +561,10 @@ def callbacks(app_handle):
         [
             Input('flex-country-input', 'value'),
             Input('flex-scenario-input', 'value'),
-        ],
-        [State('flex-data-store', 'data')]
+            Input('flex-store', 'data')
+        ]
     )
-    def update_country_basic_results_table(
+    def flex_update_country_basic_results_table(
             country_sel,
             scenario,
             cur_data,
@@ -611,10 +611,10 @@ def callbacks(app_handle):
         [
             Input('flex-country-input', 'value'),
             Input('flex-scenario-input', 'value'),
-        ],
-        [State('flex-data-store', 'data')]
+            Input('flex-store', 'data')
+        ]
     )
-    def update_country_ghg_results_table(
+    def flex_update_country_ghg_results_table(
             country_sel,
             scenario,
             cur_data,
@@ -684,10 +684,10 @@ def callbacks(app_handle):
             Input('flex-country-input', 'value'),
             Input('flex-compare-input', 'value'),
             Input('flex-scenario-input', 'value'),
-        ],
-        [State('flex-data-store', 'data')]
+            Input('flex-store', 'data')
+        ]
     )
-    def update_compare_basic_results_table(country_sel, comp_sel, scenario, cur_data):
+    def flex_update_compare_basic_results_table(country_sel, comp_sel, scenario, cur_data):
         """Display information and study's results comparison between countries."""
         answer_table = []
         country_iso = country_sel
@@ -761,10 +761,10 @@ def callbacks(app_handle):
             Input('flex-country-input', 'value'),
             Input('flex-compare-input', 'value'),
             Input('flex-scenario-input', 'value'),
-        ],
-        [State('flex-data-store', 'data')]
+            Input('flex-store', 'data')
+        ]
     )
-    def update_compare_ghg_results_table(country_sel, comp_sel, scenario, cur_data):
+    def flex_update_compare_ghg_results_table(country_sel, comp_sel, scenario, cur_data):
         """Display information and study's results for a country."""
         answer_table = []
         df_bau_ref = None
@@ -878,14 +878,14 @@ def callbacks(app_handle):
         return answer_table
 
     @app_handle.callback(
-        Output('flex-results-info-div', 'children'),
+        Output('flex-country-info-div', 'children'),
         [
             Input('flex-scenario-input', 'value'),
-            Input('flex-country-input', 'value')
-        ],
-        [State('flex-data-store', 'data')]
+            Input('flex-country-input', 'value'),
+            Input('flex-store', 'data')
+        ]
     )
-    def update_results_info_div(scenario, country_iso, cur_data):
+    def flex_update_country_info_div(scenario, country_iso, cur_data):
 
         divs = []
         if scenario in SCENARIOS and country_iso is not None:
@@ -897,7 +897,7 @@ def callbacks(app_handle):
 
             divs = [
                 html.Div(
-                    id='results-info-header-div',
+                    id='flex-results-info-header-div',
                     children=[
                         html.Div(name),
                         html.Img(
@@ -924,9 +924,9 @@ def callbacks(app_handle):
         [Input('flex-country-input', 'value')],
         [
             State('flex-scenario-input', 'value'),
-            State('flex-data-store', 'data')]
+            State('flex-store', 'data')]
     )
-    def country_basic_results_title(country_iso, scenario, cur_data):
+    def flex_country_basic_results_title(country_iso, scenario, cur_data):
 
         answer = 'Results'
         if scenario in SCENARIOS and country_iso is not None:
@@ -943,9 +943,9 @@ def callbacks(app_handle):
         ],
         [
             State('flex-scenario-input', 'value'),
-            State('flex-data-store', 'data')]
+            State('flex-store', 'data')]
     )
-    def compare_basic_results_title(country_iso, comp_sel, scenario, cur_data):
+    def flex_compare_basic_results_title(country_iso, comp_sel, scenario, cur_data):
 
         answer = 'Results'
         if scenario in SCENARIOS and comp_sel is not None:
@@ -965,12 +965,13 @@ def callbacks(app_handle):
         [Input('flex-region-input', 'value')],
         [
             State('flex-scenario-input', 'value'),
-            State('flex-data-store', 'data')
+            State('flex-store', 'data')
         ]
     )
-    def update_country_selection_options(region_id, scenario, cur_data):
+    def flex_update_country_selection_options(region_id, scenario, cur_data):
         """List the countries in a given region in alphabetical order."""
         countries_in_region = []
+
         if scenario is not None:
             # load the data of the scenario
             df = pd.read_json(cur_data[scenario])
@@ -986,24 +987,12 @@ def callbacks(app_handle):
 
         return countries_in_region
 
-    @app_handle.callback(
-        Output('flex-data-store', 'data'),
-        [Input('flex-map', 'clickData')],
-        [State('flex-data-store', 'data')]
-    )
-    def update_data_store(clicked_data, cur_data):
-        if clicked_data is not None:
-            country_iso = clicked_data['points'][0]['location']
-            cur_data.update({'selected_country': country_iso})
-        return cur_data
-
-    @app_handle.callback(
-        Output('flex-general-info-div', 'children'),
-        [Input('flex-scenario-input', 'value')]
-    )
-    def update_scenario_description(scenario):
-        return SCENARIOS_DESCRIPTIONS[scenario]
-
+    # @app_handle.callback(
+    #     Output('flex-general-info-div', 'children'),
+    #     [Input('flex-scenario-input', 'value')]
+    # )
+    # def flex_update_scenario_description(scenario):
+    #     return
     @app_handle.callback(
         Output('flex-store', 'data'),
         [
