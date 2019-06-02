@@ -67,8 +67,8 @@ REGIONS_GPD = dict(WD='World', SA='South America', AF='Africa', AS='Asia')
 
 REGIONS_NDC = dict(WD=['LA', 'SSA', 'DA'], SA='LA', AF='SSA', AS='DA')
 
-VIEW_GENERAL = 'general'
-VIEW_COUNTRY = 'specific'
+VIEW_COUNTRY_SELECT = 'country'
+VIEW_CONTROLS = 'general'
 VIEW_COMPARE = 'compare'
 
 # A dict with the data for each scenario in json format
@@ -439,13 +439,11 @@ def callbacks(app_handle):
     @app_handle.callback(
         Output('flex-view-store', 'data'),
         [
-            Input('flex-scenario-input', 'value'),
             Input('flex-country-input', 'value'),
-            Input('flex-compare-input', 'value')
         ],
         [State('flex-view-store', 'data')]
     )
-    def update_view(scenario, country_sel, comp_sel, cur_view):
+    def flex_update_view(country_sel, cur_view):
         """Toggle between the different views of the app.
 
         There are currently two views:
@@ -463,32 +461,29 @@ def callbacks(app_handle):
         The controls_display is set to 'flex' only for the se4all+shift scenario and is set to
         'none' for the other scenarios (these scenarios do not have variables).
         """
+
+        comp_sel = False  # for the moment
+
         ctx = dash.callback_context
         if ctx.triggered:
             prop_id = ctx.triggered[0]['prop_id']
             # trigger comes from clicking on a country
             if 'country-input' in prop_id:
-                if country_sel:
+                if country_sel is not None:
                     if comp_sel:
                         cur_view.update({'app_view': VIEW_COMPARE})
                     else:
-                        cur_view.update({'app_view': VIEW_COUNTRY})
+                        cur_view.update({'app_view': VIEW_CONTROLS})
                 else:
-                    cur_view.update({'app_view': VIEW_GENERAL})
+                    cur_view.update({'app_view': VIEW_COUNTRY_SELECT})
 
-            # trigger comes from selecting a region
-            elif 'region-input' in prop_id:
-                cur_view.update({'app_view': VIEW_GENERAL})
-
-            # trigger comes from selection a comparison region/country
-            elif 'compare-input' in prop_id:
-                if comp_sel:
-                    cur_view.update({'app_view': VIEW_COMPARE})
-                else:
-                    if country_sel:
-                        cur_view.update({'app_view': VIEW_COUNTRY})
-                    else:
-                        cur_view.update({'app_view': VIEW_GENERAL})
+            # # trigger comes from selection a comparison region/country
+            # elif 'compare-input' in prop_id:
+            #     if comp_sel:
+            #         cur_view.update({'app_view': VIEW_COMPARE})
+            #     else:
+            #         if country_sel:
+            #             cur_view.update({'app_view': VIEW_CONTROLS})
         return cur_view
 
     @app_handle.callback(
@@ -496,70 +491,70 @@ def callbacks(app_handle):
         [Input('flex-view-store', 'data')],
         [State('flex-results-div', 'style')]
     )
-    def toggle_results_div_display(cur_view, cur_style):
+    def flex_toggle_results_div_display(cur_view, cur_style):
         """Change the display of results-div between the app's views."""
         if cur_style is None:
             cur_style = {'display': 'none'}
 
-        if cur_view['app_view'] == VIEW_GENERAL:
+        if cur_view['app_view'] == VIEW_COUNTRY_SELECT:
             cur_style.update({'display': 'none'})
-        elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
+        elif cur_view['app_view'] in [VIEW_CONTROLS]:
             cur_style.update({'display': 'flex'})
         return cur_style
 
     @app_handle.callback(
-        Output('flex-results-info-div', 'style'),
+        Output('flex-options-div', 'style'),
         [Input('flex-view-store', 'data')],
-        [State('flex-results-info-div', 'style')]
+        [State('flex-options-div', 'style')]
     )
-    def toggle_results_info_div_display(cur_view, cur_style):
+    def flex_toggle_results_info_div_display(cur_view, cur_style):
         """Change the display of results-info-div between the app's views."""
         if cur_style is None:
             cur_style = {'display': 'none'}
 
-        if cur_view['app_view'] == VIEW_GENERAL:
+        if cur_view['app_view'] == VIEW_COUNTRY_SELECT:
             cur_style.update({'display': 'none'})
-        elif cur_view['app_view'] == VIEW_COUNTRY:
+        elif cur_view['app_view'] == VIEW_CONTROLS:
             cur_style.update({'display': 'flex'})
-        elif cur_view['app_view'] == VIEW_COMPARE:
-            cur_style.update({'display': 'none'})
+        # elif cur_view['app_view'] == VIEW_COMPARE:
+        #     cur_style.update({'display': 'none'})
         return cur_style
 
-    @app_handle.callback(
-        Output('flex-compare-input-div', 'style'),
-        [
-            Input('flex-view-store', 'data'),
-        ],
-        [State('flex-compare-input-div', 'style')]
-    )
-    def toggle_compare_input_div_display(cur_view, cur_style):
-        """Change the display of compare-input-div between the app's views."""
-        if cur_style is None:
-            cur_style = {'display': 'none'}
+    # @app_handle.callback(
+    #     Output('flex-compare-input-div', 'style'),
+    #     [
+    #         Input('flex-view-store', 'data'),
+    #     ],
+    #     [State('flex-compare-input-div', 'style')]
+    # )
+    # def flex_toggle_compare_input_div_display(cur_view, cur_style):
+    #     """Change the display of compare-input-div between the app's views."""
+    #     if cur_style is None:
+    #         cur_style = {'display': 'none'}
+    #
+    #     if cur_view['app_view'] == VIEW_GENERAL:
+    #         cur_style.update({'display': 'none'})
+    #     elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
+    #         cur_style.update({'display': 'flex'})
+    #     return cur_style
 
-        if cur_view['app_view'] == VIEW_GENERAL:
-            cur_style.update({'display': 'none'})
-        elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
-            cur_style.update({'display': 'flex'})
-        return cur_style
-
-    @app_handle.callback(
-        Output('flex-compare-div', 'style'),
-        [
-            Input('flex-view-store', 'data'),
-        ],
-        [State('flex-compare-div', 'style')]
-    )
-    def toggle_compare_div_display(cur_view, cur_style):
-        """Change the display of compare-input-div between the app's views."""
-        if cur_style is None:
-            cur_style = {'display': 'none'}
-
-        if cur_view['app_view'] in [VIEW_GENERAL, VIEW_COUNTRY]:
-            cur_style.update({'display': 'none'})
-        elif cur_view['app_view'] == VIEW_COMPARE:
-            cur_style.update({'display': 'flex'})
-        return cur_style
+    # @app_handle.callback(
+    #     Output('flex-compare-div', 'style'),
+    #     [
+    #         Input('flex-view-store', 'data'),
+    #     ],
+    #     [State('flex-compare-div', 'style')]
+    # )
+    # def flex_toggle_compare_div_display(cur_view, cur_style):
+    #     """Change the display of compare-input-div between the app's views."""
+    #     if cur_style is None:
+    #         cur_style = {'display': 'none'}
+    #
+    #     if cur_view['app_view'] in [VIEW_GENERAL, VIEW_COUNTRY]:
+    #         cur_style.update({'display': 'none'})
+    #     elif cur_view['app_view'] == VIEW_COMPARE:
+    #         cur_style.update({'display': 'flex'})
+    #     return cur_style
 
     @app_handle.callback(
         Output('flex-country-basic-results-table', 'data'),
