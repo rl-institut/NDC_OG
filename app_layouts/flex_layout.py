@@ -152,124 +152,169 @@ fig_map = go.Figure(data=data, layout=layout)
 
 layout = html.Div(
     id='flex-main-div',
+    className='grid-y',
     children=[
+        dcc.Store(
+            id='flex-store',
+            storage_type='session',
+            data=SCENARIOS_DATA.copy()
+        ),
+        dcc.Store(
+            id='flex-view-store',
+            storage_type='session',
+            data={'app_view': VIEW_COUNTRY_SELECT}
+        ),
         html.Div(
-            id='flex-app-title',
-            className='title',
-            children='Visualization of New Electrification Scenarios by 2030 and the'
-                     ' Relevance of Off-Grid Components in the NDCs'
+            id='flex-general-info-div',
+            className='app__info',
+            children=html.Div('Information here about what the user can do with '
+                              'RISE')
         ),
         html.Div(
             id='flex-app-div',
-            className='app',
-            children=[
-                dcc.Store(
-                    id='flex-data-store',
-                    storage_type='session',
-                    data=SCENARIOS_DATA.copy()
-                ),
-                dcc.Store(
-                    id='flex-store',
-                    storage_type='session',
-                    data={}
-                ),
-                dcc.Store(
-                    id='flex-view-store',
-                    storage_type='session',
-                    data={'app_view': VIEW_GENERAL}
-                ),
-                html.Div(
-                    id='flex-left-panel-div',
-                    className='app__container',
-                    children=[
-                        html.Div(
-                            id='flex-scenario-div',
-                            className='app__options',
-                            children=scenario_div(BAU_SCENARIO, scenario_type='flex-')
-                        ),
-                        html.Div(
-                            id='flex-controls-div',
-                            className='app__controls',
-                            style={'display': 'none'},
-                            children=controls_div(),
-                        ),
-                    ]
-                ),
-                html.Div(
-                    id='flex-right-panel-div',
-                    className='app__container',
-                    children=[
-                        html.Div(
-                            id='flex-header-div',
-                            className='app__header',
-                            children=[
-                                html.Div(
-                                    id='flex-region-label',
-                                    className='app__input__label',
-                                    children='Region:'
-                                ),
-                                html.Div(
-                                    id='flex-region-input-div',
-                                    className='app__dropdown',
-                                    title='region selection description',
-                                    children=dcc.Dropdown(
-                                        id='flex-region-input',
-                                        className='app__input__dropdown__map',
-                                        options=[
-                                            {'label': v, 'value': k}
-                                            for k, v in REGIONS_GPD.items()
-                                        ],
-                                        value=WORLD_ID
-                                    )
-                                ),
-                                html.Div(
-                                    id='flex-elec-label',
-                                    className='app__input__label',
-                                    children='Electrification option:'
-                                ),
-                                html.Div(
-                                    id='flex-electrification-input-div',
-                                    title='electrification option description',
-                                    children=dcc.Dropdown(
-                                        id='flex-electrification-input',
-                                        className='app__input__dropdown',
-                                        options=[
-                                            {'label': v, 'value': k}
-                                            for k, v in ELECTRIFICATION_DICT.items()
-                                        ],
-                                        value=GRID,
-                                    )
-                                ),
-                                html.Div(
-                                    id='flex-logo-div',
-                                    className='app__logo',
-                                    children='ORG LOGO'
-                                ),
-                            ]
-                        ),
-                        html.Div(
-                            id='flex-country-input-div',
-                            className='app__dropdown',
-                            title='country selection description',
-                            children=dcc.Dropdown(
-                                id='flex-country-input',
-                                className='app__input__dropdown__country',
-                                options=[],
-                                value=None,
-                                multi=False
-                            )
-                        ),
-                        html.Div(
-                            id='flex-country-div',
-                            className='app__country',
-                            children=results_div(scenario_type='flex-'),
-                            style={'display': 'none'}
-                        ),
-                    ]
+            className='cell grid-x',
+            # children=html.Div(
+            #     id='flex-app-content',
+            #     className='grid-x',
+                children=[
+                    # dcc.Store(
+                    #     id='flex-data-store',
+                    #     storage_type='session',
+                    #     data=SCENARIOS_DATA.copy()
+                    # ),
 
-                )
-            ],
+                    html.Div(
+                        id='flex-left-panel-div',
+                        className='cell medium-6',
+                        children=[
+                            html.Div(
+                                id='flex-header-div',
+                                className='app__header',
+                                style={'display': 'none'},
+                                children=[
+                                    html.Div(
+                                        id='flex-region-label',
+                                        className='app__input__label',
+                                        children='Region:'
+                                    ),
+                                    html.Div(
+                                        id='flex-region-input-div',
+                                        className='app__dropdown',
+                                        title='region selection description',
+                                        children=dcc.Dropdown(
+                                            id='flex-region-input',
+                                            className='app__input__dropdown__map',
+                                            options=[
+                                                {'label': v, 'value': k}
+                                                for k, v in REGIONS_GPD.items()
+                                            ],
+                                            value=WORLD_ID
+                                        )
+                                    ),
+                                    # html.Div(
+                                    #     id='flex-logo-div',
+                                    #     children=[
+                                    #         html.Img(
+                                    #             src='data:image/png;base64,{}'.format(logo.decode()),
+                                    #             className='app__logo',
+                                    #             # style={'height': '5vh', 'padding': '10px'}
+                                    #         )
+                                    #         for logo in logos
+                                    #     ]
+                                    # ),
+                                ]
+                            ),
+
+                            html.Div(
+                                id='flex-country-input-div',
+                                title='country selection description',
+                                className='grid-x',
+                                children=[
+                                    html.Div(
+                                        id='flex-country-label',
+                                        className='cell medium-3 app__input__label',
+                                        children='Country:'
+                                    ),
+                                    dcc.Dropdown(
+                                        id='flex-country-input',
+                                        className='cell medium-6 app__input__dropdown__country',
+                                        options=list_countries_dropdown,
+                                        value=None,
+                                        multi=False
+                                    ),
+
+
+
+                                    # html.Div(
+                                    #     id='flex-compare-input-div',
+                                    #     children=[
+                                    #         html.Div(
+                                    #             id='flex-country-comp-label',
+                                    #             className='app__input__label',
+                                    #             children='compare with:'
+                                    #         ),
+                                    #         dcc.Dropdown(
+                                    #             id='flex-compare-input',
+                                    #             className='app__input__dropdown__country',
+                                    #             options=COMPARE_OPTIONS,
+                                    #             value=None,
+                                    #             multi=False
+                                    #         )
+                                    #     ],
+                                    #     style={'display': 'none'}
+                                    # )
+
+                                ]
+                            ),
+                            html.Div(
+                                id='flex-options-div',
+                                style={'display': 'none'},
+                                className='grid-y',
+                                children=[
+                                    html.Div(
+                                        id='flex-country-info-div',
+                                        className='cell medium-7 results__info',
+                                        children=''
+                                    ),
+                                    html.Div(
+                                        id='flex-controls-div',
+                                        className='cell medium-3 app__controls',
+                                        children=controls_div(),
+                                    ),
+                                    html.Div(
+                                        id='flex-scenario-div',
+                                        className='cell medium-2 app__options',
+                                        children=scenario_div(BAU_SCENARIO, scenario_type='flex-')
+                                    ),
+
+                                ]
+                            )
+                            # html.Div(
+                            #     id='flex-compare-div',
+                            #     children=compare_div(),
+                            #     style={'display': 'none'}
+                            # ),
+                        ]
+
+                    ),
+                    html.Div(
+                        id='flex-results-div',
+                        className='cell medium-6 grid-y',
+                        children=results_div(scenario_type='flex-'),
+                        # children=[
+                        #     html.Div(
+                        #         id='flex-results-div',
+                        #         className='grid-y',
+                        #
+                        #         style={'display': 'none'}
+                        #     ),
+                        # ]
+                    ),
+
+                ],
+            # )
         )
+
     ]
 )
 
