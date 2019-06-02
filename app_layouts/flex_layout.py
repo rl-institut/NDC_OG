@@ -157,9 +157,14 @@ layout = html.Div(
     className='grid-y',
     children=[
         dcc.Store(
-            id='flex-store',
+            id='flex-data-store',
             storage_type='session',
             data=SCENARIOS_DATA.copy()
+        ),
+        dcc.Store(
+            id='flex-country-store',
+            storage_type='session',
+            data={}
         ),
         dcc.Store(
             id='flex-view-store',
@@ -1022,11 +1027,61 @@ def callbacks(app_handle):
         return flex_data
 
     @app_handle.callback(
+        Output('flex-country-store', 'data'),
+        [Input('flex-country-input', 'value')],
+        [
+            State('flex-data-store', 'data'),
+            State('flex-country-store', 'data')
+        ]
+    )
+    def flex_update_flex_store(country_iso, cur_data, country_data):
+        if country_iso is not None:
+            df = pd.read_json(cur_data[SE4ALL_SCENARIO])
+            df = df.loc[df.country_iso == country_iso]
+            country_data.update({'selection': df.to_json()})
+
+        return country_data
+
+    @app_handle.callback(
+        Output('flex-rise-grid-input', 'value'),
+        [Input('flex-country-store', 'data')]
+    )
+    def flex_update_rise_grid(country_data):
+        answer = None
+        if 'selection' in country_data:
+            df = pd.read_json(country_data['selection'])
+            answer = df.rise_grid
+        return answer
+
+    @app_handle.callback(
+        Output('flex-rise-mg-input', 'value'),
+        [Input('flex-country-store', 'data')]
+    )
+    def flex_update_rise_mg(country_data):
+        answer = None
+        if 'selection' in country_data:
+            df = pd.read_json(country_data['selection'])
+            answer = df.rise_mg
+        return answer
+
+    @app_handle.callback(
+        Output('flex-rise-shs-input', 'value'),
+        [Input('flex-country-store', 'data')]
+    )
+    def flex_update_rise_shs(country_data):
+        answer = None
+        if 'selection' in country_data:
+            df = pd.read_json(country_data['selection'])
+            answer = df.rise_shs
+        return answer
+
+
+    @app_handle.callback(
         Output('flex-tier-value', 'children'),
         [Input('flex-country-input', 'value')],
         [
             State('flex-scenario-input', 'value'),
-            State('flex-store', 'data')]
+            State('flex-data-store', 'data')]
     )
     def flex_update_tier_value_div(country_iso, scenario, cur_data):
         """Find the actual tier level of the country based on its yearly electricity consumption"""
