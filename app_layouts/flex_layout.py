@@ -1009,14 +1009,16 @@ def callbacks(app_handle):
         [
             Input('flex-rise-grid-input', 'value'),
             Input('flex-rise-mg-input', 'value'),
-            Input('flex-rise-shs-input', 'value')
+            Input('flex-rise-shs-input', 'value'),
+            Input('flex-min-tier-input', 'value')
         ],
         [State('flex-store', 'data')]
     )
-    def update_flex_store(
+    def flex_update_flex_store(
             rise_grid,
             rise_mg,
             rise_shs,
+            min_tier_level,
             flex_data
     ):
 
@@ -1026,7 +1028,8 @@ def callbacks(app_handle):
             flex_data.update({'rise_mg': rise_mg})
         if rise_shs is not None:
             flex_data.update({'rise_shs': rise_shs})
-
+        if min_tier_level is not None:
+            flex_data.update({'min_tier_level': min_tier_level})
         return flex_data
 
     @app_handle.callback(
@@ -1034,16 +1037,17 @@ def callbacks(app_handle):
         [Input('flex-country-input', 'value')],
         [
             State('flex-scenario-input', 'value'),
-            State('flex-data-store', 'data')]
+            State('flex-store', 'data')]
     )
-    def update_tier_value_div(country_iso, scenario, cur_data):
+    def flex_update_tier_value_div(country_iso, scenario, cur_data):
         """Find the actual tier level of the country based on its yearly electricity consumption"""
         answer = ''
         if scenario in SCENARIOS and country_iso is not None:
             df = pd.read_json(cur_data[scenario])
             answer = '{}'.format(
                 _find_tier_level(
-                    df.loc[df.country_iso == country_iso].hh_yearly_electricity_consumption.values[0],
+                    df.loc[df.country_iso == country_iso]
+                    .hh_yearly_electricity_consumption.values[0],
                     1
                 )
             )
