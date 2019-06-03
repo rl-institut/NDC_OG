@@ -28,6 +28,8 @@ from data.data_preparation import (
     COMPARE_COLUMNS_ID,
     _find_tier_level,
     compute_ndc_results_from_raw_data,
+    extract_results_scenario,
+    prepare_scenario_data,
     prepare_results_tables,
 )
 
@@ -307,6 +309,7 @@ layout = html.Div(
                     html.Div(
                         id='flex-results-div',
                         className='cell medium-6 grid-y',
+                        style={'display': 'none'},
                         children=results_div(scenario_type='flex-'),
                         # children=[
                         #     html.Div(
@@ -330,116 +333,143 @@ def callbacks(app_handle):
     @app_handle.callback(
         Output('flex-country-barplot', 'figure'),
         [
-            Input('flex-country-input', 'value'),
             Input('flex-country-barplot-yaxis-input', 'value'),
-            Input('flex-store', 'data')
-        ],
-        [State('flex-country-barplot', 'figure')]
-    )
-    def update_country_barplot(country_sel, y_sel, cur_data, fig):
-        """update the barplot for every scenario"""
-
-        country_iso = country_sel
-        if country_iso is not None:
-            for sce_id, sce in enumerate(SCENARIOS):
-
-                df = pd.read_json(cur_data[sce])
-                # narrow to the country's results
-                df = df.loc[df.country_iso == country_iso]
-                # compute the percentage of population with electricity access
-                basic_results_data = prepare_results_tables(df)
-
-                y = basic_results_data[BASIC_ROWS.index(y_sel)]
-
-                if sce == BAU_SCENARIO and y_sel == BASIC_ROWS[0]:
-                    y = np.append(y, 0)
-                    y[3] = 100 - y.sum()
-                    ELECTRIFICATION_OPTIONS.copy()
-                    fig['data'][sce_id].update(
-                        {'x': ELECTRIFICATION_OPTIONS.copy() + ['No electricity']}
-                    )
-                else:
-                    fig['data'][sce_id].update(
-                        {'x': ELECTRIFICATION_OPTIONS.copy()}
-                    )
-                fig['data'][sce_id].update({'y': y})
-
-        return fig
-
-    @app_handle.callback(
-        Output('flex-compare-barplot', 'figure'),
-        [
-            Input('flex-country-input', 'value'),
-            Input('flex-compare-input', 'value'),
-            Input('flex-scenario-input', 'value'),
-            Input('flex-compare-barplot-yaxis-input', 'value'),
-            Input('flex-store', 'data')
+            Input('flex-country-store', 'data'),
+            Input('flex-rise-grid-input', 'value'),
+            Input('flex-rise-mg-input', 'value'),
+            Input('flex-rise-shs-input', 'value'),
+            Input('flex-min-tier-input', 'value'),
         ],
         [
-            State('flex-compare-barplot', 'figure')
+            State('flex-data-store', 'data'),
+            State('flex-country-barplot', 'figure'),
         ]
     )
-    def update_compare_barplot(country_sel, comp_sel, scenario, y_sel, cur_data, fig):
-        """update the barplot whenever the country changes"""
-        if country_sel is not None:
-            if comp_sel is not None:
+    def update_country_barplot(
+            y_sel,
+            country_data,
+            rise_grid,
+            rise_mg,
+            rise_shs,
+            min_tier_level,
+            cur_data,
+            fig
+    ):
+        """update the barplot for every scenario"""
 
-                comp_name = comp_sel
-                df = pd.read_json(cur_data[scenario])
-                df_comp = df.copy()
-                df = df.loc[df.country_iso == country_sel]
-                if comp_sel in REGIONS_NDC:
-                    # compare the reference country to a region
-                    if comp_sel != WORLD_ID:
-                        df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[comp_sel]]
-                    df_comp = df_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
-                    comp_name = REGIONS_GPD[comp_sel]
-                else:
-                    # compare the reference country to a country
-                    df_comp = df_comp.loc[df_comp.country_iso == comp_sel]
+        country_iso = country_data.get('country_iso')
+        if country_iso is not None:
+            df = pd.read_json(country_data['selection'])
 
-                basic_results_data = prepare_results_tables(df)
-                comp_results_data = prepare_results_tables(df_comp)
+            df.rise_grid = rise_grid
+            df.rise_mg = rise_mg
+            df.rise_shs = rise_shs
 
-                y = basic_results_data[BASIC_ROWS.index(y_sel)]
-                y_comp = comp_results_data[BASIC_ROWS.index(y_sel)]
+            df = prepare_scenario_data(
+                df,
+                SE4ALL_SCENARIO,
+                min_tier_level,
+                prepare_endogenous=True
+            )
 
-                x_vals = ELECTRIFICATION_OPTIONS.copy()
+            df = extract_results_scenario(df, SE4ALL_SCENARIO, min_tier_level)
+            # compute the percentage of population with electricity access
+            basic_results_data = prepare_results_tables(df)
 
-                if scenario == BAU_SCENARIO and y_sel == BASIC_ROWS[0]:
-                    y = np.append(y, 0)
-                    y_comp = np.append(y_comp, 0)
-                    y[3] = 100 - y.sum()
-                    y_comp[3] = 100 - y_comp.sum()
-                    x_vals = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
-                fs = 12
+            y = basic_results_data[BASIC_ROWS.index(y_sel)]
 
-                fig['data'] = [
-                    go.Bar(
-                        x=x_vals,
-                        y=y,
-                        text=[country_sel for i in range(4)],
-                        insidetextfont={'size': fs},
-                        textposition='auto',
-                        marker=dict(
-                            color=['#0000ff', '#ffa500', '#008000', 'red']
-                        ),
-                        hoverinfo='y+text'
-                    ),
-                    go.Bar(
-                        x=x_vals,
-                        y=y_comp,
-                        text=[comp_name for i in range(4)],
-                        insidetextfont={'size': fs},
-                        textposition='auto',
-                        marker=dict(
-                            color=['#8080ff', '#ffd280', '#1aff1a', 'red']
-                        ),
-                        hoverinfo='y+text'
-                    ),
-                ]
+            fig['data'][0].update({'text': ['flex', 'flex', 'flex', 'flex']})
+            fig['data'][0].update({'x': ELECTRIFICATION_OPTIONS.copy()})
+            fig['data'][0].update({'y': y})
+
+
+            # # reference of normal SE4All scenario
+            # df = pd.read_json(cur_data[SE4ALL_SCENARIO])
+            #
+            # basic_results_data = prepare_results_tables(df)
+            #
+            # y = basic_results_data[BASIC_ROWS.index(y_sel)]
+            # print(y)
+            # print(fig)
+            # fig['data'][1].update({'x': ELECTRIFICATION_OPTIONS.copy()})
+            # fig['data'][1].update({'y': y})
 
         return fig
+
+    # @app_handle.callback(
+    #     Output('flex-compare-barplot', 'figure'),
+    #     [
+    #         Input('flex-country-input', 'value'),
+    #         Input('flex-compare-input', 'value'),
+    #         Input('flex-scenario-input', 'value'),
+    #         Input('flex-compare-barplot-yaxis-input', 'value'),
+    #         Input('flex-country-store', 'data')
+    #     ],
+    #     [
+    #         State('flex-compare-barplot', 'figure')
+    #     ]
+    # )
+    # def update_compare_barplot(country_sel, comp_sel, scenario, y_sel, cur_data, fig):
+    #     """update the barplot whenever the country changes"""
+    #     if country_sel is not None:
+    #         if comp_sel is not None:
+    #
+    #             comp_name = comp_sel
+    #             df = pd.read_json(cur_data[scenario])
+    #             df_comp = df.copy()
+    #             df = df.loc[df.country_iso == country_sel]
+    #             if comp_sel in REGIONS_NDC:
+    #                 # compare the reference country to a region
+    #                 if comp_sel != WORLD_ID:
+    #                     df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[comp_sel]]
+    #                 df_comp = df_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
+    #                 comp_name = REGIONS_GPD[comp_sel]
+    #             else:
+    #                 # compare the reference country to a country
+    #                 df_comp = df_comp.loc[df_comp.country_iso == comp_sel]
+    #
+    #             basic_results_data = prepare_results_tables(df)
+    #             comp_results_data = prepare_results_tables(df_comp)
+    #
+    #             y = basic_results_data[BASIC_ROWS.index(y_sel)]
+    #             y_comp = comp_results_data[BASIC_ROWS.index(y_sel)]
+    #
+    #             x_vals = ELECTRIFICATION_OPTIONS.copy()
+    #
+    #             if scenario == BAU_SCENARIO and y_sel == BASIC_ROWS[0]:
+    #                 y = np.append(y, 0)
+    #                 y_comp = np.append(y_comp, 0)
+    #                 y[3] = 100 - y.sum()
+    #                 y_comp[3] = 100 - y_comp.sum()
+    #                 x_vals = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
+    #             fs = 12
+    #
+    #             fig['data'] = [
+    #                 go.Bar(
+    #                     x=x_vals,
+    #                     y=y,
+    #                     text=[country_sel for i in range(4)],
+    #                     insidetextfont={'size': fs},
+    #                     textposition='auto',
+    #                     marker=dict(
+    #                         color=['#0000ff', '#ffa500', '#008000', 'red']
+    #                     ),
+    #                     hoverinfo='y+text'
+    #                 ),
+    #                 go.Bar(
+    #                     x=x_vals,
+    #                     y=y_comp,
+    #                     text=[comp_name for i in range(4)],
+    #                     insidetextfont={'size': fs},
+    #                     textposition='auto',
+    #                     marker=dict(
+    #                         color=['#8080ff', '#ffd280', '#1aff1a', 'red']
+    #                     ),
+    #                     hoverinfo='y+text'
+    #                 ),
+    #             ]
+    #
+    #     return fig
 
     @app_handle.callback(
         Output('flex-view-store', 'data'),
@@ -564,339 +594,368 @@ def callbacks(app_handle):
     @app_handle.callback(
         Output('flex-country-basic-results-table', 'data'),
         [
-            Input('flex-country-input', 'value'),
+            Input('flex-country-store', 'data'),
+            Input('flex-rise-grid-input', 'value'),
+            Input('flex-rise-mg-input', 'value'),
+            Input('flex-rise-shs-input', 'value'),
+            Input('flex-min-tier-input', 'value'),
             Input('flex-scenario-input', 'value'),
-            Input('flex-store', 'data')
         ]
     )
     def flex_update_country_basic_results_table(
-            country_sel,
-            scenario,
-            cur_data,
+            country_data,
+            rise_grid,
+            rise_mg,
+            rise_shs,
+            min_tier_level,
+            scenario
     ):
         """Display information and study's results for a country."""
         answer_table = []
-        country_iso = country_sel
-        # in case of country_iso is a list of one element
-        if np.shape(country_iso) and len(country_iso) == 1:
-            country_iso = country_iso[0]
+        country_iso = country_data.get('country_iso')
 
         # extract the data from the selected scenario if a country was selected
         if country_iso is not None:
-            if scenario in SCENARIOS:
 
-                df = pd.read_json(cur_data[scenario])
-                df = df.loc[df.country_iso == country_iso]
+            df = pd.read_json(country_data['selection'])
 
-                basic_results_data = prepare_results_tables(df)
+            df.rise_grid = rise_grid
+            df.rise_mg = rise_mg
+            df.rise_shs = rise_shs
 
-                total = np.nansum(basic_results_data, axis=1)
+            df = prepare_scenario_data(
+                df,
+                SE4ALL_SCENARIO,
+                min_tier_level,
+                prepare_endogenous=True
+            )
 
-                # prepare a DataFrame
-                basic_results_data = pd.DataFrame(
-                    data=basic_results_data,
-                    columns=ELECTRIFICATION_OPTIONS
-                )
-                # sums of the rows
-                basic_results_data['total'] = pd.Series(total)
-                # label of the table rows
-                basic_results_data['labels'] = pd.Series(BASIC_ROWS)
-                basic_results_data.iloc[1:, 0:4] = basic_results_data.iloc[1:, 0:4].applymap(
-                    add_comma
-                )
-                basic_results_data.iloc[0, 0:4] = basic_results_data.iloc[0, 0:4].map(
-                    lambda x: '{}%'.format(x)
-                )
-                answer_table = basic_results_data[BASIC_COLUMNS_ID].to_dict('records')
+            df = extract_results_scenario(df, SE4ALL_SCENARIO, min_tier_level)
+
+            basic_results_data = prepare_results_tables(df)
+
+            total = np.nansum(basic_results_data, axis=1)
+
+            # prepare a DataFrame
+            basic_results_data = pd.DataFrame(
+                data=basic_results_data,
+                columns=ELECTRIFICATION_OPTIONS
+            )
+            # sums of the rows
+            basic_results_data['total'] = pd.Series(total)
+            # label of the table rows
+            basic_results_data['labels'] = pd.Series(BASIC_ROWS)
+            basic_results_data.iloc[1:, 0:4] = basic_results_data.iloc[1:, 0:4].applymap(
+                add_comma
+            )
+            basic_results_data.iloc[0, 0:4] = basic_results_data.iloc[0, 0:4].map(
+                lambda x: '{}%'.format(x)
+            )
+            answer_table = basic_results_data[BASIC_COLUMNS_ID].to_dict('records')
 
         return answer_table
 
     @app_handle.callback(
         Output('flex-country-ghg-results-table', 'data'),
         [
-            Input('flex-country-input', 'value'),
-            Input('flex-scenario-input', 'value'),
-            Input('flex-store', 'data')
+            Input('flex-country-store', 'data'),
+            Input('flex-rise-grid-input', 'value'),
+            Input('flex-rise-mg-input', 'value'),
+            Input('flex-rise-shs-input', 'value'),
+            Input('flex-min-tier-input', 'value'),
+            Input('flex-data-store', 'data')
         ]
     )
     def flex_update_country_ghg_results_table(
-            country_sel,
-            scenario,
-            cur_data,
+            country_data,
+            rise_grid,
+            rise_mg,
+            rise_shs,
+            min_tier_level,
+            cur_data
+
     ):
         """Display information and study's results for a country."""
         answer_table = []
-        df_bau = None
-        country_iso = country_sel
-        # in case of country_iso is a list of one element
-        if np.shape(country_iso) and len(country_iso) == 1:
-            country_iso = country_iso[0]
+        country_iso = country_data.get('country_iso')
 
         # extract the data from the selected scenario if a country was selected
         if country_iso is not None:
-            if scenario in SCENARIOS:
 
-                df = pd.read_json(cur_data[scenario])
-                df = df.loc[df.country_iso == country_iso]
+            df = pd.read_json(country_data['selection'])
 
-                if scenario in [SE4ALL_FLEX_SCENARIO, SE4ALL_SCENARIO, PROG_SCENARIO]:
-                    # to compare greenhouse gas emissions with BaU scenario
-                    df_bau = pd.read_json(cur_data[BAU_SCENARIO])
-                    df_bau = df_bau.loc[df_bau.country_iso == country_iso]
+            df.rise_grid = rise_grid
+            df.rise_mg = rise_mg
+            df.rise_shs = rise_shs
 
-                if df_bau is None:
-                    ghg_rows = [
-                        'GHG (Mio tCO2)',
-                        'GHG (TIER + 1) (Mio tCO2)',
-                        # 'GHG CUMUL'
-                    ]
-                else:
-                    ghg_rows = [
-                        'GHG (Mio tCO2)',
-                        'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-                        'GHG (TIER +1) (Mio tCO2)',
-                        'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-                    ]
+            df = prepare_scenario_data(
+                    df,
+                    SE4ALL_SCENARIO,
+                    min_tier_level,
+                    prepare_endogenous=True
+            )
 
-                # gather the values of the results to display in the table
-                ghg_res = np.squeeze(df[GHG].values).round(0)
-                ghg2_res = np.squeeze(df[GHG_CAP].values).round(0)
-                if df_bau is not None:
-                    ghg_comp_res = ghg_res - np.squeeze(df_bau[GHG].values).round(0)
-                    ghg2_comp_res = ghg2_res - np.squeeze(df_bau[GHG_CAP].values).round(0)
-                    ghg_results_data = np.vstack([ghg_res, ghg_comp_res, ghg2_res, ghg2_comp_res])
-                else:
-                    ghg_results_data = np.vstack([ghg_res, ghg2_res])
+            df = extract_results_scenario(df, SE4ALL_SCENARIO, min_tier_level)
 
-                total = np.nansum(ghg_results_data, axis=1)
+            # if scenario == SE4ALL_FLEX_SCENARIO:
+            #     # assign the values of the impact parameters for mg and shs
+            #     impact_factor = pd.read_json(flex_data.pop('impact_factor', None))
+            #     # assign the values of the flex parameters
+            #     for k in flex_data:
+            #         df.loc[:, k] = flex_data[k]
 
-                # prepare a DataFrame
-                ghg_results_data = pd.DataFrame(data=ghg_results_data,
-                                                columns=ELECTRIFICATION_OPTIONS)
 
-                # sums of the rows
-                ghg_results_data['total'] = pd.Series(total)
-                # label of the table rows
-                ghg_results_data['labels'] = pd.Series(ghg_rows)
-                ghg_results_data.iloc[:, 0:4] = ghg_results_data.iloc[:, 0:4].applymap(add_comma)
-                answer_table = ghg_results_data[GHG_COLUMNS_ID].to_dict('records')
 
-        return answer_table
 
-    @app_handle.callback(
-        Output('flex-compare-basic-results-table', 'data'),
-        [
-            Input('flex-country-input', 'value'),
-            Input('flex-compare-input', 'value'),
-            Input('flex-scenario-input', 'value'),
-            Input('flex-store', 'data')
-        ]
-    )
-    def flex_update_compare_basic_results_table(country_sel, comp_sel, scenario, cur_data):
-        """Display information and study's results comparison between countries."""
-        answer_table = []
-        country_iso = country_sel
-        # in case of country_iso is a list of one element
-        if np.shape(country_iso) and len(country_iso) == 1:
-            country_iso = country_iso[0]
+            df_bau = pd.read_json(cur_data[BAU_SCENARIO])
+            df_bau = df_bau.loc[df_bau.country_iso == country_iso]
 
-        # extract the data from the selected scenario if a country was selected
-        if country_iso is not None and comp_sel is not None:
-            if scenario in SCENARIOS:
-                df = pd.read_json(cur_data[scenario])
-                df_comp = df.copy()
-                df = df.loc[df.country_iso == country_sel]
-                if comp_sel in REGIONS_NDC:
-                    # compare the reference country to a region
-                    if comp_sel != WORLD_ID:
-                        df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[comp_sel]]
-                    df_comp = df_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
-                else:
-                    # compare the reference country to a country
-                    df_comp = df_comp.loc[df_comp.country_iso == comp_sel]
 
-                basic_results_data = prepare_results_tables(df)
-                comp_results_data = prepare_results_tables(df_comp)
+            ghg_rows = [
+                'GHG (Mio tCO2)',
+                'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
+                'GHG (TIER +1) (Mio tCO2)',
+                'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
+            ]
 
-                total = np.nansum(basic_results_data, axis=1)
-                comp_total = np.nansum(comp_results_data, axis=1)
+            # gather the values of the results to display in the table
+            ghg_res = np.squeeze(df[GHG].values).round(0)
+            ghg2_res = np.squeeze(df[GHG_CAP].values).round(0)
 
-                basic_results_data = 100 * np.divide(
-                    comp_results_data - basic_results_data,
-                    comp_results_data
-                )
+            ghg_comp_res = ghg_res - np.squeeze(df_bau[GHG].values).round(0)
+            ghg2_comp_res = ghg2_res - np.squeeze(df_bau[GHG_CAP].values).round(0)
+            ghg_results_data = np.vstack([ghg_res, ghg_comp_res, ghg2_res, ghg2_comp_res])
 
-                total = 100 * np.divide(
-                    comp_total - total,
-                    comp_total
-                )
+            total = np.nansum(ghg_results_data, axis=1)
 
-                basic_results_data = np.hstack([comp_results_data, basic_results_data])
+            # prepare a DataFrame
+            ghg_results_data = pd.DataFrame(data=ghg_results_data,
+                                            columns=ELECTRIFICATION_OPTIONS)
 
-                comp_ids = ['comp_{}'.format(c) for c in ELECTRIFICATION_OPTIONS]
-                # prepare a DataFrame
-                basic_results_data = pd.DataFrame(
-                    data=basic_results_data,
-                    columns=ELECTRIFICATION_OPTIONS + comp_ids
-                )
-
-                # sums of the rows
-                basic_results_data['total'] = pd.Series(comp_total)
-                basic_results_data['comp_total'] = pd.Series(total)
-                # label of the table rows
-                basic_results_data['labels'] = pd.Series(BASIC_ROWS)
-                basic_results_data.iloc[:, 0:8] = \
-                    basic_results_data.iloc[:, 0:8].applymap(
-                        add_comma
-                    )
-                basic_results_data.iloc[0, 0:8] = basic_results_data.iloc[0, 0:8].map(
-                    lambda x: '{}%'.format(x)
-                )
-                basic_results_data[comp_ids + ['comp_total']] = \
-                    basic_results_data[comp_ids + ['comp_total']].applymap(
-                        lambda x: '' if x == '' else str(x) if '%' in x else '{}%'.format(x)
-                    )
-                answer_table = basic_results_data[COMPARE_COLUMNS_ID].to_dict('records')
+            # sums of the rows
+            ghg_results_data['total'] = pd.Series(total)
+            # label of the table rows
+            ghg_results_data['labels'] = pd.Series(ghg_rows)
+            ghg_results_data.iloc[:, 0:4] = ghg_results_data.iloc[:, 0:4].applymap(add_comma)
+            answer_table = ghg_results_data[GHG_COLUMNS_ID].to_dict('records')
 
         return answer_table
 
-    @app_handle.callback(
-        Output('flex-compare-ghg-results-table', 'data'),
-        [
-            Input('flex-country-input', 'value'),
-            Input('flex-compare-input', 'value'),
-            Input('flex-scenario-input', 'value'),
-            Input('flex-store', 'data')
-        ]
-    )
-    def flex_update_compare_ghg_results_table(country_sel, comp_sel, scenario, cur_data):
-        """Display information and study's results for a country."""
-        answer_table = []
-        df_bau_ref = None
-        country_iso = country_sel
-        # in case of country_iso is a list of one element
-        if np.shape(country_iso) and len(country_iso) == 1:
-            country_iso = country_iso[0]
-
-        # extract the data from the selected scenario if a country was selected
-        if country_iso is not None and comp_sel is not None:
-            if scenario in SCENARIOS:
-                df = pd.read_json(cur_data[scenario])
-                df_comp = df.copy()
-                df = df.loc[df.country_iso == country_sel]
-                if comp_sel in REGIONS_NDC:
-                    # compare the reference country to a region
-                    if comp_sel != WORLD_ID:
-                        df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[comp_sel]]
-                    df_comp = df_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
-                else:
-                    # compare the reference country to a country
-                    df_comp = df_comp.loc[df_comp.country_iso == comp_sel]
-                df = df.loc[df.country_iso == country_iso]
-
-                if scenario in [SE4ALL_SCENARIO, PROG_SCENARIO]:
-                    # to compare greenhouse gas emissions with BaU scenario
-                    df_bau = pd.read_json(cur_data[BAU_SCENARIO])
-                    df_bau_ref = df_bau.loc[df_bau.country_iso == country_iso]
-
-                    if comp_sel in REGIONS_NDC:
-                        # compare the reference country to a region
-                        df_bau_comp = df_bau.loc[df_bau.region == REGIONS_NDC[comp_sel]]
-                        df_bau_comp = df_bau_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(
-                            axis=0)
-                    else:
-                        # compare the reference country to a country
-                        df_bau_comp = df_bau.loc[df_bau.country_iso == comp_sel]
-
-                if df_bau_ref is None:
-                    ghg_rows = [
-                        'GHG (Mio tCO2)',
-                        'GHG (TIER +1) (Mio tCO2)',
-                        # 'GHG CUMUL'
-                    ]
-                else:
-                    ghg_rows = [
-                        'GHG (Mio tCO2)',
-                        'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-                        'GHG (TIER +1) (Mio tCO2)',
-                        'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-                    ]
-
-                # gather the values of the results to display in the table
-                ghg_res = np.squeeze(df[GHG].values).round(0)
-                ghg2_res = np.squeeze(df[GHG_CAP].values).round(0)
-
-                comp_res = np.squeeze(df_comp[GHG].values).round(0)
-                comp2_res = np.squeeze(df_comp[GHG_CAP].values).round(0)
-
-                if df_bau_ref is not None:
-                    ghg_diff_res = ghg_res - np.squeeze(df_bau_ref[GHG].values).round(0)
-                    ghg2_diff_res = ghg2_res - np.squeeze(df_bau_ref[GHG_CAP].values).round(0)
-                    ghg_results_data = np.vstack([ghg_res, ghg_diff_res, ghg2_res, ghg2_diff_res])
-                else:
-                    ghg_results_data = np.vstack([ghg_res, ghg2_res])
-
-                if df_bau_ref is not None:
-                    ghg_diff_res = comp_res - np.squeeze(df_bau_comp[GHG].values).round(0)
-                    ghg2_diff_res = comp2_res - np.squeeze(df_bau_comp[GHG_CAP].values).round(0)
-                    ghg_comp_data = np.vstack([comp_res, ghg_diff_res, comp2_res, ghg2_diff_res])
-                else:
-                    ghg_comp_data = np.vstack([comp_res, comp2_res])
-
-                total = np.nansum(ghg_results_data, axis=1)
-                comp_total = np.nansum(ghg_comp_data, axis=1)
-
-                ghg_results_data = 100 * np.divide(
-                    ghg_comp_data - ghg_results_data,
-                    ghg_comp_data
-                )
-
-                total = 100 * np.divide(
-                    comp_total - total,
-                    comp_total
-                )
-
-                ghg_results_data = np.hstack([ghg_comp_data, ghg_results_data])
-
-                comp_ids = ['comp_{}'.format(c) for c in ELECTRIFICATION_OPTIONS]
-                # prepare a DataFrame
-                ghg_results_data = pd.DataFrame(
-                    data=ghg_results_data,
-                    columns=ELECTRIFICATION_OPTIONS + comp_ids
-                )
-                print(ghg_results_data)
-                # sums of the rows
-                ghg_results_data['total'] = pd.Series(comp_total)
-                ghg_results_data['comp_total'] = pd.Series(total)
-                # label of the table rows
-                ghg_results_data['labels'] = pd.Series(ghg_rows)
-                ghg_results_data.iloc[:, 0:8] = \
-                    ghg_results_data.iloc[:, 0:8].applymap(
-                        add_comma
-                    )
-                ghg_results_data[comp_ids + ['comp_total']] = \
-                    ghg_results_data[comp_ids + ['comp_total']].applymap(
-                        lambda x: '' if x == '' else '{}%'.format(x)
-                    )
-                answer_table = ghg_results_data[COMPARE_COLUMNS_ID].to_dict('records')
-
-        return answer_table
+    # @app_handle.callback(
+    #     Output('flex-compare-basic-results-table', 'data'),
+    #     [
+    #         Input('flex-country-input', 'value'),
+    #         Input('flex-compare-input', 'value'),
+    #         Input('flex-scenario-input', 'value'),
+    #         Input('flex-country-store', 'data')
+    #     ]
+    # )
+    # def flex_update_compare_basic_results_table(country_sel, comp_sel, scenario, cur_data):
+    #     """Display information and study's results comparison between countries."""
+    #     answer_table = []
+    #     country_iso = country_sel
+    #     # in case of country_iso is a list of one element
+    #     if np.shape(country_iso) and len(country_iso) == 1:
+    #         country_iso = country_iso[0]
+    #
+    #     # extract the data from the selected scenario if a country was selected
+    #     if country_iso is not None and comp_sel is not None:
+    #         if scenario in SCENARIOS:
+    #             df = pd.read_json(cur_data[scenario])
+    #             df_comp = df.copy()
+    #             df = df.loc[df.country_iso == country_sel]
+    #             if comp_sel in REGIONS_NDC:
+    #                 # compare the reference country to a region
+    #                 if comp_sel != WORLD_ID:
+    #                     df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[comp_sel]]
+    #                 df_comp = df_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
+    #             else:
+    #                 # compare the reference country to a country
+    #                 df_comp = df_comp.loc[df_comp.country_iso == comp_sel]
+    #
+    #             basic_results_data = prepare_results_tables(df)
+    #             comp_results_data = prepare_results_tables(df_comp)
+    #
+    #             total = np.nansum(basic_results_data, axis=1)
+    #             comp_total = np.nansum(comp_results_data, axis=1)
+    #
+    #             basic_results_data = 100 * np.divide(
+    #                 comp_results_data - basic_results_data,
+    #                 comp_results_data
+    #             )
+    #
+    #             total = 100 * np.divide(
+    #                 comp_total - total,
+    #                 comp_total
+    #             )
+    #
+    #             basic_results_data = np.hstack([comp_results_data, basic_results_data])
+    #
+    #             comp_ids = ['comp_{}'.format(c) for c in ELECTRIFICATION_OPTIONS]
+    #             # prepare a DataFrame
+    #             basic_results_data = pd.DataFrame(
+    #                 data=basic_results_data,
+    #                 columns=ELECTRIFICATION_OPTIONS + comp_ids
+    #             )
+    #
+    #             # sums of the rows
+    #             basic_results_data['total'] = pd.Series(comp_total)
+    #             basic_results_data['comp_total'] = pd.Series(total)
+    #             # label of the table rows
+    #             basic_results_data['labels'] = pd.Series(BASIC_ROWS)
+    #             basic_results_data.iloc[:, 0:8] = \
+    #                 basic_results_data.iloc[:, 0:8].applymap(
+    #                     add_comma
+    #                 )
+    #             basic_results_data.iloc[0, 0:8] = basic_results_data.iloc[0, 0:8].map(
+    #                 lambda x: '{}%'.format(x)
+    #             )
+    #             basic_results_data[comp_ids + ['comp_total']] = \
+    #                 basic_results_data[comp_ids + ['comp_total']].applymap(
+    #                     lambda x: '' if x == '' else str(x) if '%' in x else '{}%'.format(x)
+    #                 )
+    #             answer_table = basic_results_data[COMPARE_COLUMNS_ID].to_dict('records')
+    #
+    #     return answer_table
+    #
+    # @app_handle.callback(
+    #     Output('flex-compare-ghg-results-table', 'data'),
+    #     [
+    #         Input('flex-country-input', 'value'),
+    #         Input('flex-compare-input', 'value'),
+    #         Input('flex-scenario-input', 'value'),
+    #         Input('flex-country-store', 'data')
+    #     ]
+    # )
+    # def flex_update_compare_ghg_results_table(country_sel, comp_sel, scenario, cur_data):
+    #     """Display information and study's results for a country."""
+    #     answer_table = []
+    #     df_bau_ref = None
+    #     country_iso = country_sel
+    #     # in case of country_iso is a list of one element
+    #     if np.shape(country_iso) and len(country_iso) == 1:
+    #         country_iso = country_iso[0]
+    #
+    #     # extract the data from the selected scenario if a country was selected
+    #     if country_iso is not None and comp_sel is not None:
+    #         if scenario in SCENARIOS:
+    #             df = pd.read_json(cur_data[scenario])
+    #             df_comp = df.copy()
+    #             df = df.loc[df.country_iso == country_sel]
+    #             if comp_sel in REGIONS_NDC:
+    #                 # compare the reference country to a region
+    #                 if comp_sel != WORLD_ID:
+    #                     df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[comp_sel]]
+    #                 df_comp = df_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
+    #             else:
+    #                 # compare the reference country to a country
+    #                 df_comp = df_comp.loc[df_comp.country_iso == comp_sel]
+    #             df = df.loc[df.country_iso == country_iso]
+    #
+    #             if scenario in [SE4ALL_SCENARIO, PROG_SCENARIO]:
+    #                 # to compare greenhouse gas emissions with BaU scenario
+    #                 df_bau = pd.read_json(cur_data[BAU_SCENARIO])
+    #                 df_bau_ref = df_bau.loc[df_bau.country_iso == country_iso]
+    #
+    #                 if comp_sel in REGIONS_NDC:
+    #                     # compare the reference country to a region
+    #                     df_bau_comp = df_bau.loc[df_bau.region == REGIONS_NDC[comp_sel]]
+    #                     df_bau_comp = df_bau_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(
+    #                         axis=0)
+    #                 else:
+    #                     # compare the reference country to a country
+    #                     df_bau_comp = df_bau.loc[df_bau.country_iso == comp_sel]
+    #
+    #             if df_bau_ref is None:
+    #                 ghg_rows = [
+    #                     'GHG (Mio tCO2)',
+    #                     'GHG (TIER +1) (Mio tCO2)',
+    #                     # 'GHG CUMUL'
+    #                 ]
+    #             else:
+    #                 ghg_rows = [
+    #                     'GHG (Mio tCO2)',
+    #                     'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
+    #                     'GHG (TIER +1) (Mio tCO2)',
+    #                     'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
+    #                 ]
+    #
+    #             # gather the values of the results to display in the table
+    #             ghg_res = np.squeeze(df[GHG].values).round(0)
+    #             ghg2_res = np.squeeze(df[GHG_CAP].values).round(0)
+    #
+    #             comp_res = np.squeeze(df_comp[GHG].values).round(0)
+    #             comp2_res = np.squeeze(df_comp[GHG_CAP].values).round(0)
+    #
+    #             if df_bau_ref is not None:
+    #                 ghg_diff_res = ghg_res - np.squeeze(df_bau_ref[GHG].values).round(0)
+    #                 ghg2_diff_res = ghg2_res - np.squeeze(df_bau_ref[GHG_CAP].values).round(0)
+    #                 ghg_results_data = np.vstack([ghg_res, ghg_diff_res, ghg2_res, ghg2_diff_res])
+    #             else:
+    #                 ghg_results_data = np.vstack([ghg_res, ghg2_res])
+    #
+    #             if df_bau_ref is not None:
+    #                 ghg_diff_res = comp_res - np.squeeze(df_bau_comp[GHG].values).round(0)
+    #                 ghg2_diff_res = comp2_res - np.squeeze(df_bau_comp[GHG_CAP].values).round(0)
+    #                 ghg_comp_data = np.vstack([comp_res, ghg_diff_res, comp2_res, ghg2_diff_res])
+    #             else:
+    #                 ghg_comp_data = np.vstack([comp_res, comp2_res])
+    #
+    #             total = np.nansum(ghg_results_data, axis=1)
+    #             comp_total = np.nansum(ghg_comp_data, axis=1)
+    #
+    #             ghg_results_data = 100 * np.divide(
+    #                 ghg_comp_data - ghg_results_data,
+    #                 ghg_comp_data
+    #             )
+    #
+    #             total = 100 * np.divide(
+    #                 comp_total - total,
+    #                 comp_total
+    #             )
+    #
+    #             ghg_results_data = np.hstack([ghg_comp_data, ghg_results_data])
+    #
+    #             comp_ids = ['comp_{}'.format(c) for c in ELECTRIFICATION_OPTIONS]
+    #             # prepare a DataFrame
+    #             ghg_results_data = pd.DataFrame(
+    #                 data=ghg_results_data,
+    #                 columns=ELECTRIFICATION_OPTIONS + comp_ids
+    #             )
+    #             print(ghg_results_data)
+    #             # sums of the rows
+    #             ghg_results_data['total'] = pd.Series(comp_total)
+    #             ghg_results_data['comp_total'] = pd.Series(total)
+    #             # label of the table rows
+    #             ghg_results_data['labels'] = pd.Series(ghg_rows)
+    #             ghg_results_data.iloc[:, 0:8] = \
+    #                 ghg_results_data.iloc[:, 0:8].applymap(
+    #                     add_comma
+    #                 )
+    #             ghg_results_data[comp_ids + ['comp_total']] = \
+    #                 ghg_results_data[comp_ids + ['comp_total']].applymap(
+    #                     lambda x: '' if x == '' else '{}%'.format(x)
+    #                 )
+    #             answer_table = ghg_results_data[COMPARE_COLUMNS_ID].to_dict('records')
+    #
+    #     return answer_table
 
     @app_handle.callback(
         Output('flex-country-info-div', 'children'),
         [
-            Input('flex-scenario-input', 'value'),
-            Input('flex-country-input', 'value'),
-            Input('flex-store', 'data')
+            Input('flex-country-store', 'data')
         ]
     )
-    def flex_update_country_info_div(scenario, country_iso, cur_data):
+    def flex_update_country_info_div(country_data):
 
         divs = []
-        if scenario in SCENARIOS and country_iso is not None:
-            df = pd.read_json(cur_data[scenario])
-            pop_2017 = df.loc[df.country_iso == country_iso].pop_2017.values[0]
-            name = df.loc[df.country_iso == country_iso].country.values[0]
+        country_iso = country_data.get('country_iso')
+
+        # extract the data if a country was selected
+        if country_iso is not None:
+            df = pd.read_json(country_data['selection'])
+            pop_2017 = df.pop_2017.values[0]
+            name = df.country.values[0]
             image_filename = 'icons/{}.png'.format(country_iso)
             encoded_image = base64.b64encode(open(image_filename, 'rb').read())
 
@@ -926,71 +985,46 @@ def callbacks(app_handle):
 
     @app_handle.callback(
         Output('flex-country-basic-results-title', 'children'),
-        [Input('flex-country-input', 'value')],
-        [
-            State('flex-scenario-input', 'value'),
-            State('flex-store', 'data')]
+        [Input('flex-country-store', 'data')],
+        [State('flex-scenario-input', 'value')]
     )
-    def flex_country_basic_results_title(country_iso, scenario, cur_data):
+    def flex_country_basic_results_title(country_data, scenario):
 
         answer = 'Results'
-        if scenario in SCENARIOS and country_iso is not None:
-            df = pd.read_json(cur_data[scenario])
+        country_iso = country_data.get('country_iso')
+
+        # extract the data if a country was selected
+        if country_iso is not None:
+            df = pd.read_json(country_data['selection'])
             answer = 'Results for {}: electrification options'.format(
-                df.loc[df.country_iso == country_iso].country.values[0])
+                df.country.values[0])
         return answer
 
-    @app_handle.callback(
-        Output('flex-compare-basic-results-title', 'children'),
-        [
-            Input('flex-country-input', 'value'),
-            Input('flex-compare-input', 'value')
-        ],
-        [
-            State('flex-scenario-input', 'value'),
-            State('flex-store', 'data')]
-    )
-    def flex_compare_basic_results_title(country_iso, comp_sel, scenario, cur_data):
+    # @app_handle.callback(
+    #     Output('flex-compare-basic-results-title', 'children'),
+    #     [
+    #         Input('flex-country-input', 'value'),
+    #         Input('flex-compare-input', 'value')
+    #     ],
+    #     [
+    #         State('flex-scenario-input', 'value'),
+    #         State('flex-country-store', 'data')]
+    # )
+    # def flex_compare_basic_results_title(country_iso, comp_sel, scenario, cur_data):
+    #
+    #     answer = 'Results'
+    #     if scenario in SCENARIOS and comp_sel is not None:
+    #         df = pd.read_json(cur_data[scenario])
+    #         if comp_sel in REGIONS_NDC:
+    #             comp_name = REGIONS_GPD[comp_sel]
+    #         else:
+    #             comp_name = df.loc[df.country_iso == comp_sel].country.values[0]
+    #         answer = 'Results for {} and relative difference with {}'.format(
+    #             comp_name,
+    #             df.loc[df.country_iso == country_iso].country.values[0]
+    #         )
+    #     return answer
 
-        answer = 'Results'
-        if scenario in SCENARIOS and comp_sel is not None:
-            df = pd.read_json(cur_data[scenario])
-            if comp_sel in REGIONS_NDC:
-                comp_name = REGIONS_GPD[comp_sel]
-            else:
-                comp_name = df.loc[df.country_iso == comp_sel].country.values[0]
-            answer = 'Results for {} and relative difference with {}'.format(
-                comp_name,
-                df.loc[df.country_iso == country_iso].country.values[0]
-            )
-        return answer
-
-    @app_handle.callback(
-        Output('flex-country-input', 'options'),
-        [Input('flex-region-input', 'value')],
-        [
-            State('flex-scenario-input', 'value'),
-            State('flex-store', 'data')
-        ]
-    )
-    def flex_update_country_selection_options(region_id, scenario, cur_data):
-        """List the countries in a given region in alphabetical order."""
-        countries_in_region = []
-
-        if scenario is not None:
-            # load the data of the scenario
-            df = pd.read_json(cur_data[scenario])
-
-            if region_id != WORLD_ID:
-                # narrow to the region if the scope is not on the whole world
-                df = df.loc[df.region == REGIONS_NDC[region_id]]
-
-            # sort alphabetically by country
-            df = df.sort_values('country')
-            for idx, row in df.iterrows():
-                countries_in_region.append({'label': row['country'], 'value': row['country_iso']})
-
-        return countries_in_region
 
     # @app_handle.callback(
     #     Output('flex-general-info-div', 'children'),
@@ -998,33 +1032,33 @@ def callbacks(app_handle):
     # )
     # def flex_update_scenario_description(scenario):
     #     return
-    @app_handle.callback(
-        Output('flex-store', 'data'),
-        [
-            Input('flex-rise-grid-input', 'value'),
-            Input('flex-rise-mg-input', 'value'),
-            Input('flex-rise-shs-input', 'value'),
-            Input('flex-min-tier-input', 'value')
-        ],
-        [State('flex-store', 'data')]
-    )
-    def flex_update_flex_store(
-            rise_grid,
-            rise_mg,
-            rise_shs,
-            min_tier_level,
-            flex_data
-    ):
-
-        if rise_grid is not None:
-            flex_data.update({'rise_grid': rise_grid})
-        if rise_mg is not None:
-            flex_data.update({'rise_mg': rise_mg})
-        if rise_shs is not None:
-            flex_data.update({'rise_shs': rise_shs})
-        if min_tier_level is not None:
-            flex_data.update({'min_tier_level': min_tier_level})
-        return flex_data
+    # @app_handle.callback(
+    #     Output('flex-store', 'data'),
+    #     [
+    #         Input('flex-rise-grid-input', 'value'),
+    #         Input('flex-rise-mg-input', 'value'),
+    #         Input('flex-rise-shs-input', 'value'),
+    #         Input('flex-min-tier-input', 'value')
+    #     ],
+    #     [State('flex-store', 'data')]
+    # )
+    # def flex_update_flex_store(
+    #         rise_grid,
+    #         rise_mg,
+    #         rise_shs,
+    #         min_tier_level,
+    #         flex_data
+    # ):
+    #
+    #     if rise_grid is not None:
+    #         flex_data.update({'rise_grid': rise_grid})
+    #     if rise_mg is not None:
+    #         flex_data.update({'rise_mg': rise_mg})
+    #     if rise_shs is not None:
+    #         flex_data.update({'rise_shs': rise_shs})
+    #     if min_tier_level is not None:
+    #         flex_data.update({'min_tier_level': min_tier_level})
+    #     return flex_data
 
     @app_handle.callback(
         Output('flex-country-store', 'data'),
@@ -1039,7 +1073,7 @@ def callbacks(app_handle):
             df = pd.read_json(cur_data[SE4ALL_SCENARIO])
             df = df.loc[df.country_iso == country_iso]
             country_data.update({'selection': df.to_json()})
-
+            country_data.update({'country_iso': country_iso})
         return country_data
 
     @app_handle.callback(
