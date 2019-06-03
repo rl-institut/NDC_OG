@@ -22,8 +22,6 @@ from data.data_preparation import (
     LABEL_COLUMNS,
     BASIC_COLUMNS_ID,
     GHG_COLUMNS_ID,
-    MENTI_DRIVES,
-    IMPACT_FACTORS,
 )
 
 
