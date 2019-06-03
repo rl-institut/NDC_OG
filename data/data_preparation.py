@@ -126,6 +126,9 @@ MIN_RATED_CAPACITY = {1: 3, 2: 50, 3: 200, 4: 800, 5: 2000}  # index is TIER lev
 MIN_ANNUAL_CONSUMPTION = {1: 4.5, 2: 73, 3: 365, 4: 1250, 5: 3000}  # index is TIER level [kWh/a]
 RATIO_CAP_CONSUMPTION = {}
 
+# Investment cost, source :
+GRID_INV_COST_HH = 2500
+
 # Investment Cost Source: Arranz and Worldbank,
 # BENCHMARKING STUDY OF SOLAR PV MINIGRIDS INVESTMENT COSTS, 2017 (Jabref)
 # unit is USD per household
@@ -614,10 +617,11 @@ def _compute_ghg_emissions(df, min_tier_level):
 def _compute_investment_cost(df):
     """Compute investment costs in USD in `extract_results_scenario."""
     m, h = _linear_investment_cost()
-
+    df['grid_investment_cost'] = GRID_INV_COST_HH * df.pop_get_grid_2030.div(df.hh_av_size)
     df['mg_investment_cost_per_kW'] = df.hh_mg_tier_peak_demand * m + h
     df['mg_investment_cost'] = df.mg_investment_cost_per_kW * df.hh_mg_capacity
     df['shs_investment_cost'] = df.hh_shs_capacity * SHS_AVERAGE_INVESTMENT_COST
+    df['tier_capped_grid_investment_cost'] = df.grid_investment_cost
     df['tier_capped_mg_investment_cost'] = \
         df.mg_investment_cost_per_kW * df.hh_cap_scn2_mg_capacity
     df['tier_capped_shs_investment_cost'] = \
