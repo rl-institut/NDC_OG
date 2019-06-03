@@ -680,7 +680,8 @@ def extract_results_scenario(
 
         for opt in ELECTRIFICATION_OPTIONS:
             df['pop_get_%s_2030' % opt] = \
-                df['endo_pop_get_%s_2030' % opt] * (1 + df['shift_%s_share' % opt])
+                df['endo_pop_get_%s_2030' % opt] + \
+                df.pop_newly_electrified_2030 * df['shift_%s_share' % opt]
     else:
         raise ValueError
 
