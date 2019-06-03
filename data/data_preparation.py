@@ -113,8 +113,8 @@ POP_GET = ['pop_get_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS]
 HH_GET = ['hh_get_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS]
 HH_CAP = ['hh_%s_capacity' % opt for opt in ELECTRIFICATION_OPTIONS]
 HH_SCN2 = ['hh_cap_scn2_%s_capacity' % opt for opt in ELECTRIFICATION_OPTIONS]
-INVEST = ['%s_investment_cost' % opt for opt in [MG, SHS]]
-INVEST_CAP = ['tier_capped_%s_investment_cost' % opt for opt in [MG, SHS]]
+INVEST = ['%s_investment_cost' % opt for opt in ELECTRIFICATION_OPTIONS]
+INVEST_CAP = ['tier_capped_%s_investment_cost' % opt for opt in ELECTRIFICATION_OPTIONS]
 GHG = ['ghg_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS]
 GHG_CAP = ['tier_capped_ghg_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS]
 EXO_RESULTS = POP_GET + HH_GET + HH_CAP + HH_SCN2 + INVEST + INVEST_CAP + GHG + GHG_CAP
@@ -182,9 +182,7 @@ def prepare_results_tables(df):
     cap_res = np.squeeze(df[HH_CAP].values * 1e-3).round(0)
     cap2_res = np.squeeze(df[HH_SCN2].values * 1e-3).round(0)
     invest_res = np.squeeze(df[INVEST].values * 1e-6).round(0)
-    invest_res = np.append(np.NaN, invest_res)
-    invest2_res = np.squeeze(df[INVEST_CAP].values).round(0)
-    invest2_res = np.append(np.NaN, invest2_res * 1e-6)
+    invest2_res = np.squeeze(df[INVEST_CAP].values * 1e-6).round(0)
     return np.vstack(
         [pop_res, pop, hh_res, cap_res, cap2_res, invest_res, invest2_res]
     )
