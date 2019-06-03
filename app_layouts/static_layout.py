@@ -991,7 +991,7 @@ def callbacks(app_handle):
             country_iso = country_iso[0]
 
         # extract the data from the selected scenario if a country was selected
-        if country_iso is not None:
+        if country_iso is not None and comp_sel is not None:
             if scenario in SCENARIOS:
                 df = pd.read_json(cur_data[scenario])
                 df_comp = df.copy()
@@ -1069,7 +1069,7 @@ def callbacks(app_handle):
             country_iso = country_iso[0]
 
         # extract the data from the selected scenario if a country was selected
-        if country_iso is not None:
+        if country_iso is not None and comp_sel is not None:
             if scenario in SCENARIOS:
                 df = pd.read_json(cur_data[scenario])
                 df_comp = df.copy()
