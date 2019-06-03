@@ -49,6 +49,17 @@ def extract_centroids(reg):
     return centroids.loc[centroids.region.isin(reg)].copy()
 
 
+def round_digits(val):
+    """Formats number by rounding to 3 digits"""
+    if isinstance(val, str):
+        answer = val
+    else:
+        if np.isnan(val):
+            answer = ''
+        else:
+            answer = "{:.3}".format(val)
+    return answer
+
 def add_comma(val):
     """Formats number by separating thousands with a comma."""
     if np.isnan(val):
@@ -751,8 +762,11 @@ def callbacks(app_handle):
                 basic_results_data['total'] = pd.Series(total)
                 # label of the table rows
                 basic_results_data['labels'] = pd.Series(BASIC_ROWS)
-                basic_results_data.iloc[1:, 0:4] = basic_results_data.iloc[1:, 0:4].applymap(
+                basic_results_data.iloc[3:5, 0:4] = basic_results_data.iloc[3:5, 0:4].applymap(
                     add_comma
+                )
+                basic_results_data.iloc[1:, 0:4] = basic_results_data.iloc[1:, 0:4].applymap(
+                    round_digits
                 )
                 basic_results_data.iloc[0, 0:4] = basic_results_data.iloc[0, 0:4].map(
                     lambda x: '{}%'.format(x)
@@ -977,7 +991,7 @@ def callbacks(app_handle):
             country_iso = country_iso[0]
 
         # extract the data from the selected scenario if a country was selected
-        if country_iso is not None:
+        if country_iso is not None and comp_sel is not None:
             if scenario in SCENARIOS:
                 df = pd.read_json(cur_data[scenario])
                 df_comp = df.copy()
@@ -1055,7 +1069,7 @@ def callbacks(app_handle):
             country_iso = country_iso[0]
 
         # extract the data from the selected scenario if a country was selected
-        if country_iso is not None:
+        if country_iso is not None and comp_sel is not None:
             if scenario in SCENARIOS:
                 df = pd.read_json(cur_data[scenario])
                 df_comp = df.copy()

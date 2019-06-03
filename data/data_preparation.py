@@ -138,24 +138,24 @@ RISE_INDICES = ['rise_%s' % opt for opt in ELECTRIFICATION_OPTIONS]
 
 BASIC_ROWS = [
     'People share',
-    'People (thousands)',
-    'HH (thousands)',
+    'People (Mio)',
+    'HH (Mio)',
     'HH demand (MW)',
     'HH demand (TIER + 1) (MW)',
-    'Investment MUSD',
-    'Investment (TIER + 1) MUSD',
+    'Investment BUSD',
+    'Investment (TIER + 1) BUSD',
 ]
 
 BASIC_ROWS_FULL = {
     'People share': 'Percentage of people getting electricity access by 2030',
-    'People (thousands)': 'Number of people getting electricity access by 2030',
-    'HH (thousands)': 'Number of households getting electricity access by 2030',
+    'People (Mio)': 'Number of people getting electricity access by 2030',
+    'HH (Mio)': 'Number of households getting electricity access by 2030',
     'HH demand (MW)': 'Expected household electricity demand by 2030, in MW',
     'HH demand (TIER + 1) (MW)':
         'Expected household electricity demand by 2030 for one TIER level up, in MW',
-    'Investment MUSD':
+    'Investment BUSD':
         'Needed initial investments to supply expected demand by 2030, in million USD',
-    'Investment (TIER + 1) MUSD':
+    'Investment (TIER + 1) BUSD':
         'Needed initial investments to supply expected demand by 2030 for one TIER level up, '
         'in million USD',
 }
@@ -173,16 +173,16 @@ for opt in ELECTRIFICATION_OPTIONS + ['total']:
 
 
 def prepare_results_tables(df):
-    pop = np.squeeze(df[POP_GET].values * 1e-3).round(0)
+    pop = np.squeeze(df[POP_GET].values * 1e-6).round(3)
     # compute the percentage of population with electricity access
     df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0)
     # gather the values of the results to display in the table
     pop_res = np.squeeze(df[POP_GET].values * 100).round(1)
-    hh_res = np.squeeze(df[HH_GET].values * 1e-3).round(1)
+    hh_res = np.squeeze(df[HH_GET].values * 1e-6).round(3)
     cap_res = np.squeeze(df[HH_CAP].values * 1e-3).round(0)
     cap2_res = np.squeeze(df[HH_SCN2].values * 1e-3).round(0)
-    invest_res = np.squeeze(df[INVEST].values * 1e-6).round(0)
-    invest2_res = np.squeeze(df[INVEST_CAP].values * 1e-6).round(0)
+    invest_res = np.squeeze(df[INVEST].values * 1e-9).round(3)
+    invest2_res = np.squeeze(df[INVEST_CAP].values * 1e-9).round(3)
     return np.vstack(
         [pop_res, pop, hh_res, cap_res, cap2_res, invest_res, invest2_res]
     )
