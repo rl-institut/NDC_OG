@@ -360,6 +360,12 @@ def prepare_endogenous_variables(
         shs_sales_volumes = SHS_SALES_VOLUMES
     df = input_df.copy()
 
+    # compute the TIER level of the countries base on their electricity consumption
+    df['lower_tier_level'] = np.vectorize(_find_tier_level)(
+        df.hh_yearly_electricity_consumption,
+        min_tier_level
+    )
+
     # compute the grid and mg yearly consumption adjusted for tier level
     for opt in [GRID, MG]:
         df['hh_%s_tier_yearly_electricity_consumption' % opt] = \
