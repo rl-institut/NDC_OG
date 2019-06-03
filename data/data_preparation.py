@@ -126,34 +126,15 @@ MIN_RATED_CAPACITY = {1: 3, 2: 50, 3: 200, 4: 800, 5: 2000}  # index is TIER lev
 MIN_ANNUAL_CONSUMPTION = {1: 4.5, 2: 73, 3: 365, 4: 1250, 5: 3000}  # index is TIER level [kWh/a]
 RATIO_CAP_CONSUMPTION = {}
 
+# Investment cost, source :
+GRID_INV_COST_HH = 2500
+
 # Investment Cost Source: Arranz and Worldbank,
 # BENCHMARKING STUDY OF SOLAR PV MINIGRIDS INVESTMENT COSTS, 2017 (Jabref)
 # unit is USD per household
 MEDIAN_INVESTMENT_COST = {1: 742, 2: 1273, 3: 2516, 4: 5277, 5: 5492}
 
-# drives for the socio-economic model
-IMPACT_FACTORS = pd.DataFrame(
-    {
-        MG: [3, 13. / 6, 19. / 6, 3.25, 11. / 3],
-        SHS: [23. / 12, 4.5, 37. / 12, 17. / 6, 41. / 12],
-        'labels': [
-            'high_gdp',
-            'high_mobile_money',
-            'high_ease_doing_business',
-            'low_corruption',
-            'high_grid_weakness'
-        ]
-    }
-)
-IMPACT_FACTORS = IMPACT_FACTORS.set_index('labels')
-
-MENTI_DRIVES = ['gdp', 'mobile_money', 'ease_doing_business', 'corruption', 'weak_grid']
-
-# $RT_shift_factors.$P$2
-WEIGHT_MENTIS = 0.2
-# -->WEIGHT_GRID = 0.8 ($RT_shift_factors.$O$2)  and  WEIGHT_GRID = 1 - WEIGHT_MENTIS
 RISE_INDICES = ['rise_%s' % opt for opt in ELECTRIFICATION_OPTIONS]
-SHIFT_MENTI = ['shift_menti_mg', 'shift_menti_shs']
 
 BASIC_ROWS = [
     'People share',
@@ -288,56 +269,6 @@ def get_peak_capacity_from_yearly_consumption(yearly_consumption, min_tier_level
     return (m * (x - x_i) + y_i) * 1e-3
 
 
-def map_gdp_class(gdp_per_capita):
-    """Assign an index value to differentiate gdp per capita."""
-    answer = 1
-    if gdp_per_capita < 1500:
-        answer = 0.5
-    if gdp_per_capita < 700:
-        answer = 0
-    return answer
-
-
-def map_mobile_money_class(mobile_money):
-    """Assign an index value to differentiate mobile_money."""
-    answer = 1
-    if mobile_money <= 0.21:
-        answer = 0.5
-    if mobile_money <= 0.12:
-        answer = 0
-    return answer
-
-
-def map_ease_doing_business_class(business_ease):
-    """Assign an index value to differentiate ease of doing business."""
-    answer = 1
-    if business_ease <= 164:
-        answer = 0.5
-    if business_ease < 131:
-        answer = 0
-    return answer
-
-
-def map_corruption_class(corruption_idx):
-    """Assign an index value to differentiate corruption."""
-    answer = 1
-    if corruption_idx <= 33:
-        answer = 0.5
-    if corruption_idx < 26:
-        answer = 0
-    return answer
-
-
-def map_weak_grid_class(weak_grid_idx):
-    """Assign an index value to differentiate weak grid."""
-    answer = 1
-    if weak_grid_idx <= 9:
-        answer = 0.5
-    if weak_grid_idx < 4.5:
-        answer = 0
-    return answer
-
-
 def map_tier_yearly_consumption(
         yearly_consumption,
         electrification_option_share,
@@ -429,6 +360,12 @@ def prepare_endogenous_variables(
         shs_sales_volumes = SHS_SALES_VOLUMES
     df = input_df.copy()
 
+    # compute the TIER level of the countries base on their electricity consumption
+    df['lower_tier_level'] = np.vectorize(_find_tier_level)(
+        df.hh_yearly_electricity_consumption,
+        min_tier_level
+    )
+
     # compute the grid and mg yearly consumption adjusted for tier level
     for opt in [GRID, MG]:
         df['hh_%s_tier_yearly_electricity_consumption' % opt] = \
@@ -496,85 +433,57 @@ def prepare_bau_data(input_df, bau_data=None):
     return df
 
 
-def prepare_se4all_shift_drives(df):
-    # compute the shift drives
-    df['weak_grid_class'] = df['weak_grid_index'].map(map_weak_grid_class, na_action='ignore')
-    df['corruption_class'] = df['corruption_index'].map(map_corruption_class, na_action='ignore')
-    df['ease_doing_business_class'] = df['ease_doing_business_index'].map(
-        map_ease_doing_business_class, na_action='ignore')
-    df['gdp_class'] = df['gdp_per_capita'].map(map_gdp_class, na_action='ignore')
-    df['mobile_money'] = df['mobile_money_2017'].fillna(df['mobile_money_2014'])
-    df['mobile_money_class'] = df['mobile_money'].map(
-        map_mobile_money_class, na_action='ignore').fillna(0)
-
-
-def apply_se4all_shift_drives(df, impact_factor=None):
-    if impact_factor is None:
-        impact_factor = IMPACT_FACTORS
-    # apply the shift drives
-    for opt in [MG, SHS]:
-        df['shift_menti_%s' % opt] = \
-            df.gdp_class * impact_factor[opt]['high_gdp'] \
-            + df.mobile_money_class * impact_factor[opt]['high_mobile_money'] \
-            + df.ease_doing_business_class * impact_factor[opt]['high_ease_doing_business'] \
-            + df.corruption_class * impact_factor[opt]['low_corruption'] \
-            + df.weak_grid_class * impact_factor[opt]['high_grid_weakness']
-
-
 def prepare_se4all_data(
         input_df,
-        weight_mentis=WEIGHT_MENTIS,
-        fixed_shift_drives=True,
-        impact_factor=None
 ):
     # for se4all+SHIFT
 
     df = input_df.copy()
 
-    weight_grid = 1 - weight_mentis
-
-    if fixed_shift_drives:
-        prepare_se4all_shift_drives(df)
-    apply_se4all_shift_drives(df, impact_factor)
-
     for opt in ELECTRIFICATION_OPTIONS:
         df['endo_pop_get_%s_2030' % opt] = df['pop_%s_share' % opt] * df.pop_newly_electrified_2030
 
-    # to normalize the senarii weigthed sum
-    weighted_norm = \
-        df.loc[:, RISE_INDICES].sum(axis=1) * weight_grid \
-        + df.loc[:, SHIFT_MENTI].sum(axis=1) * weight_mentis
+    # indexes for which all three RISE scores are 0
+    nz_idxs = df.loc[:, RISE_INDICES].sum(axis=1) != 0
+    # sum of the RISE scores for the electrification options, used as normalization's factor
+    norm = df.loc[nz_idxs, RISE_INDICES].sum(axis=1)
 
-    non_zero_indices = df.loc[:, RISE_INDICES + SHIFT_MENTI].sum(axis=1) != 0
-
-    for col in ['shift_grid_share', 'shift_grid_to_mg_share', 'shift_grid_to_shs_share']:
-        # if the sum of the RISE indices and shift MENTI is 0 the corresponding rows
+    for col in ['shift_grid_share', 'shift_mg_share', 'shift_shs_share']:
+        # if the sum of the RISE scores is 0, the corresponding rows
         # in the given columns are set to 0
-        df.loc[df.loc[:, RISE_INDICES + SHIFT_MENTI].sum(axis=1) == 0, col] = 0
+        df.loc[df.loc[:, RISE_INDICES].sum(axis=1) == 0, col] = 0
 
-    # share of population which will be on the grid in the se4all+SHIFT scenario
-    df.loc[non_zero_indices, 'shift_grid_share'] = df.rise_grid * weight_grid / weighted_norm
+    # compute the weight of the shift to an electricity option
+    df.loc[nz_idxs, 'shift_grid_share'] = \
+        2 * df.loc[nz_idxs, 'rise_grid'] \
+        - df.loc[nz_idxs, 'rise_mg'] \
+        - df.loc[nz_idxs, 'rise_shs']
+    df.loc[nz_idxs, 'shift_grid_share'] = df.loc[nz_idxs, 'shift_grid_share'].div(norm)
 
-    # share of population which will have changed from grid to mg in the se4all+SHIFT scenario
-    df.loc[non_zero_indices, 'shift_grid_to_mg_share'] = \
-        (df.rise_mg * weight_grid + df.shift_menti_mg * weight_mentis) / weighted_norm
+    df.loc[nz_idxs, 'shift_mg_share'] = \
+        2 * df.loc[nz_idxs, 'rise_mg'] \
+        - df.loc[nz_idxs, 'rise_grid'] \
+        - df.loc[nz_idxs, 'rise_shs']
+    df.loc[nz_idxs, 'shift_mg_share'] = df.loc[nz_idxs, 'shift_mg_share'].div(norm)
 
-    # share of population which will have changed from grid to shs in the se4all+SHIFT scenario
-    df.loc[non_zero_indices, 'shift_grid_to_shs_share'] = \
-        (df.rise_shs * weight_grid + df.shift_menti_shs * weight_mentis) / weighted_norm
+    df.loc[nz_idxs, 'shift_shs_share'] = \
+        2 * df.loc[nz_idxs, 'rise_shs'] \
+        - df.loc[nz_idxs, 'rise_grid'] \
+        - df.loc[nz_idxs, 'rise_mg']
+    df.loc[nz_idxs, 'shift_shs_share'] = df.loc[nz_idxs, 'shift_shs_share'].div(norm)
 
     # SHARED WITH prOG
     # if the predicted mg share is larger than the predicted grid share, the number of people
     # predicted to use mg in the se4all+SHIFT scenario is returned, otherwise it is set to 0
-    df.loc[df.shift_grid_to_mg_share >= df.shift_grid_share, 'shift_pop_grid_to_mg'] = \
-        df.shift_grid_to_mg_share * df.endo_pop_get_grid_2030
-    df.loc[df.shift_grid_to_mg_share < df.shift_grid_share, 'shift_pop_grid_to_mg'] = 0
+    # df.loc[df.shift_grid_to_mg_share >= df.shift_grid_share, 'shift_pop_grid_to_mg'] = \
+    #     df.shift_grid_to_mg_share * df.endo_pop_get_grid_2030
+    # df.loc[df.shift_grid_to_mg_share < df.shift_grid_share, 'shift_pop_grid_to_mg'] = 0
 
     # if the predicted shs share is larger than the predicted grid share, the number of people
     # predicted to use shs in the se4all+SHIFT scenario is returned, otherwise it is set to 0
-    df.loc[df.shift_grid_to_shs_share >= df.shift_grid_share, 'shift_pop_grid_to_shs'] = \
-        df.shift_grid_to_shs_share * df.endo_pop_get_grid_2030
-    df.loc[df.shift_grid_to_shs_share < df.shift_grid_share, 'shift_pop_grid_to_shs'] = 0
+    # df.loc[df.shift_grid_to_shs_share >= df.shift_grid_share, 'shift_pop_grid_to_shs'] = \
+    #     df.shift_grid_to_shs_share * df.endo_pop_get_grid_2030
+    # df.loc[df.shift_grid_to_shs_share < df.shift_grid_share, 'shift_pop_grid_to_shs'] = 0
 
     return df
 
@@ -714,10 +623,11 @@ def _compute_ghg_emissions(df, min_tier_level):
 def _compute_investment_cost(df):
     """Compute investment costs in USD in `extract_results_scenario."""
     m, h = _linear_investment_cost()
-
+    df['grid_investment_cost'] = GRID_INV_COST_HH * df.pop_get_grid_2030.div(df.hh_av_size)
     df['mg_investment_cost_per_kW'] = df.hh_mg_tier_peak_demand * m + h
     df['mg_investment_cost'] = df.mg_investment_cost_per_kW * df.hh_mg_capacity
     df['shs_investment_cost'] = df.hh_shs_capacity * SHS_AVERAGE_INVESTMENT_COST
+    df['tier_capped_grid_investment_cost'] = df.grid_investment_cost
     df['tier_capped_mg_investment_cost'] = \
         df.mg_investment_cost_per_kW * df.hh_cap_scn2_mg_capacity
     df['tier_capped_shs_investment_cost'] = \
@@ -747,7 +657,7 @@ def extract_results_scenario(
 
             # predicted number of people getting access to electricity (regional detail level)
             df['pop_get_%s_2030' % opt] = df.bau_pop_newly_electrified * df['temp_%s' % opt]
-    elif scenario in [SE4ALL_SCENARIO, SE4ALL_FLEX_SCENARIO, PROG_SCENARIO]:
+    elif scenario == PROG_SCENARIO:
         # SUMME(AA4:AB4) --> df.loc[:,['shift_pop_grid_to_mg' 'shift_pop_grid_to_shs']].sum(axis=1)
         # grid =D4-SUMME(AA4:AB4)
         opt = 'grid'
@@ -768,6 +678,11 @@ def extract_results_scenario(
         df['pop_get_%s_2030' % opt] = \
             df['endo_pop_get_%s_2030' % opt] \
             + df['shift_pop_grid_to_%s' % opt]
+    elif scenario == SE4ALL_SCENARIO:
+
+        for opt in ELECTRIFICATION_OPTIONS:
+            df['pop_get_%s_2030' % opt] = \
+                df['endo_pop_get_%s_2030' % opt] * (1 + df['shift_%s_share' % opt])
     else:
         raise ValueError
 
