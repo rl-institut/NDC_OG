@@ -109,15 +109,17 @@ to a localized group of customers',
 }
 
 # column names of the exogenous results
+ENDO_POP_GET = ['endo_pop_get_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS]
 POP_GET = ['pop_get_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS]
 HH_GET = ['hh_get_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS]
 HH_CAP = ['hh_%s_capacity' % opt for opt in ELECTRIFICATION_OPTIONS]
 HH_SCN2 = ['hh_cap_scn2_%s_capacity' % opt for opt in ELECTRIFICATION_OPTIONS]
 INVEST = ['%s_investment_cost' % opt for opt in ELECTRIFICATION_OPTIONS]
 INVEST_CAP = ['tier_capped_%s_investment_cost' % opt for opt in ELECTRIFICATION_OPTIONS]
-GHG = ['ghg_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS]
+GHG = ['ghg_%s_cumul' % opt for opt in ELECTRIFICATION_OPTIONS]
 GHG_CAP = ['tier_capped_ghg_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS]
-EXO_RESULTS = POP_GET + HH_GET + HH_CAP + HH_SCN2 + INVEST + INVEST_CAP + GHG + GHG_CAP
+EXO_RESULTS = POP_GET + HH_GET + HH_CAP + HH_SCN2 + INVEST + INVEST_CAP + GHG + GHG_CAP \
+              + ['ghg_tot_cumul']
 
 # source http://www.worldbank.org/content/dam/Worldbank/Topics/Energy%20and%20Extract/
 # Beyond_Connections_Energy_Access_Redefined_Exec_ESMAP_2015.pdf
