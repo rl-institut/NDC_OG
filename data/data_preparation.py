@@ -188,6 +188,140 @@ def prepare_results_tables(df):
     )
 
 
+def compute_rise_shifts(rise, pop_get, opt, flag=''):
+    df = pd.DataFrame(
+        data=[rise, pop_get, [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
+        columns=ELECTRIFICATION_OPTIONS)
+
+    please_print = False
+
+    if df.iloc[0].sum() == 0:
+        df.iloc[6] = df.iloc[0]
+    else:
+        df.iloc[2] = df.iloc[1] / df.iloc[1].sum()
+        df.iloc[3, 0] = (df.iloc[0].grid - df.iloc[0].mg) + (df.iloc[0].grid - df.iloc[0].shs)
+        df.iloc[3, 1] = (df.iloc[0].mg - df.iloc[0].grid) + (df.iloc[0].mg - df.iloc[0].shs)
+        df.iloc[3, 2] = (df.iloc[0].shs - df.iloc[0].mg) + (df.iloc[0].shs - df.iloc[0].grid)
+
+        df.iloc[3] = df.iloc[3] / df.iloc[0].sum()
+
+        for j in range(3):
+            df.iloc[4, j] = df.iloc[1].sum() * df.iloc[3, j]
+            df.iloc[5, j] = df.iloc[4, j] / df.iloc[1, j]
+            df.iloc[6, j] = df.iloc[1, j] + df.iloc[4, j]
+
+        diff = df.iloc[6].values
+        diff = diff[diff < 0]
+        if len(diff) == 2:
+            # print('There are two differences smaller than 0')
+            diff = df.iloc[6].values
+            diff = diff[diff > 0]
+            idx = df.iloc[6].to_list().index(diff[0])
+
+            eps = 0
+            for i in range(3):
+                if i != idx:
+                    df.iloc[6, i] = df.iloc[1, i] * df.iloc[3, i]
+                    eps = eps + np.abs(df.iloc[6, i])
+            df.iloc[6, idx] = eps
+
+        elif len(diff) == 1:
+            # print('one difference is smaller than 0')
+            idx = df.iloc[6].to_list().index(diff[0])
+            norm = 0
+            idx2 = None
+            # find out if there is another penalized case
+            for i in range(3):
+                if i != idx:
+                    if df.iloc[3, i] < 0:
+                        idx2 = i
+                    norm = norm + df.iloc[0, i]
+
+            if idx2 is None:
+                # print('the difference will be fully split between the two other case')
+                eps = df.iloc[1, idx]
+                for i in range(3):
+                    if i == idx:
+                        df.iloc[6, i] = -eps
+                    else:
+                        df.iloc[6, i] = np.abs(eps) * df.iloc[0, i] / norm
+            else:
+                # print('one of the remaining should have a penalty')
+                # this one cannot be larger that its population
+                df.iloc[6, idx] = - df.iloc[1, idx]
+                # this one becomes a part of the population from above, which compensates
+                # a bit the penalty
+                df.iloc[6, idx2] = df.iloc[4, idx2] + np.abs(df.iloc[6, idx]) * df.iloc[
+                    0, idx2] / norm
+                # the highest score receives the penalty
+                for i in range(3):
+                    if i != idx and i != idx2:
+                        df.iloc[6, i] = np.abs(df.iloc[4, idx2]) + np.abs(df.iloc[6, idx]) * \
+                                        df.iloc[0, i] / norm
+
+        elif len(df) == 3:
+            print('error, all differences are negative')
+        else:
+            # print('no difference is smaller than 0')
+
+            # check if any Delta_i < 0
+            diff = df.iloc[3].values
+            diff = diff[diff < 0]
+            if len(diff) == 1:
+                # print('Only one should be penalized')
+                # print('The difference will be fully split between the two other case')
+                idx = df.iloc[3].to_list().index(diff[0])
+                norm = 0
+                for i in range(3):
+                    if i != idx:
+                        norm = norm + df.iloc[0, i]
+
+                eps = df.iloc[4, idx]
+                for i in range(3):
+                    if i == idx:
+                        df.iloc[6, i] = eps
+                    else:
+                        df.iloc[6, i] = np.abs(eps) * df.iloc[0, i] / norm
+
+                        # ----
+            elif len(diff) == 2:
+                df.iloc[6] = df.iloc[4]
+                # print('Two should be penalized')
+            elif len(diff) == 3:
+                print('error, all deltas are negative')
+            else:
+                # case when all RISE are equal
+                print('error, all deltas are positive or zero')
+                df.iloc[6] = df.iloc[4]
+                please_print = True
+
+        df.iloc[7] = df.iloc[6] + df.iloc[1]
+        for i in range(3):
+            df.iloc[5, i] = df.iloc[6, i] / df.iloc[1, i]
+
+    if df.iloc[6].sum() > 1e-8:
+
+        print(
+            'Error ({}): the sum of the shifts ({}) is not equal to zero!'.format(
+                flag,
+                df.iloc[6].sum(),
+            )
+        )
+        please_print = True
+
+    if please_print:
+        print(flag)
+        df['sum'] = df.sum(axis=1)
+
+        df['labels'] = ['R_i', 'N_i', 'n_i', 'Delta_i', 'Delta N_i', 'Delta N_i / N_i (case 2)',
+                        'Delta N_i (case 2)', 'Delta N_i + N_i (case 2)']
+
+        print(df)
+        print()
+        print()
+    return df.iloc[6, ELECTRIFICATION_OPTIONS.index(opt)]
+
+
 def _slope_capacity_vs_yearly_consumption(tier_level):
     """Linearize the relation between min rated capacity and min annual consumption
 
