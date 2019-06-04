@@ -163,8 +163,9 @@ BASIC_ROWS_FULL = {
 LABEL_COLUMNS = ELECTRIFICATION_DICT.copy()
 # a column for the row labels
 LABEL_COLUMNS['labels'] = ''
+LABEL_COLUMNS['No Electricity'] = 'No Electricity'
 LABEL_COLUMNS['total'] = 'Total'
-BASIC_COLUMNS_ID = ['labels'] + ELECTRIFICATION_OPTIONS + ['total']
+BASIC_COLUMNS_ID = ['labels'] + ELECTRIFICATION_OPTIONS + ['No Electricity'] + ['total']
 GHG_COLUMNS_ID = ['labels'] + ELECTRIFICATION_OPTIONS + ['total']
 COMPARE_COLUMNS_ID = ['labels']
 for opt in ELECTRIFICATION_OPTIONS + ['total']:
@@ -177,7 +178,7 @@ def prepare_results_tables(df):
     # compute the percentage of population with electricity access
     df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0)
     # gather the values of the results to display in the table
-    pop_res = np.squeeze(df[POP_GET].values * 100).round(1)
+    pop_res = np.squeeze(df[POP_GET].values * 100)
     hh_res = np.squeeze(df[HH_GET].values * 1e-6).round(3)
     cap_res = np.squeeze(df[HH_CAP].values * 1e-3).round(0)
     cap2_res = np.squeeze(df[HH_SCN2].values * 1e-3).round(0)
@@ -680,7 +681,7 @@ def extract_results_scenario(
 
         for opt in ELECTRIFICATION_OPTIONS:
             df['pop_get_%s_2030' % opt] = \
-                df['endo_pop_get_%s_2030' % opt] * (1 + df['shift_%s_share' % opt])
+                df['pop_newly_electrified_2030'] * df['shift_%s_share' % opt]
     else:
         raise ValueError
 

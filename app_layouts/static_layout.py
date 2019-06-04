@@ -429,18 +429,21 @@ def callbacks(app_handle):
                 basic_results_data = prepare_results_tables(df)
 
                 y = basic_results_data[BASIC_ROWS.index(y_sel)]
-
-                if sce == BAU_SCENARIO and y_sel == BASIC_ROWS[0]:
+                if y_sel in BASIC_ROWS[0:3]:
                     y = np.append(y, 0)
-                    y[3] = 100 - y.sum()
-                    ELECTRIFICATION_OPTIONS.copy()
-                    fig['data'][sce_id].update(
-                        {'x': ELECTRIFICATION_OPTIONS.copy() + ['No electricity']}
-                    )
+                    x = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
                 else:
-                    fig['data'][sce_id].update(
-                        {'x': ELECTRIFICATION_OPTIONS.copy()}
-                    )
+                    x = ELECTRIFICATION_OPTIONS.copy()
+
+                if sce == BAU_SCENARIO:
+                    if y_sel == BASIC_ROWS[0]:
+                        y[3] = 100 - y.sum()
+                    elif y_sel == BASIC_ROWS[1]:
+                        y[3] = df.pop_newly_electrified_2030 * 1e-6 - y.sum()
+                    elif y_sel == BASIC_ROWS[2]:
+                        y[3] = (df.pop_newly_electrified_2030 * 1e-6) / df.hh_av_size - y.sum()
+
+                fig['data'][sce_id].update({'x': x})
                 fig['data'][sce_id].update({'y': y})
 
         return fig
@@ -466,6 +469,9 @@ def callbacks(app_handle):
                     # narrow to the region if the scope is not on the whole world
                     df = df.loc[df.region == REGIONS_NDC[region_id]]
 
+                hh_av_size = df.hh_av_size.mean(axis=0)
+                print(hh_av_size)
+
                 # aggregate the results
                 df = df[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
 
@@ -473,19 +479,23 @@ def callbacks(app_handle):
                 basic_results_data = prepare_results_tables(df)
 
                 y = basic_results_data[BASIC_ROWS.index(y_sel)]
-
-                if sce == BAU_SCENARIO and y_sel == BASIC_ROWS[0]:
+                if y_sel in BASIC_ROWS[0:3]:
                     y = np.append(y, 0)
-                    y[3] = 100 - y.sum()
-                    ELECTRIFICATION_OPTIONS.copy()
-                    fig['data'][sce_id].update(
-                        {'x': ELECTRIFICATION_OPTIONS.copy() + ['No electricity']}
-                    )
+                    x = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
                 else:
-                    fig['data'][sce_id].update(
-                        {'x': ELECTRIFICATION_OPTIONS.copy()}
-                    )
+                    x = ELECTRIFICATION_OPTIONS.copy()
+
+                if sce == BAU_SCENARIO:
+                    if y_sel == BASIC_ROWS[0]:
+                        y[3] = 100 - y.sum()
+                    elif y_sel == BASIC_ROWS[1]:
+                        y[3] = df.pop_newly_electrified_2030 * 1e-6 - y.sum()
+                    elif y_sel == BASIC_ROWS[2]:
+                        y[3] = (df.pop_newly_electrified_2030 * 1e-6) / hh_av_size - y.sum()
+
+                fig['data'][sce_id].update({'x': x})
                 fig['data'][sce_id].update({'y': y})
+
         return fig
 
     @app_handle.callback(
@@ -526,19 +536,31 @@ def callbacks(app_handle):
                 y = basic_results_data[BASIC_ROWS.index(y_sel)]
                 y_comp = comp_results_data[BASIC_ROWS.index(y_sel)]
 
-                x_vals = ELECTRIFICATION_OPTIONS.copy()
-
-                if scenario == BAU_SCENARIO and y_sel == BASIC_ROWS[0]:
+                if y_sel in BASIC_ROWS[0:3]:
                     y = np.append(y, 0)
                     y_comp = np.append(y_comp, 0)
-                    y[3] = 100 - y.sum()
-                    y_comp[3] = 100 - y_comp.sum()
-                    x_vals = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
+                    x = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
+                else:
+                    x = ELECTRIFICATION_OPTIONS.copy()
+
+                if scenario == BAU_SCENARIO:
+                    if y_sel == BASIC_ROWS[0]:
+                        y[3] = 100 - y.sum()
+                        y_comp[3] = 100 - y_comp.sum()
+                    elif y_sel == BASIC_ROWS[1]:
+                        y[3] = df.pop_newly_electrified_2030 * 1e-6 - y.sum()
+                        y_comp[3] = df.pop_newly_electrified_2030 * 1e-6 - y_comp.sum()
+                    elif y_sel == BASIC_ROWS[2]:
+                        y[3] = (df.pop_newly_electrified_2030 * 1e-6) / df.hh_av_size - y.sum()
+                        y_comp[3] = (df.pop_newly_electrified_2030 * 1e-6) / df.hh_av_size \
+                                    - y_comp.sum()
+
+
                 fs = 12
 
                 fig['data'] = [
                            go.Bar(
-                               x=x_vals,
+                               x=x,
                                y=y,
                                text=[country_sel for i in range(4)],
                                insidetextfont={'size': fs},
@@ -549,7 +571,7 @@ def callbacks(app_handle):
                                hoverinfo='y+text'
                            ),
                            go.Bar(
-                               x=x_vals,
+                               x=x,
                                y=y_comp,
                                text=[comp_name for i in range(4)],
                                insidetextfont={'size': fs},
@@ -758,6 +780,7 @@ def callbacks(app_handle):
                     data=basic_results_data,
                     columns=ELECTRIFICATION_OPTIONS
                 )
+                basic_results_data['No Electricity'] = 0
                 # sums of the rows
                 basic_results_data['total'] = pd.Series(total)
                 # label of the table rows
@@ -882,6 +905,7 @@ def callbacks(app_handle):
                     data=basic_results_data,
                     columns=ELECTRIFICATION_OPTIONS
                 )
+                basic_results_data['No Electricity'] = np.nan
                 # sums of the rows
                 basic_results_data['total'] = pd.Series(total)
                 # label of the table rows
@@ -1029,6 +1053,8 @@ def callbacks(app_handle):
                     data=basic_results_data,
                     columns=ELECTRIFICATION_OPTIONS + comp_ids
                 )
+
+                basic_results_data['No Electricity'] = 0
 
                 # sums of the rows
                 basic_results_data['total'] = pd.Series(comp_total)
