@@ -575,47 +575,24 @@ def prepare_se4all_data(
     for opt in ELECTRIFICATION_OPTIONS:
         df['endo_pop_get_%s_2030' % opt] = df['pop_%s_share' % opt] * df.pop_newly_electrified_2030
 
-    # indexes for which all three RISE scores are 0
-    nz_idxs = df.loc[:, RISE_INDICES].sum(axis=1) != 0
-    # sum of the RISE scores for the electrification options, used as normalization's factor
-    norm = df.loc[nz_idxs, RISE_INDICES].sum(axis=1)
+    shift_rise_df = []
 
-    for col in ['shift_grid_share', 'shift_mg_share', 'shift_shs_share']:
-        # if the sum of the RISE scores is 0, the corresponding rows
-        # in the given columns are set to 0
-        df.loc[df.loc[:, RISE_INDICES].sum(axis=1) == 0, col] = 0
+    for idx, row in df.iterrows():
+        shift_rise = []
+        for opt in ELECTRIFICATION_OPTIONS:
+            shift_rise.append(
+                compute_rise_shifts(
+                    row[RISE_INDICES].values,
+                    row[ENDO_POP_GET].values,
+                    opt,
+                    row['country_iso'],
+                )
+            )
+        shift_rise_df.append(shift_rise)
+    shift_rise_df = np.vstack(shift_rise_df)
 
-    # compute the weight of the shift to an electricity option
-    df.loc[nz_idxs, 'shift_grid_share'] = \
-        2 * df.loc[nz_idxs, 'rise_grid'] \
-        - df.loc[nz_idxs, 'rise_mg'] \
-        - df.loc[nz_idxs, 'rise_shs']
-    df.loc[nz_idxs, 'shift_grid_share'] = df.loc[nz_idxs, 'shift_grid_share'].div(norm)
-
-    df.loc[nz_idxs, 'shift_mg_share'] = \
-        2 * df.loc[nz_idxs, 'rise_mg'] \
-        - df.loc[nz_idxs, 'rise_grid'] \
-        - df.loc[nz_idxs, 'rise_shs']
-    df.loc[nz_idxs, 'shift_mg_share'] = df.loc[nz_idxs, 'shift_mg_share'].div(norm)
-
-    df.loc[nz_idxs, 'shift_shs_share'] = \
-        2 * df.loc[nz_idxs, 'rise_shs'] \
-        - df.loc[nz_idxs, 'rise_grid'] \
-        - df.loc[nz_idxs, 'rise_mg']
-    df.loc[nz_idxs, 'shift_shs_share'] = df.loc[nz_idxs, 'shift_shs_share'].div(norm)
-
-    # SHARED WITH prOG
-    # if the predicted mg share is larger than the predicted grid share, the number of people
-    # predicted to use mg in the se4all+SHIFT scenario is returned, otherwise it is set to 0
-    # df.loc[df.shift_grid_to_mg_share >= df.shift_grid_share, 'shift_pop_grid_to_mg'] = \
-    #     df.shift_grid_to_mg_share * df.endo_pop_get_grid_2030
-    # df.loc[df.shift_grid_to_mg_share < df.shift_grid_share, 'shift_pop_grid_to_mg'] = 0
-
-    # if the predicted shs share is larger than the predicted grid share, the number of people
-    # predicted to use shs in the se4all+SHIFT scenario is returned, otherwise it is set to 0
-    # df.loc[df.shift_grid_to_shs_share >= df.shift_grid_share, 'shift_pop_grid_to_shs'] = \
-    #     df.shift_grid_to_shs_share * df.endo_pop_get_grid_2030
-    # df.loc[df.shift_grid_to_shs_share < df.shift_grid_share, 'shift_pop_grid_to_shs'] = 0
+    for i, opt in enumerate(ELECTRIFICATION_OPTIONS):
+        df['shift_rise_%s' % opt] = shift_rise_df[:, i]
 
     return df
 
@@ -814,8 +791,7 @@ def extract_results_scenario(
 
         for opt in ELECTRIFICATION_OPTIONS:
             df['pop_get_%s_2030' % opt] = \
-                df['endo_pop_get_%s_2030' % opt] + \
-                df.pop_newly_electrified_2030 * df['shift_%s_share' % opt]
+                df['endo_pop_get_%s_2030' % opt] + df['shift_rise_%s' % opt]
     else:
         raise ValueError
 
