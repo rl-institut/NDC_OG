@@ -117,9 +117,13 @@ HH_SCN2 = ['hh_cap_scn2_%s_capacity' % opt for opt in ELECTRIFICATION_OPTIONS]
 INVEST = ['%s_investment_cost' % opt for opt in ELECTRIFICATION_OPTIONS]
 INVEST_CAP = ['tier_capped_%s_investment_cost' % opt for opt in ELECTRIFICATION_OPTIONS]
 GHG = ['ghg_%s_cumul' % opt for opt in ELECTRIFICATION_OPTIONS]
+GHG_ER = ['ghg_ER_cumul']
+GHG_NO_ACCESS = ['ghg_no_access_cumul', 'tier_capped_ghg_no_access_cumul']
 GHG_CAP = ['tier_capped_ghg_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS]
-EXO_RESULTS = POP_GET + HH_GET + HH_CAP + HH_SCN2 + INVEST + INVEST_CAP + GHG + GHG_CAP \
-              + ['ghg_tot_cumul']
+GHG_CAP_ER = ['tier_capped_ghg_ER_cumul']
+GHG_ALL = GHG + GHG_ER + GHG_CAP + GHG_CAP_ER + ['ghg_tot_cumul', 'tier_capped_ghg_tot_cumul'] \
+    + GHG_NO_ACCESS
+EXO_RESULTS = POP_GET + HH_GET + HH_CAP + HH_SCN2 + INVEST + INVEST_CAP + GHG_ALL
 
 # source http://www.worldbank.org/content/dam/Worldbank/Topics/Energy%20and%20Extract/
 # Beyond_Connections_Energy_Access_Redefined_Exec_ESMAP_2015.pdf
