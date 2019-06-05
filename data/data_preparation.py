@@ -175,7 +175,7 @@ LABEL_COLUMNS['total'] = 'Total'
 BASIC_COLUMNS_ID = ['labels'] + ELECTRIFICATION_OPTIONS + ['No Electricity'] + ['total']
 GHG_COLUMNS_ID = ['labels'] + ELECTRIFICATION_OPTIONS + ['No Electricity'] + ['total']
 COMPARE_COLUMNS_ID = ['labels']
-for opt in ELECTRIFICATION_OPTIONS + ['total']:
+for opt in ELECTRIFICATION_OPTIONS + ['No Electricity'] + ['total']:
     COMPARE_COLUMNS_ID.append(opt)
     COMPARE_COLUMNS_ID.append('comp_{}'.format(opt))
 
