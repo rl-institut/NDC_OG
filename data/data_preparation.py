@@ -119,10 +119,11 @@ INVEST_CAP = ['tier_capped_%s_investment_cost' % opt for opt in ELECTRIFICATION_
 GHG = ['ghg_%s_cumul' % opt for opt in ELECTRIFICATION_OPTIONS]
 GHG_ER = ['ghg_ER_cumul']
 GHG_NO_ACCESS = ['ghg_no_access_cumul', 'tier_capped_ghg_no_access_cumul']
-GHG_CAP = ['tier_capped_ghg_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS]
+GHG_CAP = ['tier_capped_ghg_%s_cumul' % opt for opt in ELECTRIFICATION_OPTIONS]
 GHG_CAP_ER = ['tier_capped_ghg_ER_cumul']
 GHG_ALL = GHG + GHG_ER + GHG_CAP + GHG_CAP_ER + ['ghg_tot_cumul', 'tier_capped_ghg_tot_cumul'] \
-    + GHG_NO_ACCESS
+    + GHG_NO_ACCESS + ['ghg_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS] \
+    + ['tier_capped_ghg_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS]
 EXO_RESULTS = POP_GET + HH_GET + HH_CAP + HH_SCN2 + INVEST + INVEST_CAP + GHG_ALL
 
 # source http://www.worldbank.org/content/dam/Worldbank/Topics/Energy%20and%20Extract/
@@ -179,12 +180,17 @@ for opt in ELECTRIFICATION_OPTIONS + ['total']:
     COMPARE_COLUMNS_ID.append('comp_{}'.format(opt))
 
 
-def prepare_results_tables(df):
-    pop = np.squeeze(df[POP_GET].values * 1e-6).round(3)
+def prepare_results_tables(df, sce=''):
+
+    pop = np.squeeze(df[POP_GET].values * 1e-6)
     # compute the percentage of population with electricity access
     df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0)
     # gather the values of the results to display in the table
     pop_res = np.squeeze(df[POP_GET].values * 100)
+
+    if sce == BAU_SCENARIO:
+        df.pop_newly_electrified_2030
+
     hh_res = np.squeeze(df[HH_GET].values * 1e-6).round(3)
     cap_res = np.squeeze(df[HH_CAP].values * 1e-3).round(0)
     cap2_res = np.squeeze(df[HH_SCN2].values * 1e-3).round(0)
@@ -730,11 +736,6 @@ def _compute_ghg_emissions(df, min_tier_level, bau_df=None):
     df['ghg_ER_cumul'] = 0
     if bau_df is not None:
         df['ghg_ER_2030'] = bau_df.ghg_tot_2030 - df.ghg_tot_2030
-        # Assumption: ghg_ER_2017 is 0 by construction
-        df['ghg_slope'] = (df.ghg_ER_2030 - 0) / (2030 - 2017)
-
-        for i in range(0, 14, 1):
-            df['ghg_ER_cumul'] = df.ghg_ER_cumul + (i * df.ghg_slope)
 
         # integral is the surface of a triangle as everyone has access
         # to electricity by 2030 in these scenarios
@@ -751,6 +752,9 @@ def _compute_ghg_emissions(df, min_tier_level, bau_df=None):
         + df.ghg_mg_cumul \
         + df.ghg_shs_cumul \
         + df.ghg_no_access_cumul
+
+    if bau_df is not None:
+        df.ghg_ER_cumul = bau_df.ghg_tot_cumul - df.ghg_tot_cumul
 
     # consider the upper tier level minimal consumption value instead of the actual value
     df['hh_grid_tier_cap_yearly_electricity_consumption'] = \
@@ -792,13 +796,6 @@ def _compute_ghg_emissions(df, min_tier_level, bau_df=None):
         df['tier_capped_ghg_ER_2030'] = \
             bau_df.tier_capped_ghg_tot_2030 \
             - df.tier_capped_ghg_tot_2030
-        # Assumption: ghg_ER_2017 is 0 by construction
-        df['tier_capped_ghg_slope'] = (df.tier_capped_ghg_ER_2030 - 0) / (2030 - 2017)
-
-        for i in range(0, 14, 1):
-            df['tier_capped_ghg_ER_cumul'] = \
-                df.tier_capped_ghg_ER_cumul \
-                + (i * df.tier_capped_ghg_slope)
 
         # integral is the surface of a triangle as everyone has access
         # to electricity by 2030 in these scenarios
@@ -816,6 +813,10 @@ def _compute_ghg_emissions(df, min_tier_level, bau_df=None):
         + df.tier_capped_ghg_shs_cumul \
         + df.tier_capped_ghg_no_access_cumul
 
+    if bau_df is not None:
+        df.tier_capped_ghg_ER_cumul = \
+            bau_df.tier_capped_ghg_tot_cumul \
+            - df.tier_capped_ghg_tot_cumul
 
 def _compute_investment_cost(df):
     """Compute investment costs in USD in `extract_results_scenario."""
