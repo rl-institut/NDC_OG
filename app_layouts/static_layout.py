@@ -426,21 +426,15 @@ def callbacks(app_handle):
                 # narrow to the country's results
                 df = df.loc[df.country_iso == country_iso]
                 # compute the percentage of population with electricity access
-                basic_results_data = prepare_results_tables(df)
+                basic_results_data = prepare_results_tables(df, sce)
 
+                if y_sel in BASIC_ROWS[0:3]:
+                    x = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
+                else:
+                    x = ELECTRIFICATION_OPTIONS.copy()
                 y = basic_results_data[BASIC_ROWS.index(y_sel)]
 
-                if sce == BAU_SCENARIO and y_sel == BASIC_ROWS[0]:
-                    y = np.append(y, 0)
-                    y[3] = 100 - y.sum()
-                    ELECTRIFICATION_OPTIONS.copy()
-                    fig['data'][sce_id].update(
-                        {'x': ELECTRIFICATION_OPTIONS.copy() + ['No electricity']}
-                    )
-                else:
-                    fig['data'][sce_id].update(
-                        {'x': ELECTRIFICATION_OPTIONS.copy()}
-                    )
+                fig['data'][sce_id].update({'x': x})
                 fig['data'][sce_id].update({'y': y})
 
         return fig
@@ -470,22 +464,17 @@ def callbacks(app_handle):
                 df = df[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
 
                 # compute the percentage of population with electricity access
-                basic_results_data = prepare_results_tables(df)
+                basic_results_data = prepare_results_tables(df, sce)
 
+                if y_sel in BASIC_ROWS[0:3]:
+                    x = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
+                else:
+                    x = ELECTRIFICATION_OPTIONS.copy()
                 y = basic_results_data[BASIC_ROWS.index(y_sel)]
 
-                if sce == BAU_SCENARIO and y_sel == BASIC_ROWS[0]:
-                    y = np.append(y, 0)
-                    y[3] = 100 - y.sum()
-                    ELECTRIFICATION_OPTIONS.copy()
-                    fig['data'][sce_id].update(
-                        {'x': ELECTRIFICATION_OPTIONS.copy() + ['No electricity']}
-                    )
-                else:
-                    fig['data'][sce_id].update(
-                        {'x': ELECTRIFICATION_OPTIONS.copy()}
-                    )
+                fig['data'][sce_id].update({'x': x})
                 fig['data'][sce_id].update({'y': y})
+
         return fig
 
     @app_handle.callback(
@@ -520,25 +509,21 @@ def callbacks(app_handle):
                     # compare the reference country to a country
                     df_comp = df_comp.loc[df_comp.country_iso == comp_sel]
 
-                basic_results_data = prepare_results_tables(df)
-                comp_results_data = prepare_results_tables(df_comp)
+                basic_results_data = prepare_results_tables(df, scenario)
+                comp_results_data = prepare_results_tables(df_comp, scenario)
 
+                if y_sel in BASIC_ROWS[0:3]:
+                    x = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
+                else:
+                    x = ELECTRIFICATION_OPTIONS.copy()
                 y = basic_results_data[BASIC_ROWS.index(y_sel)]
                 y_comp = comp_results_data[BASIC_ROWS.index(y_sel)]
 
-                x_vals = ELECTRIFICATION_OPTIONS.copy()
-
-                if scenario == BAU_SCENARIO and y_sel == BASIC_ROWS[0]:
-                    y = np.append(y, 0)
-                    y_comp = np.append(y_comp, 0)
-                    y[3] = 100 - y.sum()
-                    y_comp[3] = 100 - y_comp.sum()
-                    x_vals = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
                 fs = 12
 
                 fig['data'] = [
                            go.Bar(
-                               x=x_vals,
+                               x=x,
                                y=y,
                                text=[country_sel for i in range(4)],
                                insidetextfont={'size': fs},
@@ -549,7 +534,7 @@ def callbacks(app_handle):
                                hoverinfo='y+text'
                            ),
                            go.Bar(
-                               x=x_vals,
+                               x=x,
                                y=y_comp,
                                text=[comp_name for i in range(4)],
                                insidetextfont={'size': fs},
@@ -749,14 +734,14 @@ def callbacks(app_handle):
                 df = pd.read_json(cur_data[scenario])
                 df = df.loc[df.country_iso == country_iso]
 
-                basic_results_data = prepare_results_tables(df)
+                basic_results_data = prepare_results_tables(df, scenario)
 
                 total = np.nansum(basic_results_data, axis=1)
 
                 # prepare a DataFrame
                 basic_results_data = pd.DataFrame(
                     data=basic_results_data,
-                    columns=ELECTRIFICATION_OPTIONS
+                    columns=ELECTRIFICATION_OPTIONS + ['No Electricity']
                 )
                 # sums of the rows
                 basic_results_data['total'] = pd.Series(total)
@@ -835,8 +820,10 @@ def callbacks(app_handle):
                 total = np.nansum(ghg_results_data, axis=1)
 
                 # prepare a DataFrame
-                ghg_results_data = pd.DataFrame(data=ghg_results_data,
-                                                columns=ELECTRIFICATION_OPTIONS)
+                ghg_results_data = pd.DataFrame(
+                    data=ghg_results_data,
+                    columns=ELECTRIFICATION_OPTIONS + ['No Electricity']
+                )
 
                 # sums of the rows
                 ghg_results_data['total'] = pd.Series(total)
@@ -873,14 +860,14 @@ def callbacks(app_handle):
                 # aggregate the results
                 df = df[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
 
-                basic_results_data = prepare_results_tables(df)
+                basic_results_data = prepare_results_tables(df, scenario)
 
                 total = np.nansum(basic_results_data, axis=1)
 
                 # prepare a DataFrame
                 basic_results_data = pd.DataFrame(
                     data=basic_results_data,
-                    columns=ELECTRIFICATION_OPTIONS
+                    columns=ELECTRIFICATION_OPTIONS + ['No Electricity']
                 )
                 # sums of the rows
                 basic_results_data['total'] = pd.Series(total)
@@ -962,8 +949,10 @@ def callbacks(app_handle):
                 total = np.nansum(ghg_results_data, axis=1)
 
                 # prepare a DataFrame
-                ghg_results_data = pd.DataFrame(data=ghg_results_data,
-                                                columns=ELECTRIFICATION_OPTIONS)
+                ghg_results_data = pd.DataFrame(
+                    data=ghg_results_data,
+                    columns=ELECTRIFICATION_OPTIONS + ['No Electricity']
+                )
                 # sums of the rows
                 ghg_results_data['total'] = pd.Series(total)
                 ghg_results_data['labels'] = pd.Series(ghg_rows)
@@ -1005,8 +994,8 @@ def callbacks(app_handle):
                     # compare the reference country to a country
                     df_comp = df_comp.loc[df_comp.country_iso == comp_sel]
 
-                basic_results_data = prepare_results_tables(df)
-                comp_results_data = prepare_results_tables(df_comp)
+                basic_results_data = prepare_results_tables(df, scenario)
+                comp_results_data = prepare_results_tables(df_comp, scenario)
 
                 total = np.nansum(basic_results_data, axis=1)
                 comp_total = np.nansum(comp_results_data, axis=1)
@@ -1023,11 +1012,12 @@ def callbacks(app_handle):
 
                 basic_results_data = np.hstack([comp_results_data, basic_results_data])
 
-                comp_ids = ['comp_{}'.format(c) for c in ELECTRIFICATION_OPTIONS]
+                comp_ids = ['comp_{}'.format(c) for c in ELECTRIFICATION_OPTIONS] \
+                    + ['comp_No Electricity']
                 # prepare a DataFrame
                 basic_results_data = pd.DataFrame(
                     data=basic_results_data,
-                    columns=ELECTRIFICATION_OPTIONS + comp_ids
+                    columns=ELECTRIFICATION_OPTIONS + ['No Electricity'] + comp_ids
                 )
 
                 # sums of the rows
@@ -1042,10 +1032,10 @@ def callbacks(app_handle):
                 basic_results_data.iloc[0, 0:8] = basic_results_data.iloc[0, 0:8].map(
                     lambda x: '{}%'.format(x)
                 )
-                basic_results_data[comp_ids + ['comp_total']] = \
-                    basic_results_data[comp_ids + ['comp_total']].applymap(
-                        lambda x: '' if x == '' else str(x) if '%' in x else '{}%'.format(x)
-                    )
+                # basic_results_data[comp_ids + ['comp_total']] = \
+                #     basic_results_data[comp_ids + ['comp_total']].applymap(
+                #         lambda x: '' if x == '' else str(x) if '%' in x else '{}%'.format(x)
+                #     )
                 answer_table = basic_results_data[COMPARE_COLUMNS_ID].to_dict('records')
 
         return answer_table
@@ -1148,13 +1138,14 @@ def callbacks(app_handle):
 
                 ghg_results_data = np.hstack([ghg_comp_data, ghg_results_data])
 
-                comp_ids = ['comp_{}'.format(c) for c in ELECTRIFICATION_OPTIONS]
+                comp_ids = ['comp_{}'.format(c) for c in ELECTRIFICATION_OPTIONS] \
+                    + ['comp_No Electricity']
+
                 # prepare a DataFrame
                 ghg_results_data = pd.DataFrame(
                     data=ghg_results_data,
-                    columns=ELECTRIFICATION_OPTIONS + comp_ids
+                    columns=ELECTRIFICATION_OPTIONS + ['No Electricity'] + comp_ids
                 )
-                print(ghg_results_data)
                 # sums of the rows
                 ghg_results_data['total'] = pd.Series(comp_total)
                 ghg_results_data['comp_total'] = pd.Series(total)

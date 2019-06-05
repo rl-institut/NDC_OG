@@ -116,13 +116,14 @@ HH_CAP = ['hh_%s_capacity' % opt for opt in ELECTRIFICATION_OPTIONS]
 HH_SCN2 = ['hh_cap_scn2_%s_capacity' % opt for opt in ELECTRIFICATION_OPTIONS]
 INVEST = ['%s_investment_cost' % opt for opt in ELECTRIFICATION_OPTIONS]
 INVEST_CAP = ['tier_capped_%s_investment_cost' % opt for opt in ELECTRIFICATION_OPTIONS]
-GHG = ['ghg_%s_cumul' % opt for opt in ELECTRIFICATION_OPTIONS]
+GHG = ['ghg_%s_cumul' % opt for opt in ELECTRIFICATION_OPTIONS] + ['ghg_no_access_cumul']
 GHG_ER = ['ghg_ER_cumul']
-GHG_NO_ACCESS = ['ghg_no_access_cumul', 'tier_capped_ghg_no_access_cumul']
-GHG_CAP = ['tier_capped_ghg_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS]
+GHG_CAP = ['tier_capped_ghg_%s_cumul' % opt for opt in ELECTRIFICATION_OPTIONS] \
+          + ['tier_capped_ghg_no_access_cumul']
 GHG_CAP_ER = ['tier_capped_ghg_ER_cumul']
 GHG_ALL = GHG + GHG_ER + GHG_CAP + GHG_CAP_ER + ['ghg_tot_cumul', 'tier_capped_ghg_tot_cumul'] \
-    + GHG_NO_ACCESS
+    + ['ghg_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS] \
+    + ['tier_capped_ghg_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS]
 EXO_RESULTS = POP_GET + HH_GET + HH_CAP + HH_SCN2 + INVEST + INVEST_CAP + GHG_ALL
 
 # source http://www.worldbank.org/content/dam/Worldbank/Topics/Energy%20and%20Extract/
@@ -169,26 +170,44 @@ BASIC_ROWS_FULL = {
 LABEL_COLUMNS = ELECTRIFICATION_DICT.copy()
 # a column for the row labels
 LABEL_COLUMNS['labels'] = ''
+LABEL_COLUMNS['No Electricity'] = 'No Electricity'
 LABEL_COLUMNS['total'] = 'Total'
-BASIC_COLUMNS_ID = ['labels'] + ELECTRIFICATION_OPTIONS + ['total']
-GHG_COLUMNS_ID = ['labels'] + ELECTRIFICATION_OPTIONS + ['total']
+BASIC_COLUMNS_ID = ['labels'] + ELECTRIFICATION_OPTIONS + ['No Electricity'] + ['total']
+GHG_COLUMNS_ID = ['labels'] + ELECTRIFICATION_OPTIONS + ['No Electricity'] + ['total']
 COMPARE_COLUMNS_ID = ['labels']
-for opt in ELECTRIFICATION_OPTIONS + ['total']:
+for opt in ELECTRIFICATION_OPTIONS + ['No Electricity'] + ['total']:
     COMPARE_COLUMNS_ID.append(opt)
     COMPARE_COLUMNS_ID.append('comp_{}'.format(opt))
 
 
-def prepare_results_tables(df):
-    pop = np.squeeze(df[POP_GET].values * 1e-6).round(3)
+def prepare_results_tables(df, sce=BAU_SCENARIO):
+    pop = np.squeeze(df[POP_GET].values * 1e-6)
     # compute the percentage of population with electricity access
     df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0)
     # gather the values of the results to display in the table
-    pop_res = np.squeeze(df[POP_GET].values * 100).round(1)
-    hh_res = np.squeeze(df[HH_GET].values * 1e-6).round(3)
-    cap_res = np.squeeze(df[HH_CAP].values * 1e-3).round(0)
-    cap2_res = np.squeeze(df[HH_SCN2].values * 1e-3).round(0)
-    invest_res = np.squeeze(df[INVEST].values * 1e-9).round(3)
-    invest2_res = np.squeeze(df[INVEST_CAP].values * 1e-9).round(3)
+    pop_res = np.squeeze(df[POP_GET].values * 100)
+
+    hh_res = np.squeeze(df[HH_GET].values * 1e-6)
+
+    if sce == BAU_SCENARIO:
+        total_share = pop_res.sum()
+        total_pop = df.pop_newly_electrified_2030
+        pop_no_elec = total_pop * 1e-6 - pop.sum()
+        pop_res_no_elec = 100 - total_share
+        pop = np.append(pop, pop_no_elec)
+        pop_res = np.append(pop_res, pop_res_no_elec)
+        hh_av_size = np.round(pop[0]/hh_res[0], 2)
+        hh_res = np.append(hh_res, pop_no_elec / hh_av_size)
+    else:
+        pop = np.append(pop, np.nan)
+        pop_res = np.append(pop_res, np.nan)
+        hh_res = np.append(hh_res, np.nan)
+
+    cap_res = np.append(np.squeeze(df[HH_CAP].values * 1e-3).round(0), np.nan)
+    cap2_res = np.append(np.squeeze(df[HH_SCN2].values * 1e-3).round(0), np.nan)
+    invest_res = np.append(np.squeeze(df[INVEST].values * 1e-9).round(3), np.nan)
+    invest2_res = np.append(np.squeeze(df[INVEST_CAP].values * 1e-9).round(3), np.nan)
+
     return np.vstack(
         [pop_res, pop, hh_res, cap_res, cap2_res, invest_res, invest2_res]
     )
@@ -729,11 +748,6 @@ def _compute_ghg_emissions(df, min_tier_level, bau_df=None):
     df['ghg_ER_cumul'] = 0
     if bau_df is not None:
         df['ghg_ER_2030'] = bau_df.ghg_tot_2030 - df.ghg_tot_2030
-        # Assumption: ghg_ER_2017 is 0 by construction
-        df['ghg_slope'] = (df.ghg_ER_2030 - 0) / (2030 - 2017)
-
-        for i in range(0, 14, 1):
-            df['ghg_ER_cumul'] = df.ghg_ER_cumul + (i * df.ghg_slope)
 
         # integral is the surface of a triangle as everyone has access
         # to electricity by 2030 in these scenarios
@@ -750,6 +764,9 @@ def _compute_ghg_emissions(df, min_tier_level, bau_df=None):
         + df.ghg_mg_cumul \
         + df.ghg_shs_cumul \
         + df.ghg_no_access_cumul
+
+    if bau_df is not None:
+        df.ghg_ER_cumul = bau_df.ghg_tot_cumul - df.ghg_tot_cumul
 
     # consider the upper tier level minimal consumption value instead of the actual value
     df['hh_grid_tier_cap_yearly_electricity_consumption'] = \
@@ -791,13 +808,6 @@ def _compute_ghg_emissions(df, min_tier_level, bau_df=None):
         df['tier_capped_ghg_ER_2030'] = \
             bau_df.tier_capped_ghg_tot_2030 \
             - df.tier_capped_ghg_tot_2030
-        # Assumption: ghg_ER_2017 is 0 by construction
-        df['tier_capped_ghg_slope'] = (df.tier_capped_ghg_ER_2030 - 0) / (2030 - 2017)
-
-        for i in range(0, 14, 1):
-            df['tier_capped_ghg_ER_cumul'] = \
-                df.tier_capped_ghg_ER_cumul \
-                + (i * df.tier_capped_ghg_slope)
 
         # integral is the surface of a triangle as everyone has access
         # to electricity by 2030 in these scenarios
@@ -814,6 +824,11 @@ def _compute_ghg_emissions(df, min_tier_level, bau_df=None):
         + df.tier_capped_ghg_mg_cumul \
         + df.tier_capped_ghg_shs_cumul \
         + df.tier_capped_ghg_no_access_cumul
+
+    if bau_df is not None:
+        df.tier_capped_ghg_ER_cumul = \
+            bau_df.tier_capped_ghg_tot_cumul \
+            - df.tier_capped_ghg_tot_cumul
 
 
 def _compute_investment_cost(df):
