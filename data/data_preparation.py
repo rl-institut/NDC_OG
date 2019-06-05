@@ -692,16 +692,16 @@ def _compute_ghg_emissions(df, min_tier_level, bau_df=None):
         (df.pop_get_grid_2030 / df.hh_av_size) \
         * df.hh_grid_tier_yearly_electricity_consumption \
         * (df.grid_emission_factor / 1000)
-    df['ghg_grid_cumul'] = 0.5 * df['ghg_grid_2030'] * (2030 - 2017)
+    df['ghg_grid_cumul'] = 0.5 * df.ghg_grid_2030 * (2030 - 2017)
 
     df['ghg_mg_2030'] = \
         (df.pop_get_mg_2030 / df.hh_av_size) \
         * df.hh_mg_tier_yearly_electricity_consumption \
         * (df.mg_emission_factor / 1000)
-    df['ghg_mg_cumul'] = 0.5 * df['ghg_mg_2030'] * (2030 - 2017)
+    df['ghg_mg_cumul'] = 0.5 * df.ghg_mg_2030 * (2030 - 2017)
 
     df['ghg_shs_2030'] = df.pop_get_shs_2030 * df.shs_emission_factor
-    df['ghg_shs_cumul'] = 0.5 * df['ghg_shs_2030'] * (2030 - 2017)
+    df['ghg_shs_cumul'] = 0.5 * df.ghg_shs_2030 * (2030 - 2017)
 
     df['ghg_no_access_2017'] = \
         (df.dark_rate * df.pop_2017 / df.hh_av_size) \
@@ -713,16 +713,16 @@ def _compute_ghg_emissions(df, min_tier_level, bau_df=None):
         * df.hh_no_access_consumption \
         * (df.no_access_emission_factor / 1000)
 
-    df['ghg_tot_2030'] = df['ghg_grid_2030'] + df['ghg_mg_2030'] + df['ghg_no_access_2030']
+    df['ghg_tot_2030'] = df.ghg_grid_2030. + df.ghg_mg_2030 + df.ghg_no_access_2030
 
     df['ghg_tot_cumul'] = 0
     if bau_df is not None:
-        df['ghg_ER_2030'] = bau_df['ghg_tot_2030'] - df['ghg_tot_2030']
+        df['ghg_ER_2030'] = bau_df.ghg_tot_2030 - df.ghg_tot_2030
         # Assumption: ghg_ER_2017 is 0 by construction
-        df['ghg_slope'] = (df['ghg_ER_2030'] - 0) / (2030 - 2017)
+        df['ghg_slope'] = (df.ghg_ER_2030 - 0) / (2030 - 2017)
 
         for i in range(0, 14, 1):
-            df['ghg_tot_cumul'] = df['ghg_tot_cumul'] + (i * df['ghg_slope'])
+            df['ghg_tot_cumul'] = df.ghg_tot_cumul + (i * df.ghg_slope)
 
     # consider the upper tier level minimal consumption value instead of the actual value
     df['hh_grid_tier_cap_yearly_electricity_consumption'] = \
@@ -738,36 +738,36 @@ def _compute_ghg_emissions(df, min_tier_level, bau_df=None):
         (df.pop_get_grid_2030 / df.hh_av_size) \
         * df.hh_grid_tier_cap_yearly_electricity_consumption\
         * (df.grid_emission_factor / 1000)
-    df['tier_capped_ghg_grid_cumul'] = 0.5 * df['tier_capped_ghg_grid_2030'] * (2030 - 2017)
+    df['tier_capped_ghg_grid_cumul'] = 0.5 * df.tier_capped_ghg_grid_2030 * (2030 - 2017)
 
     df['tier_capped_ghg_mg_2030'] = \
         (df.pop_get_mg_2030 / df.hh_av_size) \
         * df.hh_mg_tier_cap_yearly_electricity_consumption \
         * (df.mg_emission_factor / 1000)
-    df['tier_capped_ghg_mg_cumul'] = 0.5 * df['tier_capped_ghg_mg_2030'] * (2030 - 2017)
+    df['tier_capped_ghg_mg_cumul'] = 0.5 * df.tier_capped_ghg_mg_2030 * (2030 - 2017)
 
     df['tier_capped_ghg_shs_2030'] = df.ghg_shs_2030
-    df['tier_capped_ghg_shs_cumul'] = 0.5 * df['tier_capped_ghg_shs_2030'] * (2030 - 2017)
+    df['tier_capped_ghg_shs_cumul'] = 0.5 * df.tier_capped_ghg_shs_2030 * (2030 - 2017)
 
     df['tier_capped_ghg_no_access_2030'] = df.ghg_no_access_2030
 
     df['tier_capped_ghg_tot_2030'] = \
-        df['tier_capped_ghg_grid_2030'] \
-        + df['tier_capped_ghg_mg_2030'] \
-        + df['tier_capped_ghg_no_access_2030']
+        df.tier_capped_ghg_grid_2030 \
+        + df.tier_capped_ghg_mg_2030 \
+        + df.tier_capped_ghg_no_access_2030
 
     df['tier_capped_ghg_tot_cumul'] = 0
     if bau_df is not None:
-        df['tier_capped_ghg_ER_2030'] = \
-            bau_df['tier_capped_ghg_tot_2030'] \
-            - df['tier_capped_ghg_tot_2030']
+        df.tier_capped_ghg_ER_2030 = \
+            bau_df.tier_capped_ghg_tot_2030 \
+            - df.tier_capped_ghg_tot_2030
         # Assumption: ghg_ER_2017 is 0 by construction
-        df['tier_capped_ghg_slope'] = (df['tier_capped_ghg_ER_2030'] - 0) / (2030 - 2017)
+        df['tier_capped_ghg_slope'] = (df.tier_capped_ghg_ER_2030 - 0) / (2030 - 2017)
 
         for i in range(0, 14, 1):
             df['tier_capped_ghg_tot_cumul'] = \
-                df['tier_capped_ghg_tot_cumul'] \
-                + (i * df['tier_capped_ghg_slope'])
+                df.tier_capped_ghg_tot_cumul \
+                + (i * df.tier_capped_ghg_slope)
 
 
 def _compute_investment_cost(df):
