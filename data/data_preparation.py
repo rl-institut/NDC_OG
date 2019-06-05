@@ -109,15 +109,21 @@ to a localized group of customers',
 }
 
 # column names of the exogenous results
+ENDO_POP_GET = ['endo_pop_get_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS]
 POP_GET = ['pop_get_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS]
 HH_GET = ['hh_get_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS]
 HH_CAP = ['hh_%s_capacity' % opt for opt in ELECTRIFICATION_OPTIONS]
 HH_SCN2 = ['hh_cap_scn2_%s_capacity' % opt for opt in ELECTRIFICATION_OPTIONS]
 INVEST = ['%s_investment_cost' % opt for opt in ELECTRIFICATION_OPTIONS]
 INVEST_CAP = ['tier_capped_%s_investment_cost' % opt for opt in ELECTRIFICATION_OPTIONS]
-GHG = ['ghg_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS]
+GHG = ['ghg_%s_cumul' % opt for opt in ELECTRIFICATION_OPTIONS]
+GHG_ER = ['ghg_ER_cumul']
+GHG_NO_ACCESS = ['ghg_no_access_cumul', 'tier_capped_ghg_no_access_cumul']
 GHG_CAP = ['tier_capped_ghg_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS]
-EXO_RESULTS = POP_GET + HH_GET + HH_CAP + HH_SCN2 + INVEST + INVEST_CAP + GHG + GHG_CAP
+GHG_CAP_ER = ['tier_capped_ghg_ER_cumul']
+GHG_ALL = GHG + GHG_ER + GHG_CAP + GHG_CAP_ER + ['ghg_tot_cumul', 'tier_capped_ghg_tot_cumul'] \
+    + GHG_NO_ACCESS
+EXO_RESULTS = POP_GET + HH_GET + HH_CAP + HH_SCN2 + INVEST + INVEST_CAP + GHG_ALL
 
 # source http://www.worldbank.org/content/dam/Worldbank/Topics/Energy%20and%20Extract/
 # Beyond_Connections_Energy_Access_Redefined_Exec_ESMAP_2015.pdf
@@ -187,6 +193,140 @@ def prepare_results_tables(df):
     return np.vstack(
         [pop_res, pop, hh_res, cap_res, cap2_res, invest_res, invest2_res]
     )
+
+
+def compute_rise_shifts(rise, pop_get, opt, flag=''):
+    df = pd.DataFrame(
+        data=[rise, pop_get, [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
+        columns=ELECTRIFICATION_OPTIONS)
+
+    please_print = False
+
+    if df.iloc[0].sum() == 0:
+        df.iloc[6] = df.iloc[0]
+    else:
+        df.iloc[2] = df.iloc[1] / df.iloc[1].sum()
+        df.iloc[3, 0] = (df.iloc[0].grid - df.iloc[0].mg) + (df.iloc[0].grid - df.iloc[0].shs)
+        df.iloc[3, 1] = (df.iloc[0].mg - df.iloc[0].grid) + (df.iloc[0].mg - df.iloc[0].shs)
+        df.iloc[3, 2] = (df.iloc[0].shs - df.iloc[0].mg) + (df.iloc[0].shs - df.iloc[0].grid)
+
+        df.iloc[3] = df.iloc[3] / df.iloc[0].sum()
+
+        for j in range(3):
+            df.iloc[4, j] = df.iloc[1].sum() * df.iloc[3, j]
+            df.iloc[5, j] = df.iloc[4, j] / df.iloc[1, j]
+            df.iloc[6, j] = df.iloc[1, j] + df.iloc[4, j]
+
+        diff = df.iloc[6].values
+        diff = diff[diff < 0]
+        if len(diff) == 2:
+            # print('There are two differences smaller than 0')
+            diff = df.iloc[6].values
+            diff = diff[diff > 0]
+            idx = df.iloc[6].to_list().index(diff[0])
+
+            eps = 0
+            for i in range(3):
+                if i != idx:
+                    df.iloc[6, i] = df.iloc[1, i] * df.iloc[3, i]
+                    eps = eps + np.abs(df.iloc[6, i])
+            df.iloc[6, idx] = eps
+
+        elif len(diff) == 1:
+            # print('one difference is smaller than 0')
+            idx = df.iloc[6].to_list().index(diff[0])
+            norm = 0
+            idx2 = None
+            # find out if there is another penalized case
+            for i in range(3):
+                if i != idx:
+                    if df.iloc[3, i] < 0:
+                        idx2 = i
+                    norm = norm + df.iloc[0, i]
+
+            if idx2 is None:
+                # print('the difference will be fully split between the two other case')
+                eps = df.iloc[1, idx]
+                for i in range(3):
+                    if i == idx:
+                        df.iloc[6, i] = -eps
+                    else:
+                        df.iloc[6, i] = np.abs(eps) * df.iloc[0, i] / norm
+            else:
+                # print('one of the remaining should have a penalty')
+                # this one cannot be larger that its population
+                df.iloc[6, idx] = - df.iloc[1, idx]
+                # this one becomes a part of the population from above, which compensates
+                # a bit the penalty
+                df.iloc[6, idx2] = df.iloc[4, idx2] + np.abs(df.iloc[6, idx]) * df.iloc[
+                    0, idx2] / norm
+                # the highest score receives the penalty
+                for i in range(3):
+                    if i != idx and i != idx2:
+                        df.iloc[6, i] = np.abs(df.iloc[4, idx2]) + np.abs(df.iloc[6, idx]) * \
+                                        df.iloc[0, i] / norm
+
+        elif len(df) == 3:
+            print('error, all differences are negative')
+        else:
+            # print('no difference is smaller than 0')
+
+            # check if any Delta_i < 0
+            diff = df.iloc[3].values
+            diff = diff[diff < 0]
+            if len(diff) == 1:
+                # print('Only one should be penalized')
+                # print('The difference will be fully split between the two other case')
+                idx = df.iloc[3].to_list().index(diff[0])
+                norm = 0
+                for i in range(3):
+                    if i != idx:
+                        norm = norm + df.iloc[0, i]
+
+                eps = df.iloc[4, idx]
+                for i in range(3):
+                    if i == idx:
+                        df.iloc[6, i] = eps
+                    else:
+                        df.iloc[6, i] = np.abs(eps) * df.iloc[0, i] / norm
+
+                        # ----
+            elif len(diff) == 2:
+                df.iloc[6] = df.iloc[4]
+                # print('Two should be penalized')
+            elif len(diff) == 3:
+                print('error, all deltas are negative')
+            else:
+                # case when all RISE are equal
+                print('error, all deltas are positive or zero')
+                df.iloc[6] = df.iloc[4]
+                please_print = True
+
+        df.iloc[7] = df.iloc[6] + df.iloc[1]
+        for i in range(3):
+            df.iloc[5, i] = df.iloc[6, i] / df.iloc[1, i]
+
+    if df.iloc[6].sum() > 1e-8:
+
+        print(
+            'Error ({}): the sum of the shifts ({}) is not equal to zero!'.format(
+                flag,
+                df.iloc[6].sum(),
+            )
+        )
+        please_print = True
+
+    if please_print:
+        print(flag)
+        df['sum'] = df.sum(axis=1)
+
+        df['labels'] = ['R_i', 'N_i', 'n_i', 'Delta_i', 'Delta N_i', 'Delta N_i / N_i (case 2)',
+                        'Delta N_i (case 2)', 'Delta N_i + N_i (case 2)']
+
+        print(df)
+        print()
+        print()
+    return df.iloc[6, ELECTRIFICATION_OPTIONS.index(opt)]
 
 
 def _slope_capacity_vs_yearly_consumption(tier_level):
@@ -442,47 +582,24 @@ def prepare_se4all_data(
     for opt in ELECTRIFICATION_OPTIONS:
         df['endo_pop_get_%s_2030' % opt] = df['pop_%s_share' % opt] * df.pop_newly_electrified_2030
 
-    # indexes for which all three RISE scores are 0
-    nz_idxs = df.loc[:, RISE_INDICES].sum(axis=1) != 0
-    # sum of the RISE scores for the electrification options, used as normalization's factor
-    norm = df.loc[nz_idxs, RISE_INDICES].sum(axis=1)
+    shift_rise_df = []
 
-    for col in ['shift_grid_share', 'shift_mg_share', 'shift_shs_share']:
-        # if the sum of the RISE scores is 0, the corresponding rows
-        # in the given columns are set to 0
-        df.loc[df.loc[:, RISE_INDICES].sum(axis=1) == 0, col] = 0
+    for idx, row in df.iterrows():
+        shift_rise = []
+        for opt in ELECTRIFICATION_OPTIONS:
+            shift_rise.append(
+                compute_rise_shifts(
+                    row[RISE_INDICES].values,
+                    row[ENDO_POP_GET].values,
+                    opt,
+                    row['country_iso'],
+                )
+            )
+        shift_rise_df.append(shift_rise)
+    shift_rise_df = np.vstack(shift_rise_df)
 
-    # compute the weight of the shift to an electricity option
-    df.loc[nz_idxs, 'shift_grid_share'] = \
-        2 * df.loc[nz_idxs, 'rise_grid'] \
-        - df.loc[nz_idxs, 'rise_mg'] \
-        - df.loc[nz_idxs, 'rise_shs']
-    df.loc[nz_idxs, 'shift_grid_share'] = df.loc[nz_idxs, 'shift_grid_share'].div(norm)
-
-    df.loc[nz_idxs, 'shift_mg_share'] = \
-        2 * df.loc[nz_idxs, 'rise_mg'] \
-        - df.loc[nz_idxs, 'rise_grid'] \
-        - df.loc[nz_idxs, 'rise_shs']
-    df.loc[nz_idxs, 'shift_mg_share'] = df.loc[nz_idxs, 'shift_mg_share'].div(norm)
-
-    df.loc[nz_idxs, 'shift_shs_share'] = \
-        2 * df.loc[nz_idxs, 'rise_shs'] \
-        - df.loc[nz_idxs, 'rise_grid'] \
-        - df.loc[nz_idxs, 'rise_mg']
-    df.loc[nz_idxs, 'shift_shs_share'] = df.loc[nz_idxs, 'shift_shs_share'].div(norm)
-
-    # SHARED WITH prOG
-    # if the predicted mg share is larger than the predicted grid share, the number of people
-    # predicted to use mg in the se4all+SHIFT scenario is returned, otherwise it is set to 0
-    # df.loc[df.shift_grid_to_mg_share >= df.shift_grid_share, 'shift_pop_grid_to_mg'] = \
-    #     df.shift_grid_to_mg_share * df.endo_pop_get_grid_2030
-    # df.loc[df.shift_grid_to_mg_share < df.shift_grid_share, 'shift_pop_grid_to_mg'] = 0
-
-    # if the predicted shs share is larger than the predicted grid share, the number of people
-    # predicted to use shs in the se4all+SHIFT scenario is returned, otherwise it is set to 0
-    # df.loc[df.shift_grid_to_shs_share >= df.shift_grid_share, 'shift_pop_grid_to_shs'] = \
-    #     df.shift_grid_to_shs_share * df.endo_pop_get_grid_2030
-    # df.loc[df.shift_grid_to_shs_share < df.shift_grid_share, 'shift_pop_grid_to_shs'] = 0
+    for i, opt in enumerate(ELECTRIFICATION_OPTIONS):
+        df['shift_rise_%s' % opt] = shift_rise_df[:, i]
 
     return df
 
@@ -561,9 +678,8 @@ def prepare_scenario_data(
     return df
 
 
-def _compute_ghg_emissions(df, min_tier_level):
+def _compute_ghg_emissions(df, min_tier_level, bau_df=None):
     """Compute green house gases emissions in `extract_results_scenario."""
-
     # source : ???
     df['hh_no_access_consumption'] = 55
     # source : ???
@@ -579,20 +695,62 @@ def _compute_ghg_emissions(df, min_tier_level):
 
     df['ghg_grid_2030'] = \
         (df.pop_get_grid_2030 / df.hh_av_size) \
-        * df.hh_grid_tier_yearly_electricity_consumption\
+        * df.hh_grid_tier_yearly_electricity_consumption \
         * (df.grid_emission_factor / 1000)
+    # integral is the surface of a triangle
+    df['ghg_grid_cumul'] = 0.5 * df.ghg_grid_2030 * (2030 - 2017)
 
     df['ghg_mg_2030'] = \
         (df.pop_get_mg_2030 / df.hh_av_size) \
         * df.hh_mg_tier_yearly_electricity_consumption \
         * (df.mg_emission_factor / 1000)
+    # integral is the surface of a triangle
+    df['ghg_mg_cumul'] = 0.5 * df.ghg_mg_2030 * (2030 - 2017)
 
     df['ghg_shs_2030'] = df.pop_get_shs_2030 * df.shs_emission_factor
+    # integral is the surface of a triangle
+    df['ghg_shs_cumul'] = 0.5 * df.ghg_shs_2030 * (2030 - 2017)
+
+    df['ghg_no_access_2017'] = \
+        (df.dark_rate * df.pop_2017 / df.hh_av_size) \
+        * df.hh_no_access_consumption \
+        * (df.no_access_emission_factor / 1000)
 
     df['ghg_no_access_2030'] = \
         (df.pop_no_access_2030 / df.hh_av_size) \
         * df.hh_no_access_consumption \
         * (df.no_access_emission_factor / 1000)
+
+    df['ghg_tot_2030'] = \
+        df.ghg_grid_2030 \
+        + df.ghg_mg_2030 \
+        + df.ghg_shs_2030 \
+        + df.ghg_no_access_2030
+
+    df['ghg_ER_cumul'] = 0
+    if bau_df is not None:
+        df['ghg_ER_2030'] = bau_df.ghg_tot_2030 - df.ghg_tot_2030
+        # Assumption: ghg_ER_2017 is 0 by construction
+        df['ghg_slope'] = (df.ghg_ER_2030 - 0) / (2030 - 2017)
+
+        for i in range(0, 14, 1):
+            df['ghg_ER_cumul'] = df.ghg_ER_cumul + (i * df.ghg_slope)
+
+        # integral is the surface of a triangle as everyone has access
+        # to electricity by 2030 in these scenarios
+        df['ghg_no_access_cumul'] = 0.5 * df.ghg_no_access_2017 * (2030 - 2017)
+    else:
+        # integral is the sum of the surfaces of a triangle and a square
+        df['ghg_no_access_cumul'] = (
+                df.ghg_no_access_2030
+                + (df.ghg_no_access_2017 - df.ghg_no_access_2030) / 2
+        ) * (2030 - 2017)
+
+    df['ghg_tot_cumul'] = \
+        df.ghg_grid_cumul \
+        + df.ghg_mg_cumul \
+        + df.ghg_shs_cumul \
+        + df.ghg_no_access_cumul
 
     # consider the upper tier level minimal consumption value instead of the actual value
     df['hh_grid_tier_cap_yearly_electricity_consumption'] = \
@@ -608,15 +766,55 @@ def _compute_ghg_emissions(df, min_tier_level):
         (df.pop_get_grid_2030 / df.hh_av_size) \
         * df.hh_grid_tier_cap_yearly_electricity_consumption\
         * (df.grid_emission_factor / 1000)
+    # integral is the surface of a triangle
+    df['tier_capped_ghg_grid_cumul'] = 0.5 * df.tier_capped_ghg_grid_2030 * (2030 - 2017)
 
     df['tier_capped_ghg_mg_2030'] = \
         (df.pop_get_mg_2030 / df.hh_av_size) \
         * df.hh_mg_tier_cap_yearly_electricity_consumption \
         * (df.mg_emission_factor / 1000)
+    # integral is the surface of a triangle
+    df['tier_capped_ghg_mg_cumul'] = 0.5 * df.tier_capped_ghg_mg_2030 * (2030 - 2017)
 
     df['tier_capped_ghg_shs_2030'] = df.ghg_shs_2030
+    # integral is the surface of a triangle
+    df['tier_capped_ghg_shs_cumul'] = 0.5 * df.tier_capped_ghg_shs_2030 * (2030 - 2017)
 
     df['tier_capped_ghg_no_access_2030'] = df.ghg_no_access_2030
+
+    df['tier_capped_ghg_tot_2030'] = \
+        df.tier_capped_ghg_grid_2030 \
+        + df.tier_capped_ghg_mg_2030 \
+        + df.tier_capped_ghg_no_access_2030
+
+    df['tier_capped_ghg_ER_cumul'] = 0
+    if bau_df is not None:
+        df['tier_capped_ghg_ER_2030'] = \
+            bau_df.tier_capped_ghg_tot_2030 \
+            - df.tier_capped_ghg_tot_2030
+        # Assumption: ghg_ER_2017 is 0 by construction
+        df['tier_capped_ghg_slope'] = (df.tier_capped_ghg_ER_2030 - 0) / (2030 - 2017)
+
+        for i in range(0, 14, 1):
+            df['tier_capped_ghg_ER_cumul'] = \
+                df.tier_capped_ghg_ER_cumul \
+                + (i * df.tier_capped_ghg_slope)
+
+        # integral is the surface of a triangle as everyone has access
+        # to electricity by 2030 in these scenarios
+        df['tier_capped_ghg_no_access_cumul'] = 0.5 * df.ghg_no_access_2017 * (2030 - 2017)
+    else:
+        # integral is the sum of the surfaces of a triangle and a square
+        df['tier_capped_ghg_no_access_cumul'] = (
+                df.ghg_no_access_2030
+                + (df.ghg_no_access_2017 - df.ghg_no_access_2030) / 2
+        ) * (2030 - 2017)
+
+    df['tier_capped_ghg_tot_cumul'] = \
+        df.tier_capped_ghg_grid_cumul \
+        + df.tier_capped_ghg_mg_cumul \
+        + df.tier_capped_ghg_shs_cumul \
+        + df.tier_capped_ghg_no_access_cumul
 
 
 def _compute_investment_cost(df):
@@ -677,11 +875,12 @@ def extract_results_scenario(
         df['pop_get_%s_2030' % opt] = \
             df['endo_pop_get_%s_2030' % opt] \
             + df['shift_pop_grid_to_%s' % opt]
+
     elif scenario == SE4ALL_SCENARIO:
 
         for opt in ELECTRIFICATION_OPTIONS:
             df['pop_get_%s_2030' % opt] = \
-                df['pop_newly_electrified_2030'] * df['shift_%s_share' % opt]
+                df['endo_pop_get_%s_2030' % opt] + df['shift_rise_%s' % opt]
     else:
         raise ValueError
 
@@ -703,7 +902,13 @@ def extract_results_scenario(
             df['hh_cap_scn2_%s_capacity' % opt] = df['hh_get_%s_2030' % opt] * df[
                 'cap_sn2_%s_tier_up' % opt] / 1000
 
-    _compute_ghg_emissions(df, min_tier_level)
+    if scenario == BAU_SCENARIO:
+        _compute_ghg_emissions(df, min_tier_level)
+        df.to_csv('data/bau_results.csv')
+    else:
+        bau_data = pd.read_csv('data/bau_results.csv')
+        _compute_ghg_emissions(df, min_tier_level, bau_df=bau_data)
+
     _compute_investment_cost(df)
 
     return df
