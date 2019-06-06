@@ -166,19 +166,21 @@ layout = go.Layout(
     paper_bgcolor='#EBF2FA',
     autosize=True,
     margin=dict(
-        l=15,
-        r=15,
-        b=5,
-        t=5
+        l=2,
+        r=2,
+        b=2,
+        t=2
     ),
     geo=go.layout.Geo(
+        bgcolor='#EBF2FA',
         scope='world',
         showlakes=True,
         showcountries=True,
         lakecolor='rgb(255, 255, 255)',
-        projection=dict(type='equirectangular'),
+        projection=dict(type='orthographic'),
     ),
     geo2=go.layout.Geo(
+        bgcolor='#EBF2FA',
         scope='world',
         showlakes=True,
         showcountries=True,
