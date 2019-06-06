@@ -63,8 +63,10 @@
     margin-top: 20px;
     margin-bottom: 20px;
     text-align: justify;
-    background: #4F89A3;
+    background: #002E4F;
+    color: #FFFFFF;
 }
+
 
 .app__checkbox {
     padding: 0px 5px 0px;
