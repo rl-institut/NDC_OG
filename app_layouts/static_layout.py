@@ -1077,42 +1077,49 @@ def callbacks(app_handle):
     @app_handle.callback(
         Output('compare-basic-results-table', 'style_data_conditional'),
         [Input('compare-basic-results-table', 'data')],
-        [State('compare-basic-results-table', 'style_data_conditional')]
+        [
+            State('compare-basic-results-table', 'style_data_conditional'),
+            State('compare-input', 'value')
+        ]
     )
-    def update_compare_basic_results_table_styling(cur_data, cur_style):
+    def update_compare_basic_results_table_styling(cur_data, cur_style, comp_sel):
 
-        data = pd.DataFrame.from_dict(cur_data)
+        if comp_sel is not None:
+            data = pd.DataFrame.from_dict(cur_data)
 
-        col_ref = BASIC_COLUMNS_ID[1:]
-        col_comp = ['comp_{}'.format(col) for col in BASIC_COLUMNS_ID[1:]]
-        data = data[col_ref + col_comp].applymap(
-            lambda x: 0 if x == '' else float(x.replace(',', '').replace('%', '')))
-        ref = data[col_ref]
-        comp = data[col_comp]
+            col_ref = BASIC_COLUMNS_ID[1:]
+            col_comp = ['comp_{}'.format(col) for col in BASIC_COLUMNS_ID[1:]]
+            data = data[col_ref + col_comp].applymap(
+                lambda x: 0 if x == '' else float(x.replace(',', '').replace('%', '')))
+            ref = data[col_ref]
+            comp = data[col_comp]
 
-        compare_results_styling = []
-        for j, col in enumerate(col_ref):
-            for i in range(len(ref.index)):
-                apply_condition = True
-                if ref.iloc[i, j] > comp.iloc[i, j]:
-                    color = COLOR_BETTER
-                    font = 'bold'
-                elif ref.iloc[i, j] < comp.iloc[i, j]:
-                    color = COLOR_WORSE
-                    font = 'normal'
-                else:
-                    apply_condition = False
+            compare_results_styling = []
+            for j, col in enumerate(col_ref):
+                for i in range(len(ref.index)):
+                    apply_condition = True
+                    if ref.iloc[i, j] > comp.iloc[i, j]:
+                        color = COLOR_BETTER
+                        font = 'bold'
+                    elif ref.iloc[i, j] < comp.iloc[i, j]:
+                        color = COLOR_WORSE
+                        font = 'normal'
+                    else:
+                        apply_condition = False
 
-                if apply_condition:
-                    compare_results_styling.append(
-                        {
-                            "if": {"column_id": col, "row_index": i},
-                            'color': color,
-                            # 'backgroundColor': color,
-                            'fontWeight': font
-                         }
-                    )
-                cur_style = TABLES_COLUMNS_WIDTH + TABLES_LABEL_STYLING + compare_results_styling
+                    if apply_condition:
+                        compare_results_styling.append(
+                            {
+                                "if": {"column_id": col, "row_index": i},
+                                'color': color,
+                                # 'backgroundColor': color,
+                                'fontWeight': font
+                             }
+                        )
+                    cur_style = \
+                        TABLES_COLUMNS_WIDTH \
+                        + TABLES_LABEL_STYLING \
+                        + compare_results_styling
 
         return cur_style
 
@@ -1250,44 +1257,48 @@ def callbacks(app_handle):
     @app_handle.callback(
         Output('compare-ghg-results-table', 'style_data_conditional'),
         [Input('compare-ghg-results-table', 'data')],
-        [State('compare-ghg-results-table', 'style_data_conditional')]
+        [
+            State('compare-ghg-results-table', 'style_data_conditional'),
+            State('compare-input', 'value')
+        ]
     )
-    def update_compare_ghg_results_table_styling(
-            cur_data,
-            cur_style
-    ):
+    def update_compare_ghg_results_table_styling(cur_data, cur_style, comp_sel):
 
-        data = pd.DataFrame.from_dict(cur_data)
+        if comp_sel is not None:
+            data = pd.DataFrame.from_dict(cur_data)
 
-        col_ref = BASIC_COLUMNS_ID[1:]
-        col_comp = ['comp_{}'.format(col) for col in BASIC_COLUMNS_ID[1:]]
-        data = data[col_ref + col_comp].applymap(
-            lambda x: 0 if x == '' else float(x.replace(',', '')))
-        ref = data[col_ref]
-        comp = data[col_comp]
+            col_ref = BASIC_COLUMNS_ID[1:]
+            col_comp = ['comp_{}'.format(col) for col in BASIC_COLUMNS_ID[1:]]
+            data = data[col_ref + col_comp].applymap(
+                lambda x: 0 if x == '' else float(x.replace(',', '')))
+            ref = data[col_ref]
+            comp = data[col_comp]
 
-        compare_results_styling = []
-        for j, col in enumerate(col_ref):
-            for i in range(len(ref.index)):
-                apply_condition = True
-                if ref.iloc[i, j] > comp.iloc[i, j]:
-                    color = COLOR_WORSE
-                    font = 'normal'
-                elif ref.iloc[i, j] < comp.iloc[i, j]:
-                    color = COLOR_BETTER
-                    font = 'bold'
-                else:
-                    apply_condition = False
+            compare_results_styling = []
+            for j, col in enumerate(col_ref):
+                for i in range(len(ref.index)):
+                    apply_condition = True
+                    if ref.iloc[i, j] > comp.iloc[i, j]:
+                        color = COLOR_WORSE
+                        font = 'normal'
+                    elif ref.iloc[i, j] < comp.iloc[i, j]:
+                        color = COLOR_BETTER
+                        font = 'bold'
+                    else:
+                        apply_condition = False
 
-                if apply_condition:
-                    compare_results_styling.append(
-                        {
-                            "if": {"column_id": col, "row_index": i},
-                            'color': color,
-                            'fontWeight': font
-                        }
-                    )
-                cur_style = TABLES_COLUMNS_WIDTH + TABLES_LABEL_STYLING + compare_results_styling
+                    if apply_condition:
+                        compare_results_styling.append(
+                            {
+                                "if": {"column_id": col, "row_index": i},
+                                'color': color,
+                                'fontWeight': font
+                            }
+                        )
+                    cur_style = \
+                        TABLES_COLUMNS_WIDTH \
+                        + TABLES_LABEL_STYLING \
+                        + compare_results_styling
 
         return cur_style
 
