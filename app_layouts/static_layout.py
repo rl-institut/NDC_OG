@@ -26,6 +26,7 @@ from data.data_preparation import (
     EXO_RESULTS,
     BASIC_ROWS,
     BASIC_COLUMNS_ID,
+    LABEL_COLUMNS,
     GHG_COLUMNS_ID,
     COMPARE_COLUMNS_ID,
     compute_ndc_results_from_raw_data,
@@ -36,6 +37,8 @@ from .app_components import (
     scenario_div,
     results_div,
     compare_div,
+    TABLES_COLUMNS_WIDTH,
+    TABLES_LABEL_STYLING,
 )
 
 URL_PATHNAME = 'static'
@@ -50,17 +53,21 @@ def extract_centroids(reg):
 
 
 def round_digits(val):
-    """Formats number by rounding to 3 digits"""
-    if isinstance(val, str):
-        answer = val
+    """Formats number by rounding to 2 digits and add commas for thousands"""
+    if np.isnan(val):
+        answer = ''
     else:
-        if np.isnan(val):
-            answer = ''
+        if len('{:d}'.format(int(val))) > 3:
+            # add commas and no dot if in the thousands range
+            answer = '{:,}'.format(val)
+            answer = answer.split('.')[0]
         else:
-            if np.round(val, 2) == 0:
-                answer = '0'
-            else:
-                answer = '{:.2f}'.format(val)
+            # add dot if not in the thousands range
+            answer = '{:.2f}'.format(val)
+
+        if np.round(val, 2) == 0:
+            # always round the zero
+            answer = '0'
     return answer
 
 
@@ -78,16 +85,6 @@ def format_percent(val):
                 answer = '100%'
             else:
                 answer = '{:.2f}%'.format(val)
-    return answer
-
-
-def add_comma(val):
-    """Formats number by separating thousands with a comma."""
-    if np.isnan(val):
-        answer = ''
-    else:
-        answer = '{:,}'.format(val)
-        answer = answer.split('.')[0]
     return answer
 
 
@@ -119,6 +116,10 @@ COMPARE_OPTIONS = []
 for _, r in pd.read_json(SCENARIOS_DATA[BAU_SCENARIO]).sort_values('country').iterrows():
     COMPARE_OPTIONS.append({'label': r['country'], 'value': r['country_iso']})
 COMPARE_OPTIONS = [{'label': v, 'value': k} for k, v in REGIONS_GPD.items()] + COMPARE_OPTIONS
+
+# colors for hightlight of comparison
+COLOR_BETTER = '#218380'
+COLOR_WORSE = '#8F2D56'
 
 
 def country_hover_text(input_df):
@@ -768,9 +769,6 @@ def callbacks(app_handle):
                 basic_results_data['total'] = pd.Series(total)
 
                 # Format the digits
-                basic_results_data.iloc[3:5, 0:] = basic_results_data.iloc[3:5, 0:].applymap(
-                    add_comma
-                )
                 basic_results_data.iloc[1:, 0:] = basic_results_data.iloc[1:, 0:].applymap(
                     round_digits
                 )
@@ -851,7 +849,7 @@ def callbacks(app_handle):
 
                 # sums of the rows
                 ghg_results_data['total'] = pd.Series(total)
-                ghg_results_data.iloc[:, 0:] = ghg_results_data.iloc[:, 0:].applymap(add_comma)
+                ghg_results_data.iloc[:, 0:] = ghg_results_data.iloc[:, 0:].applymap(round_digits)
                 # label of the table rows
                 ghg_results_data['labels'] = pd.Series(ghg_rows)
                 answer_table = ghg_results_data[GHG_COLUMNS_ID].to_dict('records')
@@ -897,9 +895,6 @@ def callbacks(app_handle):
                 basic_results_data['total'] = pd.Series(total)
 
                 # Format the digits
-                basic_results_data.iloc[3:5, 0:] = basic_results_data.iloc[3:5, 0:].applymap(
-                    add_comma
-                )
                 basic_results_data.iloc[1:, 0:] = basic_results_data.iloc[1:, 0:].applymap(
                     round_digits
                 )
@@ -985,7 +980,7 @@ def callbacks(app_handle):
                 )
                 # sums of the rows
                 ghg_results_data['total'] = pd.Series(total)
-                ghg_results_data.iloc[:, 0:] = ghg_results_data.iloc[:, 0:].applymap(add_comma)
+                ghg_results_data.iloc[:, 0:] = ghg_results_data.iloc[:, 0:].applymap(round_digits)
                 # label of the table rows
                 ghg_results_data['labels'] = pd.Series(ghg_rows)
 
@@ -1031,17 +1026,7 @@ def callbacks(app_handle):
                 total = np.nansum(basic_results_data, axis=1)
                 comp_total = np.nansum(comp_results_data, axis=1)
 
-                basic_results_data = 100 * np.divide(
-                    comp_results_data - basic_results_data,
-                    comp_results_data
-                )
-
-                total = 100 * np.divide(
-                    comp_total - total,
-                    comp_total
-                )
-
-                basic_results_data = np.hstack([comp_results_data, basic_results_data])
+                basic_results_data = np.hstack([basic_results_data, comp_results_data])
 
                 comp_ids = ['comp_{}'.format(c) for c in ELECTRIFICATION_OPTIONS] \
                     + ['comp_No Electricity']
@@ -1052,24 +1037,84 @@ def callbacks(app_handle):
                 )
 
                 # sums of the rows
-                basic_results_data['total'] = pd.Series(comp_total)
-                basic_results_data['comp_total'] = pd.Series(total)
+                basic_results_data['total'] = pd.Series(total)
+                basic_results_data['comp_total'] = pd.Series(comp_total)
+                # Format the digits
+                basic_results_data.iloc[1:, 0:] = basic_results_data.iloc[1:, 0:].applymap(
+                    round_digits
+                )
+                basic_results_data.iloc[0, 0:] = basic_results_data.iloc[0, 0:].map(
+                    format_percent
+                )
                 # label of the table rows
                 basic_results_data['labels'] = pd.Series(BASIC_ROWS)
-                basic_results_data.iloc[:, 0:8] = \
-                    basic_results_data.iloc[:, 0:8].applymap(
-                        add_comma
-                    )
-                basic_results_data.iloc[0, 0:8] = basic_results_data.iloc[0, 0:8].map(
-                    lambda x: '{}%'.format(x)
-                )
-                # basic_results_data[comp_ids + ['comp_total']] = \
-                #     basic_results_data[comp_ids + ['comp_total']].applymap(
-                #         lambda x: '' if x == '' else str(x) if '%' in x else '{}%'.format(x)
-                #     )
+
                 answer_table = basic_results_data[COMPARE_COLUMNS_ID].to_dict('records')
 
         return answer_table
+
+    @app_handle.callback(
+        Output('compare-basic-results-table', 'columns'),
+        [
+            Input('country-input', 'value'),
+            Input('compare-input', 'value'),
+        ]
+    )
+    def update_compare_basic_results_table_columns_title(country_sel, comp_sel):
+
+        basic_columns_ids = []
+        for col in BASIC_COLUMNS_ID:
+            if col != 'labels':
+                basic_columns_ids.append({'name': [LABEL_COLUMNS[col], country_sel], 'id': col})
+                basic_columns_ids.append(
+                    {'name': [LABEL_COLUMNS[col], comp_sel], 'id': 'comp_{}'.format(col)}
+                )
+            else:
+                basic_columns_ids.append({'name': LABEL_COLUMNS[col], 'id': col})
+
+        return basic_columns_ids
+
+    @app_handle.callback(
+        Output('compare-basic-results-table', 'style_data_conditional'),
+        [Input('compare-basic-results-table', 'data')],
+        [State('compare-basic-results-table', 'style_data_conditional')]
+    )
+    def update_compare_basic_results_table_styling(cur_data, cur_style):
+
+        data = pd.DataFrame.from_dict(cur_data)
+
+        col_ref = BASIC_COLUMNS_ID[1:]
+        col_comp = ['comp_{}'.format(col) for col in BASIC_COLUMNS_ID[1:]]
+        data = data[col_ref + col_comp].applymap(
+            lambda x: 0 if x == '' else float(x.replace(',', '').replace('%', '')))
+        ref = data[col_ref]
+        comp = data[col_comp]
+
+        compare_results_styling = []
+        for j, col in enumerate(col_ref):
+            for i in range(len(ref.index)):
+                apply_condition = True
+                if ref.iloc[i, j] > comp.iloc[i, j]:
+                    color = COLOR_BETTER
+                    font = 'bold'
+                elif ref.iloc[i, j] < comp.iloc[i, j]:
+                    color = COLOR_WORSE
+                    font = 'normal'
+                else:
+                    apply_condition = False
+
+                if apply_condition:
+                    compare_results_styling.append(
+                        {
+                            "if": {"column_id": col, "row_index": i},
+                            'color': color,
+                            # 'backgroundColor': color,
+                            'fontWeight': font
+                         }
+                    )
+                cur_style = TABLES_COLUMNS_WIDTH + TABLES_LABEL_STYLING + compare_results_styling
+
+        return cur_style
 
     @app_handle.callback(
         Output('compare-ghg-results-table', 'data'),
@@ -1158,17 +1203,7 @@ def callbacks(app_handle):
                 total = np.nansum(ghg_results_data, axis=1)
                 comp_total = np.nansum(ghg_comp_data, axis=1)
 
-                ghg_results_data = 100 * np.divide(
-                    ghg_comp_data - ghg_results_data,
-                    ghg_comp_data
-                )
-
-                total = 100 * np.divide(
-                    comp_total - total,
-                    comp_total
-                )
-
-                ghg_results_data = np.hstack([ghg_comp_data, ghg_results_data])
+                ghg_results_data = np.hstack([ghg_results_data, ghg_comp_data])
 
                 comp_ids = ['comp_{}'.format(c) for c in ELECTRIFICATION_OPTIONS] \
                     + ['comp_No Electricity']
@@ -1181,19 +1216,80 @@ def callbacks(app_handle):
                 # sums of the rows
                 ghg_results_data['total'] = pd.Series(comp_total)
                 ghg_results_data['comp_total'] = pd.Series(total)
+                # Format the digits
+                ghg_results_data.iloc[:, 0:] = ghg_results_data.iloc[:, 0:].applymap(
+                        round_digits
+                )
                 # label of the table rows
                 ghg_results_data['labels'] = pd.Series(ghg_rows)
-                ghg_results_data.iloc[:, 0:8] = \
-                    ghg_results_data.iloc[:, 0:8].applymap(
-                        add_comma
-                    )
-                ghg_results_data[comp_ids + ['comp_total']] = \
-                    ghg_results_data[comp_ids + ['comp_total']].applymap(
-                        lambda x: '' if x == '' else '{}%'.format(x)
-                    )
                 answer_table = ghg_results_data[COMPARE_COLUMNS_ID].to_dict('records')
 
         return answer_table
+
+    @app_handle.callback(
+        Output('compare-ghg-results-table', 'columns'),
+        [
+            Input('country-input', 'value'),
+            Input('compare-input', 'value'),
+        ]
+    )
+    def update_compare_ghg_results_table_columns_title(country_sel, comp_sel):
+
+        basic_columns_ids = []
+        for col in GHG_COLUMNS_ID:
+            if col != 'labels':
+                basic_columns_ids.append({'name': [LABEL_COLUMNS[col], country_sel], 'id': col})
+                basic_columns_ids.append(
+                    {'name': [LABEL_COLUMNS[col], comp_sel], 'id': 'comp_{}'.format(col)}
+                )
+            else:
+                basic_columns_ids.append({'name': LABEL_COLUMNS[col], 'id': col})
+
+        return basic_columns_ids
+
+    @app_handle.callback(
+        Output('compare-ghg-results-table', 'style_data_conditional'),
+        [Input('compare-ghg-results-table', 'data')],
+        [State('compare-ghg-results-table', 'style_data_conditional')]
+    )
+    def update_compare_ghg_results_table_styling(
+            cur_data,
+            cur_style
+    ):
+
+        data = pd.DataFrame.from_dict(cur_data)
+
+        col_ref = BASIC_COLUMNS_ID[1:]
+        col_comp = ['comp_{}'.format(col) for col in BASIC_COLUMNS_ID[1:]]
+        data = data[col_ref + col_comp].applymap(
+            lambda x: 0 if x == '' else float(x.replace(',', '')))
+        ref = data[col_ref]
+        comp = data[col_comp]
+
+        compare_results_styling = []
+        for j, col in enumerate(col_ref):
+            for i in range(len(ref.index)):
+                apply_condition = True
+                if ref.iloc[i, j] > comp.iloc[i, j]:
+                    color = COLOR_WORSE
+                    font = 'normal'
+                elif ref.iloc[i, j] < comp.iloc[i, j]:
+                    color = COLOR_BETTER
+                    font = 'bold'
+                else:
+                    apply_condition = False
+
+                if apply_condition:
+                    compare_results_styling.append(
+                        {
+                            "if": {"column_id": col, "row_index": i},
+                            'color': color,
+                            'fontWeight': font
+                        }
+                    )
+                cur_style = TABLES_COLUMNS_WIDTH + TABLES_LABEL_STYLING + compare_results_styling
+
+        return cur_style
 
     @app_handle.callback(
         Output('country-input', 'value'),
@@ -1306,7 +1402,7 @@ def callbacks(app_handle):
                 comp_name = REGIONS_GPD[comp_sel]
             else:
                 comp_name = df.loc[df.country_iso == comp_sel].country.values[0]
-            answer = 'Results for {} and relative difference with {}'.format(
+            answer = 'Results for {} compared with results {}'.format(
                 comp_name,
                 df.loc[df.country_iso == country_iso].country.values[0]
             )
