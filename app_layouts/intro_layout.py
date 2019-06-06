@@ -2,8 +2,11 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 
-from app_main import app, URL_BASEPATH
+from app_main import app, URL_BASEPATH, PLACEHOLDER
+
 from . import static_layout, flex_layout
+
+
 
 description_content = [
     html.H2('Universal Access to Electricity by 2030...'),
@@ -56,7 +59,10 @@ layout = html.Div(
                             id='intro-placeholder-div',
                             className='cell medium-5 framed',
                             children=[
-                                'Placeholder or video'
+                                html.Img(
+                                    src='data:image/png;base64,{}'.format(PLACEHOLDER.decode()),
+                                    style={'height': '80%'}
+                                )
                             ]
                         ),
                         html.Div(

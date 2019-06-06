@@ -10,6 +10,9 @@ LOGOS = [
     for fn in os.listdir('logos') if fn.endswith('.png')
 ]
 
+PLACEHOLDER = base64.b64encode(open('assets/placeholder.png', 'rb').read())
+
+
 # Initializes dash app
 app = dash.Dash(__name__)
 
