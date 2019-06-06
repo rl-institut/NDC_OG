@@ -118,8 +118,9 @@ for _, r in pd.read_json(SCENARIOS_DATA[BAU_SCENARIO]).sort_values('country').it
 COMPARE_OPTIONS = [{'label': v, 'value': k} for k, v in REGIONS_GPD.items()] + COMPARE_OPTIONS
 
 # colors for hightlight of comparison
-COLOR_BETTER = '#def3eb'
-COLOR_WORSE = '#f0e4f7'
+COLOR_BETTER = '#218380'
+COLOR_WORSE = '#8F2D56'
+
 
 def country_hover_text(input_df):
     """Format the text displayed by the hover."""
@@ -1085,7 +1086,7 @@ def callbacks(app_handle):
         col_ref = BASIC_COLUMNS_ID[1:]
         col_comp = ['comp_{}'.format(col) for col in BASIC_COLUMNS_ID[1:]]
         data = data[col_ref + col_comp].applymap(
-            lambda x: 0 if x == '' else float(x.replace(',', '').replace('%','')))
+            lambda x: 0 if x == '' else float(x.replace(',', '').replace('%', '')))
         ref = data[col_ref]
         comp = data[col_comp]
 
@@ -1098,7 +1099,7 @@ def callbacks(app_handle):
                     font = 'bold'
                 elif ref.iloc[i, j] < comp.iloc[i, j]:
                     color = COLOR_WORSE
-                    font = 'light'
+                    font = 'normal'
                 else:
                     apply_condition = False
 
@@ -1106,7 +1107,8 @@ def callbacks(app_handle):
                     compare_results_styling.append(
                         {
                             "if": {"column_id": col, "row_index": i},
-                            'backgroundColor': color,
+                            'color': color,
+                            # 'backgroundColor': color,
                             'fontWeight': font
                          }
                     )
@@ -1281,7 +1283,7 @@ def callbacks(app_handle):
                     compare_results_styling.append(
                         {
                             "if": {"column_id": col, "row_index": i},
-                            'backgroundColor': color,
+                            'color': color,
                             'fontWeight': font
                         }
                     )
@@ -1400,7 +1402,7 @@ def callbacks(app_handle):
                 comp_name = REGIONS_GPD[comp_sel]
             else:
                 comp_name = df.loc[df.country_iso == comp_sel].country.values[0]
-            answer = 'Results for {} and relative difference with {}'.format(
+            answer = 'Results for {} compared with results {}'.format(
                 comp_name,
                 df.loc[df.country_iso == country_iso].country.values[0]
             )
