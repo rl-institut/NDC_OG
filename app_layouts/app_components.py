@@ -22,9 +22,33 @@ from data.data_preparation import (
     LABEL_COLUMNS,
     BASIC_COLUMNS_ID,
     GHG_COLUMNS_ID,
-    MENTI_DRIVES,
-    IMPACT_FACTORS,
 )
+
+TABLES_COLUMNS_WIDTH = [
+    {'if': {'column_id': 'labels'},
+     'width': '30%'},
+    {'if': {'column_id': GRID},
+     'width': '15%'},
+    {'if': {'column_id': MG},
+     'width': '15%'},
+    {'if': {'column_id': SHS},
+     'width': '15%'},
+    {'if': {'column_id': 'total'},
+     'width': '250px'},
+]
+
+TABLES_LABEL_STYLING = [
+    {
+        'if': {'column_id': 'labels'},
+        'textAlign': 'left'
+    }
+]
+
+TABLES_HEADER_STYLING = {
+    'textAlign': 'center',
+    'backgroundColor': '#e6e6e6',
+    'fontWeight': 'bold'
+}
 
 
 def create_tooltip(cell):
@@ -95,7 +119,7 @@ def results_div(aggregate=False):
                     go.Bar(
                         x=x_vals,
                         y=[0, 0, 0, 0],
-                        text=[BAU_SCENARIO for i in range(4)],
+                        text=[SCENARIOS_DICT[BAU_SCENARIO] for i in range(4)],
                         insidetextfont={'size': fs},
                         textposition='auto',
                         marker=dict(
@@ -106,7 +130,7 @@ def results_div(aggregate=False):
                     go.Bar(
                         x=x_vals,
                         y=[0, 0, 0, 0],
-                        text=[SE4ALL_SCENARIO for i in range(4)],
+                        text=[SCENARIOS_DICT[SE4ALL_SCENARIO] for i in range(4)],
                         insidetextfont={'size': fs},
                         textposition='auto',
                         marker=dict(
@@ -117,7 +141,7 @@ def results_div(aggregate=False):
                     go.Bar(
                         x=x_vals,
                         y=[0, 0, 0, 0],
-                        text=[PROG_SCENARIO for i in range(4)],
+                        text=[SCENARIOS_DICT[PROG_SCENARIO] for i in range(4)],
                         insidetextfont={'size': fs},
                         textposition='auto',
                         marker=dict(
@@ -166,28 +190,6 @@ def results_div(aggregate=False):
         for c in ELECTRIFICATION_OPTIONS
         for label in BASIC_ROWS
     ]
-    # align row labels on the left
-    label_styling = [
-        {
-            'if': {'column_id': 'labels'},
-            'textAlign': 'left'
-        }
-    ]
-    # align column width
-    columns_width = [
-        {'if': {'column_id': 'labels'},
-         'width': '30%'},
-        {'if': {'column_id': GRID},
-         'width': '15%'},
-        {'if': {'column_id': MG},
-         'width': '15%'},
-        {'if': {'column_id': SHS},
-         'width': '15%'},
-        {'if': {'column_id': 'total'},
-         'width': '250px'},
-        {'if': {'row_index': 'odd'},
-         'backgroundColor': 'rgb(248, 248, 248)'}
-    ]
 
     # tables containing the results
     results_divs = [
@@ -212,9 +214,9 @@ def results_div(aggregate=False):
                     columns=[
                         {'name': LABEL_COLUMNS[col], 'id': col} for col in BASIC_COLUMNS_ID
                     ],
-                    style_data_conditional=number_styling + label_styling,
-                    style_cell_conditional=columns_width,
-                    style_header={'textAlign': 'center'},
+                    style_data_conditional=number_styling + TABLES_LABEL_STYLING,
+                    style_cell_conditional=TABLES_COLUMNS_WIDTH,
+                    style_header=TABLES_HEADER_STYLING,
                     style_cell={
                         'fontFamily': "Roboto"
                     },
@@ -235,16 +237,19 @@ def results_div(aggregate=False):
             id='{}-ghg-results-div'.format(id_name),
             className='{}__results'.format(id_name),
             children=[
-                html.H4('Greenhouse Gases emissions'),
+                html.H4(
+                    'Cumulated greenhouse Gases emissions '
+                    'from 2017 until 2030 (in million tons CO2)'
+                ),
                 dash_table.DataTable(
                     id='{}-ghg-results-table'.format(id_name),
                     columns=[
                         {'name': LABEL_COLUMNS[col], 'id': col}
                         for col in GHG_COLUMNS_ID
                     ],
-                    style_data_conditional=number_styling + label_styling,
-                    style_cell_conditional=columns_width,
-                    style_header={'textAlign': 'center'},
+                    style_data_conditional=number_styling + TABLES_LABEL_STYLING,
+                    style_cell_conditional=TABLES_COLUMNS_WIDTH,
+                    style_header=TABLES_HEADER_STYLING,
                     style_cell={
                         'fontFamily': "Roboto"
                     },
@@ -321,26 +326,6 @@ def compare_div():
         for c in ELECTRIFICATION_OPTIONS
         for label in BASIC_ROWS
     ]
-    # align row labels on the left
-    label_styling = [
-        {
-            'if': {'column_id': 'labels'},
-            'textAlign': 'left'
-        }
-    ]
-    # align column width
-    columns_width = [
-        {'if': {'column_id': 'labels'},
-         'width': '40%'},
-        {'if': {'column_id': GRID},
-         'width': '20%'},
-        {'if': {'column_id': MG},
-         'width': '20%'},
-        {'if': {'column_id': SHS},
-         'width': '20%'},
-        {'if': {'row_index': 'odd'},
-         'backgroundColor': 'rgb(248, 248, 248)'}
-    ]
 
     basic_columns_ids = []
     for col in BASIC_COLUMNS_ID:
@@ -384,9 +369,9 @@ def compare_div():
                 dash_table.DataTable(
                     id='{}-basic-results-table'.format(id_name),
                     columns=basic_columns_ids,
-                    style_data_conditional=number_styling + label_styling,
-                    style_cell_conditional=columns_width,
-                    style_header={'textAlign': 'center'},
+                    style_data_conditional=number_styling + TABLES_LABEL_STYLING,
+                    style_cell_conditional=TABLES_COLUMNS_WIDTH,
+                    style_header=TABLES_HEADER_STYLING,
                     style_cell={
                         'fontFamily': "Roboto"
                     },
@@ -409,13 +394,16 @@ def compare_div():
             className='{}__results'.format(id_name),
             style={'width': '90%'},
             children=[
-                html.H4('Greenhouse Gases emissions'),
+                html.H4(
+                    'Cumulated greenhouse Gases emissions '
+                    'from 2017 until 2030 (in million tons CO2)'
+                ),
                 dash_table.DataTable(
                     id='{}-ghg-results-table'.format(id_name),
                     columns=ghg_columns_ids,
-                    style_data_conditional=number_styling + label_styling,
-                    style_cell_conditional=columns_width,
-                    style_header={'textAlign': 'center'},
+                    style_data_conditional=number_styling + TABLES_LABEL_STYLING,
+                    style_cell_conditional=TABLES_COLUMNS_WIDTH,
+                    style_header=TABLES_HEADER_STYLING,
                     style_cell={
                         'fontFamily': "Roboto"
                     },
@@ -666,10 +654,10 @@ def controls_div():
                                              id='mentis-%s-input' %
                                                 input_name.replace('_', '-'),
                                              className='app__input__influence',
-                                     # options=[
-                                     #     {'label': l, 'value': v}
-                                     #     for l, v in zip(['low', 'medium', 'high'], [0, 0.5, 1])
-                                     # ],
+                                             # options=[
+                                             #     {'label': l, 'value': v}
+                                             #     for l, v in zip(['low', 'medium', 'high'], [0, 0.5, 1])
+                                             # ],
                                              value=0,
                                              type='number',
                                              min=0,

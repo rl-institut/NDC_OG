@@ -26,6 +26,7 @@ from data.data_preparation import (
     EXO_RESULTS,
     BASIC_ROWS,
     BASIC_COLUMNS_ID,
+    LABEL_COLUMNS,
     GHG_COLUMNS_ID,
     COMPARE_COLUMNS_ID,
     compute_ndc_results_from_raw_data,
@@ -36,6 +37,8 @@ from .app_components import (
     scenario_div,
     results_div,
     compare_div,
+    TABLES_COLUMNS_WIDTH,
+    TABLES_LABEL_STYLING,
 )
 
 URL_PATHNAME = 'static'
@@ -49,13 +52,39 @@ def extract_centroids(reg):
     return centroids.loc[centroids.region.isin(reg)].copy()
 
 
-def add_comma(val):
-    """Formats number by separating thousands with a comma."""
+def round_digits(val):
+    """Formats number by rounding to 2 digits and add commas for thousands"""
     if np.isnan(val):
         answer = ''
     else:
-        answer = "{:,}".format(val)
-        answer = answer.split('.')[0]
+        if len('{:d}'.format(int(val))) > 3:
+            # add commas and no dot if in the thousands range
+            answer = '{:,}'.format(val)
+            answer = answer.split('.')[0]
+        else:
+            # add dot if not in the thousands range
+            answer = '{:.2f}'.format(val)
+
+        if np.round(val, 2) == 0:
+            # always round the zero
+            answer = '0'
+    return answer
+
+
+def format_percent(val):
+    """Format number for percents."""
+    if isinstance(val, str):
+        answer = val
+    else:
+        if np.isnan(val):
+            answer = ''
+        else:
+            if np.round(val, 2) == 0:
+                answer = '0%'
+            elif val >= 100:
+                answer = '100%'
+            else:
+                answer = '{:.2f}%'.format(val)
     return answer
 
 
@@ -82,6 +111,10 @@ COMPARE_OPTIONS = []
 for _, r in pd.read_json(SCENARIOS_DATA[BAU_SCENARIO]).sort_values('country').iterrows():
     COMPARE_OPTIONS.append({'label': r['country'], 'value': r['country_iso']})
 COMPARE_OPTIONS = [{'label': v, 'value': k} for k, v in REGIONS_GPD.items()] + COMPARE_OPTIONS
+
+# colors for hightlight of comparison
+COLOR_BETTER = '#218380'
+COLOR_WORSE = '#8F2D56'
 
 
 def country_hover_text(input_df):
@@ -393,21 +426,15 @@ def callbacks(app_handle):
                 # narrow to the country's results
                 df = df.loc[df.country_iso == country_iso]
                 # compute the percentage of population with electricity access
-                basic_results_data = prepare_results_tables(df)
+                basic_results_data = prepare_results_tables(df, sce)
 
+                if y_sel in BASIC_ROWS[0:3]:
+                    x = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
+                else:
+                    x = ELECTRIFICATION_OPTIONS.copy()
                 y = basic_results_data[BASIC_ROWS.index(y_sel)]
 
-                if sce == BAU_SCENARIO and y_sel == BASIC_ROWS[0]:
-                    y = np.append(y, 0)
-                    y[3] = 100 - y.sum()
-                    ELECTRIFICATION_OPTIONS.copy()
-                    fig['data'][sce_id].update(
-                        {'x': ELECTRIFICATION_OPTIONS.copy() + ['No electricity']}
-                    )
-                else:
-                    fig['data'][sce_id].update(
-                        {'x': ELECTRIFICATION_OPTIONS.copy()}
-                    )
+                fig['data'][sce_id].update({'x': x})
                 fig['data'][sce_id].update({'y': y})
 
         return fig
@@ -437,22 +464,17 @@ def callbacks(app_handle):
                 df = df[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
 
                 # compute the percentage of population with electricity access
-                basic_results_data = prepare_results_tables(df)
+                basic_results_data = prepare_results_tables(df, sce)
 
+                if y_sel in BASIC_ROWS[0:3]:
+                    x = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
+                else:
+                    x = ELECTRIFICATION_OPTIONS.copy()
                 y = basic_results_data[BASIC_ROWS.index(y_sel)]
 
-                if sce == BAU_SCENARIO and y_sel == BASIC_ROWS[0]:
-                    y = np.append(y, 0)
-                    y[3] = 100 - y.sum()
-                    ELECTRIFICATION_OPTIONS.copy()
-                    fig['data'][sce_id].update(
-                        {'x': ELECTRIFICATION_OPTIONS.copy() + ['No electricity']}
-                    )
-                else:
-                    fig['data'][sce_id].update(
-                        {'x': ELECTRIFICATION_OPTIONS.copy()}
-                    )
+                fig['data'][sce_id].update({'x': x})
                 fig['data'][sce_id].update({'y': y})
+
         return fig
 
     @app_handle.callback(
@@ -487,25 +509,21 @@ def callbacks(app_handle):
                     # compare the reference country to a country
                     df_comp = df_comp.loc[df_comp.country_iso == comp_sel]
 
-                basic_results_data = prepare_results_tables(df)
-                comp_results_data = prepare_results_tables(df_comp)
+                basic_results_data = prepare_results_tables(df, scenario)
+                comp_results_data = prepare_results_tables(df_comp, scenario)
 
+                if y_sel in BASIC_ROWS[0:3]:
+                    x = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
+                else:
+                    x = ELECTRIFICATION_OPTIONS.copy()
                 y = basic_results_data[BASIC_ROWS.index(y_sel)]
                 y_comp = comp_results_data[BASIC_ROWS.index(y_sel)]
 
-                x_vals = ELECTRIFICATION_OPTIONS.copy()
-
-                if scenario == BAU_SCENARIO and y_sel == BASIC_ROWS[0]:
-                    y = np.append(y, 0)
-                    y_comp = np.append(y_comp, 0)
-                    y[3] = 100 - y.sum()
-                    y_comp[3] = 100 - y_comp.sum()
-                    x_vals = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
                 fs = 12
 
                 fig['data'] = [
                            go.Bar(
-                               x=x_vals,
+                               x=x,
                                y=y,
                                text=[country_sel for i in range(4)],
                                insidetextfont={'size': fs},
@@ -516,7 +534,7 @@ def callbacks(app_handle):
                                hoverinfo='y+text'
                            ),
                            go.Bar(
-                               x=x_vals,
+                               x=x,
                                y=y_comp,
                                text=[comp_name for i in range(4)],
                                insidetextfont={'size': fs},
@@ -716,25 +734,28 @@ def callbacks(app_handle):
                 df = pd.read_json(cur_data[scenario])
                 df = df.loc[df.country_iso == country_iso]
 
-                basic_results_data = prepare_results_tables(df)
+                basic_results_data = prepare_results_tables(df, scenario)
 
                 total = np.nansum(basic_results_data, axis=1)
 
                 # prepare a DataFrame
                 basic_results_data = pd.DataFrame(
                     data=basic_results_data,
-                    columns=ELECTRIFICATION_OPTIONS
+                    columns=ELECTRIFICATION_OPTIONS + ['No Electricity']
                 )
                 # sums of the rows
                 basic_results_data['total'] = pd.Series(total)
+
+                # Format the digits
+                basic_results_data.iloc[1:, 0:] = basic_results_data.iloc[1:, 0:].applymap(
+                    round_digits
+                )
+                basic_results_data.iloc[0, 0:] = basic_results_data.iloc[0, 0:].map(
+                    format_percent
+                )
                 # label of the table rows
                 basic_results_data['labels'] = pd.Series(BASIC_ROWS)
-                basic_results_data.iloc[1:, 0:4] = basic_results_data.iloc[1:, 0:4].applymap(
-                    add_comma
-                )
-                basic_results_data.iloc[0, 0:4] = basic_results_data.iloc[0, 0:4].map(
-                    lambda x: '{}%'.format(x)
-                )
+
                 answer_table = basic_results_data[BASIC_COLUMNS_ID].to_dict('records')
 
         return answer_table
@@ -774,15 +795,15 @@ def callbacks(app_handle):
 
                 if df_bau is None:
                     ghg_rows = [
-                        'GHG (Mio tCO2)',
-                        'GHG (TIER + 1) (Mio tCO2)',
+                        'GHG',
+                        'GHG (TIER + 1)',
                         # 'GHG CUMUL'
                     ]
                 else:
                     ghg_rows = [
-                        'GHG (Mio tCO2)',
+                        'GHG',
                         'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-                        'GHG (TIER +1) (Mio tCO2)',
+                        'GHG (TIER +1)',
                         'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
                     ]
 
@@ -799,14 +820,16 @@ def callbacks(app_handle):
                 total = np.nansum(ghg_results_data, axis=1)
 
                 # prepare a DataFrame
-                ghg_results_data = pd.DataFrame(data=ghg_results_data,
-                                                columns=ELECTRIFICATION_OPTIONS)
+                ghg_results_data = pd.DataFrame(
+                    data=ghg_results_data,
+                    columns=ELECTRIFICATION_OPTIONS + ['No Electricity']
+                )
 
                 # sums of the rows
                 ghg_results_data['total'] = pd.Series(total)
+                ghg_results_data.iloc[:, 0:] = ghg_results_data.iloc[:, 0:].applymap(round_digits)
                 # label of the table rows
                 ghg_results_data['labels'] = pd.Series(ghg_rows)
-                ghg_results_data.iloc[:, 0:4] = ghg_results_data.iloc[:, 0:4].applymap(add_comma)
                 answer_table = ghg_results_data[GHG_COLUMNS_ID].to_dict('records')
 
         return answer_table
@@ -837,25 +860,28 @@ def callbacks(app_handle):
                 # aggregate the results
                 df = df[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
 
-                basic_results_data = prepare_results_tables(df)
+                basic_results_data = prepare_results_tables(df, scenario)
 
                 total = np.nansum(basic_results_data, axis=1)
 
                 # prepare a DataFrame
                 basic_results_data = pd.DataFrame(
                     data=basic_results_data,
-                    columns=ELECTRIFICATION_OPTIONS
+                    columns=ELECTRIFICATION_OPTIONS + ['No Electricity']
                 )
                 # sums of the rows
                 basic_results_data['total'] = pd.Series(total)
+
+                # Format the digits
+                basic_results_data.iloc[1:, 0:] = basic_results_data.iloc[1:, 0:].applymap(
+                    round_digits
+                )
+                basic_results_data.iloc[0, 0:] = basic_results_data.iloc[0, 0:].map(
+                    format_percent
+                )
                 # label of the table rows
                 basic_results_data['labels'] = pd.Series(BASIC_ROWS)
-                basic_results_data.iloc[1:, 0:4] = basic_results_data.iloc[1:, 0:4].applymap(
-                    add_comma
-                )
-                basic_results_data.iloc[0, 0:4] = basic_results_data.iloc[0, 0:4].map(
-                    lambda x: '' if x == '' else '{}%'.format(x)
-                )
+
                 answer_table = basic_results_data[BASIC_COLUMNS_ID].to_dict('records')
 
         return answer_table
@@ -895,15 +921,15 @@ def callbacks(app_handle):
 
                 if df_bau is None:
                     ghg_rows = [
-                        'GHG (Mio tCO2)',
-                        'GHG (TIER +1) (Mio tCO2)',
+                        'GHG',
+                        'GHG (TIER +1)',
                         # 'GHG CUMUL'
                     ]
                 else:
                     ghg_rows = [
-                        'GHG (Mio tCO2)',
+                        'GHG',
                         'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-                        'GHG (TIER +1) (Mio tCO2)',
+                        'GHG (TIER +1)',
                         'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
                     ]
                     # aggregate the results
@@ -926,13 +952,16 @@ def callbacks(app_handle):
                 total = np.nansum(ghg_results_data, axis=1)
 
                 # prepare a DataFrame
-                ghg_results_data = pd.DataFrame(data=ghg_results_data,
-                                                columns=ELECTRIFICATION_OPTIONS)
+                ghg_results_data = pd.DataFrame(
+                    data=ghg_results_data,
+                    columns=ELECTRIFICATION_OPTIONS + ['No Electricity']
+                )
                 # sums of the rows
                 ghg_results_data['total'] = pd.Series(total)
-                ghg_results_data['labels'] = pd.Series(ghg_rows)
+                ghg_results_data.iloc[:, 0:] = ghg_results_data.iloc[:, 0:].applymap(round_digits)
                 # label of the table rows
-                ghg_results_data.iloc[:, 0:4] = ghg_results_data.iloc[:, 0:4].applymap(add_comma)
+                ghg_results_data['labels'] = pd.Series(ghg_rows)
+
                 answer_table = ghg_results_data[GHG_COLUMNS_ID].to_dict('records')
 
         return answer_table
@@ -955,7 +984,7 @@ def callbacks(app_handle):
             country_iso = country_iso[0]
 
         # extract the data from the selected scenario if a country was selected
-        if country_iso is not None:
+        if country_iso is not None and comp_sel is not None:
             if scenario in SCENARIOS:
                 df = pd.read_json(cur_data[scenario])
                 df_comp = df.copy()
@@ -969,50 +998,108 @@ def callbacks(app_handle):
                     # compare the reference country to a country
                     df_comp = df_comp.loc[df_comp.country_iso == comp_sel]
 
-                basic_results_data = prepare_results_tables(df)
-                comp_results_data = prepare_results_tables(df_comp)
+                basic_results_data = prepare_results_tables(df, scenario)
+                comp_results_data = prepare_results_tables(df_comp, scenario)
 
                 total = np.nansum(basic_results_data, axis=1)
                 comp_total = np.nansum(comp_results_data, axis=1)
 
-                basic_results_data = 100 * np.divide(
-                    comp_results_data - basic_results_data,
-                    comp_results_data
-                )
+                basic_results_data = np.hstack([basic_results_data, comp_results_data])
 
-                total = 100 * np.divide(
-                    comp_total - total,
-                    comp_total
-                )
-
-                basic_results_data = np.hstack([comp_results_data, basic_results_data])
-
-                comp_ids = ['comp_{}'.format(c) for c in ELECTRIFICATION_OPTIONS]
+                comp_ids = ['comp_{}'.format(c) for c in ELECTRIFICATION_OPTIONS] \
+                    + ['comp_No Electricity']
                 # prepare a DataFrame
                 basic_results_data = pd.DataFrame(
                     data=basic_results_data,
-                    columns=ELECTRIFICATION_OPTIONS + comp_ids
+                    columns=ELECTRIFICATION_OPTIONS + ['No Electricity'] + comp_ids
                 )
 
                 # sums of the rows
-                basic_results_data['total'] = pd.Series(comp_total)
-                basic_results_data['comp_total'] = pd.Series(total)
+                basic_results_data['total'] = pd.Series(total)
+                basic_results_data['comp_total'] = pd.Series(comp_total)
+                # Format the digits
+                basic_results_data.iloc[1:, 0:] = basic_results_data.iloc[1:, 0:].applymap(
+                    round_digits
+                )
+                basic_results_data.iloc[0, 0:] = basic_results_data.iloc[0, 0:].map(
+                    format_percent
+                )
                 # label of the table rows
                 basic_results_data['labels'] = pd.Series(BASIC_ROWS)
-                basic_results_data.iloc[:, 0:8] = \
-                    basic_results_data.iloc[:, 0:8].applymap(
-                        add_comma
-                    )
-                basic_results_data.iloc[0, 0:8] = basic_results_data.iloc[0, 0:8].map(
-                    lambda x: '{}%'.format(x)
-                )
-                basic_results_data[comp_ids + ['comp_total']] = \
-                    basic_results_data[comp_ids + ['comp_total']].applymap(
-                        lambda x: '' if x == '' else str(x) if '%' in x else '{}%'.format(x)
-                    )
+
                 answer_table = basic_results_data[COMPARE_COLUMNS_ID].to_dict('records')
 
         return answer_table
+
+    @app_handle.callback(
+        Output('compare-basic-results-table', 'columns'),
+        [
+            Input('country-input', 'value'),
+            Input('compare-input', 'value'),
+        ]
+    )
+    def update_compare_basic_results_table_columns_title(country_sel, comp_sel):
+
+        basic_columns_ids = []
+        for col in BASIC_COLUMNS_ID:
+            if col != 'labels':
+                basic_columns_ids.append({'name': [LABEL_COLUMNS[col], country_sel], 'id': col})
+                basic_columns_ids.append(
+                    {'name': [LABEL_COLUMNS[col], comp_sel], 'id': 'comp_{}'.format(col)}
+                )
+            else:
+                basic_columns_ids.append({'name': LABEL_COLUMNS[col], 'id': col})
+
+        return basic_columns_ids
+
+    @app_handle.callback(
+        Output('compare-basic-results-table', 'style_data_conditional'),
+        [Input('compare-basic-results-table', 'data')],
+        [
+            State('compare-basic-results-table', 'style_data_conditional'),
+            State('compare-input', 'value')
+        ]
+    )
+    def update_compare_basic_results_table_styling(cur_data, cur_style, comp_sel):
+
+        if comp_sel is not None:
+            data = pd.DataFrame.from_dict(cur_data)
+
+            col_ref = BASIC_COLUMNS_ID[1:]
+            col_comp = ['comp_{}'.format(col) for col in BASIC_COLUMNS_ID[1:]]
+            data = data[col_ref + col_comp].applymap(
+                lambda x: 0 if x == '' else float(x.replace(',', '').replace('%', '')))
+            ref = data[col_ref]
+            comp = data[col_comp]
+
+            compare_results_styling = []
+            for j, col in enumerate(col_ref):
+                for i in range(len(ref.index)):
+                    apply_condition = True
+                    if ref.iloc[i, j] > comp.iloc[i, j]:
+                        color = COLOR_BETTER
+                        font = 'bold'
+                    elif ref.iloc[i, j] < comp.iloc[i, j]:
+                        color = COLOR_WORSE
+                        font = 'normal'
+                    else:
+                        apply_condition = False
+
+                    if apply_condition:
+                        compare_results_styling.append(
+                            {
+                                "if": {"column_id": col, "row_index": i},
+                                'color': color,
+                                # 'backgroundColor': color,
+                                'fontWeight': font
+                             }
+                        )
+                    cur_style = \
+                        TABLES_COLUMNS_WIDTH \
+                        + TABLES_LABEL_STYLING \
+                        + compare_results_styling
+
+        return cur_style
 
     @app_handle.callback(
         Output('compare-ghg-results-table', 'data'),
@@ -1033,7 +1120,7 @@ def callbacks(app_handle):
             country_iso = country_iso[0]
 
         # extract the data from the selected scenario if a country was selected
-        if country_iso is not None:
+        if country_iso is not None and comp_sel is not None:
             if scenario in SCENARIOS:
                 df = pd.read_json(cur_data[scenario])
                 df_comp = df.copy()
@@ -1056,7 +1143,8 @@ def callbacks(app_handle):
                     if comp_sel in REGIONS_NDC:
                         # compare the reference country to a region
                         df_bau_comp = df_bau.loc[df_bau.region == REGIONS_NDC[comp_sel]]
-                        df_bau_comp = df_bau_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(
+                        columns_to_select = EXO_RESULTS + ['pop_newly_electrified_2030']
+                        df_bau_comp = df_bau_comp[columns_to_select].sum(
                             axis=0)
                     else:
                         # compare the reference country to a country
@@ -1064,15 +1152,15 @@ def callbacks(app_handle):
 
                 if df_bau_ref is None:
                     ghg_rows = [
-                        'GHG (Mio tCO2)',
-                        'GHG (TIER +1) (Mio tCO2)',
+                        'GHG',
+                        'GHG (TIER +1)',
                         # 'GHG CUMUL'
                     ]
                 else:
                     ghg_rows = [
-                        'GHG (Mio tCO2)',
+                        'GHG',
                         'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-                        'GHG (TIER +1) (Mio tCO2)',
+                        'GHG (TIER +1)',
                         'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
                     ]
 
@@ -1100,41 +1188,97 @@ def callbacks(app_handle):
                 total = np.nansum(ghg_results_data, axis=1)
                 comp_total = np.nansum(ghg_comp_data, axis=1)
 
-                ghg_results_data = 100 * np.divide(
-                    ghg_comp_data - ghg_results_data,
-                    ghg_comp_data
-                )
+                ghg_results_data = np.hstack([ghg_results_data, ghg_comp_data])
 
-                total = 100 * np.divide(
-                    comp_total - total,
-                    comp_total
-                )
+                comp_ids = ['comp_{}'.format(c) for c in ELECTRIFICATION_OPTIONS] \
+                    + ['comp_No Electricity']
 
-                ghg_results_data = np.hstack([ghg_comp_data, ghg_results_data])
-
-                comp_ids = ['comp_{}'.format(c) for c in ELECTRIFICATION_OPTIONS]
                 # prepare a DataFrame
                 ghg_results_data = pd.DataFrame(
                     data=ghg_results_data,
-                    columns=ELECTRIFICATION_OPTIONS + comp_ids
+                    columns=ELECTRIFICATION_OPTIONS + ['No Electricity'] + comp_ids
                 )
-                print(ghg_results_data)
                 # sums of the rows
                 ghg_results_data['total'] = pd.Series(comp_total)
                 ghg_results_data['comp_total'] = pd.Series(total)
+                # Format the digits
+                ghg_results_data.iloc[:, 0:] = ghg_results_data.iloc[:, 0:].applymap(
+                        round_digits
+                )
                 # label of the table rows
                 ghg_results_data['labels'] = pd.Series(ghg_rows)
-                ghg_results_data.iloc[:, 0:8] = \
-                    ghg_results_data.iloc[:, 0:8].applymap(
-                        add_comma
-                    )
-                ghg_results_data[comp_ids + ['comp_total']] = \
-                    ghg_results_data[comp_ids + ['comp_total']].applymap(
-                        lambda x: '' if x == '' else '{}%'.format(x)
-                    )
                 answer_table = ghg_results_data[COMPARE_COLUMNS_ID].to_dict('records')
 
         return answer_table
+
+    @app_handle.callback(
+        Output('compare-ghg-results-table', 'columns'),
+        [
+            Input('country-input', 'value'),
+            Input('compare-input', 'value'),
+        ]
+    )
+    def update_compare_ghg_results_table_columns_title(country_sel, comp_sel):
+
+        basic_columns_ids = []
+        for col in GHG_COLUMNS_ID:
+            if col != 'labels':
+                basic_columns_ids.append({'name': [LABEL_COLUMNS[col], country_sel], 'id': col})
+                basic_columns_ids.append(
+                    {'name': [LABEL_COLUMNS[col], comp_sel], 'id': 'comp_{}'.format(col)}
+                )
+            else:
+                basic_columns_ids.append({'name': LABEL_COLUMNS[col], 'id': col})
+
+        return basic_columns_ids
+
+    @app_handle.callback(
+        Output('compare-ghg-results-table', 'style_data_conditional'),
+        [Input('compare-ghg-results-table', 'data')],
+        [
+            State('compare-ghg-results-table', 'style_data_conditional'),
+            State('compare-input', 'value')
+        ]
+    )
+    def update_compare_ghg_results_table_styling(cur_data, cur_style, comp_sel):
+
+        if comp_sel is not None:
+            data = pd.DataFrame.from_dict(cur_data)
+
+            col_ref = BASIC_COLUMNS_ID[1:]
+            col_comp = ['comp_{}'.format(col) for col in BASIC_COLUMNS_ID[1:]]
+            data = data[col_ref + col_comp].applymap(
+                lambda x: 0 if x == '' else float(x.replace(',', '')))
+            ref = data[col_ref]
+            comp = data[col_comp]
+
+            compare_results_styling = []
+            for j, col in enumerate(col_ref):
+                for i in range(len(ref.index)):
+                    apply_condition = True
+                    if ref.iloc[i, j] > comp.iloc[i, j]:
+                        color = COLOR_WORSE
+                        font = 'normal'
+                    elif ref.iloc[i, j] < comp.iloc[i, j]:
+                        color = COLOR_BETTER
+                        font = 'bold'
+                    else:
+                        apply_condition = False
+
+                    if apply_condition:
+                        compare_results_styling.append(
+                            {
+                                "if": {"column_id": col, "row_index": i},
+                                'color': color,
+                                'fontWeight': font
+                            }
+                        )
+                    cur_style = \
+                        TABLES_COLUMNS_WIDTH \
+                        + TABLES_LABEL_STYLING \
+                        + compare_results_styling
+
+        return cur_style
 
     @app_handle.callback(
         Output('country-input', 'value'),
@@ -1216,6 +1360,19 @@ def callbacks(app_handle):
         return answer
 
     @app_handle.callback(
+        Output('aggregate-basic-results-title', 'children'),
+        [Input('region-input', 'value')]
+    )
+    def aggregated_basic_results_title(region_id):
+
+        answer = 'Results'
+        if region_id is not None:
+            answer = 'Aggregated results for {}: electrification options'.format(
+                REGIONS_GPD[region_id]
+            )
+        return answer
+
+    @app_handle.callback(
         Output('compare-basic-results-title', 'children'),
         [
             Input('country-input', 'value'),
@@ -1234,7 +1391,7 @@ def callbacks(app_handle):
                 comp_name = REGIONS_GPD[comp_sel]
             else:
                 comp_name = df.loc[df.country_iso == comp_sel].country.values[0]
-            answer = 'Results for {} and relative difference with {}'.format(
+            answer = 'Results for {} compared with results {}'.format(
                 comp_name,
                 df.loc[df.country_iso == country_iso].country.values[0]
             )
