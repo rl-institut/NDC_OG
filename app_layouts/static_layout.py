@@ -819,15 +819,15 @@ def callbacks(app_handle):
 
                 if df_bau is None:
                     ghg_rows = [
-                        'GHG (Mio tCO2)',
-                        'GHG (TIER + 1) (Mio tCO2)',
+                        'GHG',
+                        'GHG (TIER + 1)',
                         # 'GHG CUMUL'
                     ]
                 else:
                     ghg_rows = [
-                        'GHG (Mio tCO2)',
+                        'GHG',
                         'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-                        'GHG (TIER +1) (Mio tCO2)',
+                        'GHG (TIER +1)',
                         'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
                     ]
 
@@ -948,15 +948,15 @@ def callbacks(app_handle):
 
                 if df_bau is None:
                     ghg_rows = [
-                        'GHG (Mio tCO2)',
-                        'GHG (TIER +1) (Mio tCO2)',
+                        'GHG',
+                        'GHG (TIER +1)',
                         # 'GHG CUMUL'
                     ]
                 else:
                     ghg_rows = [
-                        'GHG (Mio tCO2)',
+                        'GHG',
                         'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-                        'GHG (TIER +1) (Mio tCO2)',
+                        'GHG (TIER +1)',
                         'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
                     ]
                     # aggregate the results
@@ -1122,15 +1122,15 @@ def callbacks(app_handle):
 
                 if df_bau_ref is None:
                     ghg_rows = [
-                        'GHG (Mio tCO2)',
-                        'GHG (TIER +1) (Mio tCO2)',
+                        'GHG',
+                        'GHG (TIER +1)',
                         # 'GHG CUMUL'
                     ]
                 else:
                     ghg_rows = [
-                        'GHG (Mio tCO2)',
+                        'GHG',
                         'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-                        'GHG (TIER +1) (Mio tCO2)',
+                        'GHG (TIER +1)',
                         'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
                     ]
 
@@ -1272,6 +1272,19 @@ def callbacks(app_handle):
             df = pd.read_json(cur_data[scenario])
             answer = 'Results for {}: electrification options'.format(
                 df.loc[df.country_iso == country_iso].country.values[0])
+        return answer
+
+    @app_handle.callback(
+        Output('aggregate-basic-results-title', 'children'),
+        [Input('region-input', 'value')]
+    )
+    def aggregated_basic_results_title(region_id):
+
+        answer = 'Results'
+        if region_id is not None:
+            answer = 'Aggregated results for {}: electrification options'.format(
+                REGIONS_GPD[region_id]
+            )
         return answer
 
     @app_handle.callback(
