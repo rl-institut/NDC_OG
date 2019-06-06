@@ -37,7 +37,8 @@ from .app_components import (
     scenario_div,
     results_div,
     compare_div,
-    TABLES_COLUMNS_WIDTH
+    TABLES_COLUMNS_WIDTH,
+    TABLES_LABEL_STYLING,
 )
 
 URL_PATHNAME = 'static'
@@ -1109,7 +1110,7 @@ def callbacks(app_handle):
                             'fontWeight': font
                          }
                     )
-                cur_style = TABLES_COLUMNS_WIDTH + compare_results_styling
+                cur_style = TABLES_COLUMNS_WIDTH + TABLES_LABEL_STYLING + compare_results_styling
 
         return cur_style
 
@@ -1284,7 +1285,7 @@ def callbacks(app_handle):
                             'fontWeight': font
                         }
                     )
-                cur_style = TABLES_COLUMNS_WIDTH + compare_results_styling
+                cur_style = TABLES_COLUMNS_WIDTH + TABLES_LABEL_STYLING + compare_results_styling
 
         return cur_style
 

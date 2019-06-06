@@ -37,6 +37,19 @@ TABLES_COLUMNS_WIDTH = [
      'width': '250px'},
 ]
 
+TABLES_LABEL_STYLING = [
+    {
+        'if': {'column_id': 'labels'},
+        'textAlign': 'left'
+    }
+]
+
+TABLES_HEADER_STYLING = {
+    'textAlign': 'center',
+    'backgroundColor': '#e6e6e6',
+    'fontWeight': 'bold'
+}
+
 
 def create_tooltip(cell):
     """Create tooltips for tables"""
@@ -177,13 +190,6 @@ def results_div(aggregate=False):
         for c in ELECTRIFICATION_OPTIONS
         for label in BASIC_ROWS
     ]
-    # align row labels on the left
-    label_styling = [
-        {
-            'if': {'column_id': 'labels'},
-            'textAlign': 'left'
-        }
-    ]
 
     # tables containing the results
     results_divs = [
@@ -208,9 +214,9 @@ def results_div(aggregate=False):
                     columns=[
                         {'name': LABEL_COLUMNS[col], 'id': col} for col in BASIC_COLUMNS_ID
                     ],
-                    style_data_conditional=number_styling + label_styling,
+                    style_data_conditional=number_styling + TABLES_LABEL_STYLING,
                     style_cell_conditional=TABLES_COLUMNS_WIDTH,
-                    style_header={'textAlign': 'center'},
+                    style_header=TABLES_HEADER_STYLING,
                     style_cell={
                         'fontFamily': "Roboto"
                     },
@@ -241,9 +247,9 @@ def results_div(aggregate=False):
                         {'name': LABEL_COLUMNS[col], 'id': col}
                         for col in GHG_COLUMNS_ID
                     ],
-                    style_data_conditional=number_styling + label_styling,
+                    style_data_conditional=number_styling + TABLES_LABEL_STYLING,
                     style_cell_conditional=TABLES_COLUMNS_WIDTH,
-                    style_header={'textAlign': 'center'},
+                    style_header=TABLES_HEADER_STYLING,
                     style_cell={
                         'fontFamily': "Roboto"
                     },
@@ -320,13 +326,6 @@ def compare_div():
         for c in ELECTRIFICATION_OPTIONS
         for label in BASIC_ROWS
     ]
-    # align row labels on the left
-    label_styling = [
-        {
-            'if': {'column_id': 'labels'},
-            'textAlign': 'left'
-        }
-    ]
 
     basic_columns_ids = []
     for col in BASIC_COLUMNS_ID:
@@ -347,12 +346,6 @@ def compare_div():
             )
         else:
             ghg_columns_ids.append({'name': LABEL_COLUMNS[col], 'id': col})
-
-    compare_results_styling = [
-        {"if": {"row_index": i},
-            'backgroundColor': 'rgb(248, 248, 248)'}
-        for i in [3, 4, 5, 6]
-    ]
 
     # tables containing the results
     results_divs = [
@@ -376,9 +369,9 @@ def compare_div():
                 dash_table.DataTable(
                     id='{}-basic-results-table'.format(id_name),
                     columns=basic_columns_ids,
-                    style_data_conditional=number_styling + label_styling,
-                    style_cell_conditional=TABLES_COLUMNS_WIDTH + compare_results_styling,
-                    style_header={'textAlign': 'center'},
+                    style_data_conditional=number_styling + TABLES_LABEL_STYLING,
+                    style_cell_conditional=TABLES_COLUMNS_WIDTH,
+                    style_header=TABLES_HEADER_STYLING,
                     style_cell={
                         'fontFamily': "Roboto"
                     },
@@ -408,9 +401,9 @@ def compare_div():
                 dash_table.DataTable(
                     id='{}-ghg-results-table'.format(id_name),
                     columns=ghg_columns_ids,
-                    style_data_conditional=number_styling + label_styling,
-                    style_cell_conditional=TABLES_COLUMNS_WIDTH + compare_results_styling,
-                    style_header={'textAlign': 'center'},
+                    style_data_conditional=number_styling + TABLES_LABEL_STYLING,
+                    style_cell_conditional=TABLES_COLUMNS_WIDTH,
+                    style_header=TABLES_HEADER_STYLING,
                     style_cell={
                         'fontFamily': "Roboto"
                     },
@@ -661,10 +654,10 @@ def controls_div():
                                              id='mentis-%s-input' %
                                                 input_name.replace('_', '-'),
                                              className='app__input__influence',
-                                     # options=[
-                                     #     {'label': l, 'value': v}
-                                     #     for l, v in zip(['low', 'medium', 'high'], [0, 0.5, 1])
-                                     # ],
+                                             # options=[
+                                             #     {'label': l, 'value': v}
+                                             #     for l, v in zip(['low', 'medium', 'high'], [0, 0.5, 1])
+                                             # ],
                                              value=0,
                                              type='number',
                                              min=0,
