@@ -851,9 +851,9 @@ def callbacks(app_handle):
 
                 # sums of the rows
                 ghg_results_data['total'] = pd.Series(total)
+                ghg_results_data.iloc[:, 0:] = ghg_results_data.iloc[:, 0:].applymap(add_comma)
                 # label of the table rows
                 ghg_results_data['labels'] = pd.Series(ghg_rows)
-                ghg_results_data.iloc[:, 0:4] = ghg_results_data.iloc[:, 0:4].applymap(add_comma)
                 answer_table = ghg_results_data[GHG_COLUMNS_ID].to_dict('records')
 
         return answer_table
@@ -985,9 +985,10 @@ def callbacks(app_handle):
                 )
                 # sums of the rows
                 ghg_results_data['total'] = pd.Series(total)
-                ghg_results_data['labels'] = pd.Series(ghg_rows)
+                ghg_results_data.iloc[:, 0:] = ghg_results_data.iloc[:, 0:].applymap(add_comma)
                 # label of the table rows
-                ghg_results_data.iloc[:, 0:4] = ghg_results_data.iloc[:, 0:4].applymap(add_comma)
+                ghg_results_data['labels'] = pd.Series(ghg_rows)
+
                 answer_table = ghg_results_data[GHG_COLUMNS_ID].to_dict('records')
 
         return answer_table
