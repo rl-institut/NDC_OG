@@ -24,6 +24,19 @@ from data.data_preparation import (
     GHG_COLUMNS_ID,
 )
 
+TABLES_COLUMNS_WIDTH = [
+    {'if': {'column_id': 'labels'},
+     'width': '30%'},
+    {'if': {'column_id': GRID},
+     'width': '15%'},
+    {'if': {'column_id': MG},
+     'width': '15%'},
+    {'if': {'column_id': SHS},
+     'width': '15%'},
+    {'if': {'column_id': 'total'},
+     'width': '250px'},
+]
+
 
 def create_tooltip(cell):
     """Create tooltips for tables"""
@@ -171,21 +184,6 @@ def results_div(aggregate=False):
             'textAlign': 'left'
         }
     ]
-    # align column width
-    columns_width = [
-        {'if': {'column_id': 'labels'},
-         'width': '30%'},
-        {'if': {'column_id': GRID},
-         'width': '15%'},
-        {'if': {'column_id': MG},
-         'width': '15%'},
-        {'if': {'column_id': SHS},
-         'width': '15%'},
-        {'if': {'column_id': 'total'},
-         'width': '250px'},
-        {'if': {'row_index': 'odd'},
-         'backgroundColor': 'rgb(248, 248, 248)'}
-    ]
 
     # tables containing the results
     results_divs = [
@@ -211,7 +209,7 @@ def results_div(aggregate=False):
                         {'name': LABEL_COLUMNS[col], 'id': col} for col in BASIC_COLUMNS_ID
                     ],
                     style_data_conditional=number_styling + label_styling,
-                    style_cell_conditional=columns_width,
+                    style_cell_conditional=TABLES_COLUMNS_WIDTH,
                     style_header={'textAlign': 'center'},
                     style_cell={
                         'fontFamily': "Roboto"
@@ -244,7 +242,7 @@ def results_div(aggregate=False):
                         for col in GHG_COLUMNS_ID
                     ],
                     style_data_conditional=number_styling + label_styling,
-                    style_cell_conditional=columns_width,
+                    style_cell_conditional=TABLES_COLUMNS_WIDTH,
                     style_header={'textAlign': 'center'},
                     style_cell={
                         'fontFamily': "Roboto"
@@ -329,19 +327,6 @@ def compare_div():
             'textAlign': 'left'
         }
     ]
-    # align column width
-    columns_width = [
-        {'if': {'column_id': 'labels'},
-         'width': '40%'},
-        {'if': {'column_id': GRID},
-         'width': '20%'},
-        {'if': {'column_id': MG},
-         'width': '20%'},
-        {'if': {'column_id': SHS},
-         'width': '20%'},
-        {'if': {'row_index': 'odd'},
-         'backgroundColor': 'rgb(248, 248, 248)'}
-    ]
 
     basic_columns_ids = []
     for col in BASIC_COLUMNS_ID:
@@ -362,6 +347,12 @@ def compare_div():
             )
         else:
             ghg_columns_ids.append({'name': LABEL_COLUMNS[col], 'id': col})
+
+    compare_results_styling = [
+        {"if": {"row_index": i},
+            'backgroundColor': 'rgb(248, 248, 248)'}
+        for i in [3, 4, 5, 6]
+    ]
 
     # tables containing the results
     results_divs = [
@@ -386,7 +377,7 @@ def compare_div():
                     id='{}-basic-results-table'.format(id_name),
                     columns=basic_columns_ids,
                     style_data_conditional=number_styling + label_styling,
-                    style_cell_conditional=columns_width,
+                    style_cell_conditional=TABLES_COLUMNS_WIDTH + compare_results_styling,
                     style_header={'textAlign': 'center'},
                     style_cell={
                         'fontFamily': "Roboto"
@@ -418,7 +409,7 @@ def compare_div():
                     id='{}-ghg-results-table'.format(id_name),
                     columns=ghg_columns_ids,
                     style_data_conditional=number_styling + label_styling,
-                    style_cell_conditional=columns_width,
+                    style_cell_conditional=TABLES_COLUMNS_WIDTH + compare_results_styling,
                     style_header={'textAlign': 'center'},
                     style_cell={
                         'fontFamily': "Roboto"

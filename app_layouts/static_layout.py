@@ -26,6 +26,7 @@ from data.data_preparation import (
     EXO_RESULTS,
     BASIC_ROWS,
     BASIC_COLUMNS_ID,
+    LABEL_COLUMNS,
     GHG_COLUMNS_ID,
     COMPARE_COLUMNS_ID,
     compute_ndc_results_from_raw_data,
@@ -36,6 +37,7 @@ from .app_components import (
     scenario_div,
     results_div,
     compare_div,
+    TABLES_COLUMNS_WIDTH
 )
 
 URL_PATHNAME = 'static'
@@ -114,6 +116,9 @@ for _, r in pd.read_json(SCENARIOS_DATA[BAU_SCENARIO]).sort_values('country').it
     COMPARE_OPTIONS.append({'label': r['country'], 'value': r['country_iso']})
 COMPARE_OPTIONS = [{'label': v, 'value': k} for k, v in REGIONS_GPD.items()] + COMPARE_OPTIONS
 
+# colors for hightlight of comparison
+COLOR_BETTER = '#def3eb'
+COLOR_WORSE = '#f0e4f7'
 
 def country_hover_text(input_df):
     """Format the text displayed by the hover."""
@@ -1041,9 +1046,72 @@ def callbacks(app_handle):
                 )
                 # label of the table rows
                 basic_results_data['labels'] = pd.Series(BASIC_ROWS)
+
                 answer_table = basic_results_data[COMPARE_COLUMNS_ID].to_dict('records')
 
         return answer_table
+
+    @app_handle.callback(
+        Output('compare-basic-results-table', 'columns'),
+        [
+            Input('country-input', 'value'),
+            Input('compare-input', 'value'),
+        ]
+    )
+    def update_compare_basic_results_table_columns_title(country_sel, comp_sel):
+
+        basic_columns_ids = []
+        for col in BASIC_COLUMNS_ID:
+            if col != 'labels':
+                basic_columns_ids.append({'name': [LABEL_COLUMNS[col], country_sel], 'id': col})
+                basic_columns_ids.append(
+                    {'name': [LABEL_COLUMNS[col], comp_sel], 'id': 'comp_{}'.format(col)}
+                )
+            else:
+                basic_columns_ids.append({'name': LABEL_COLUMNS[col], 'id': col})
+
+        return basic_columns_ids
+
+    @app_handle.callback(
+        Output('compare-basic-results-table', 'style_data_conditional'),
+        [Input('compare-basic-results-table', 'data')],
+        [State('compare-basic-results-table', 'style_data_conditional')]
+    )
+    def update_compare_basic_results_table_styling(cur_data, cur_style):
+
+        data = pd.DataFrame.from_dict(cur_data)
+
+        col_ref = BASIC_COLUMNS_ID[1:]
+        col_comp = ['comp_{}'.format(col) for col in BASIC_COLUMNS_ID[1:]]
+        data = data[col_ref + col_comp].applymap(
+            lambda x: 0 if x == '' else float(x.replace(',', '').replace('%','')))
+        ref = data[col_ref]
+        comp = data[col_comp]
+
+        compare_results_styling = []
+        for j, col in enumerate(col_ref):
+            for i in range(len(ref.index)):
+                apply_condition = True
+                if ref.iloc[i, j] > comp.iloc[i, j]:
+                    color = COLOR_BETTER
+                    font = 'bold'
+                elif ref.iloc[i, j] < comp.iloc[i, j]:
+                    color = COLOR_WORSE
+                    font = 'light'
+                else:
+                    apply_condition = False
+
+                if apply_condition:
+                    compare_results_styling.append(
+                        {
+                            "if": {"column_id": col, "row_index": i},
+                            'backgroundColor': color,
+                            'fontWeight': font
+                         }
+                    )
+                cur_style = TABLES_COLUMNS_WIDTH + compare_results_styling
+
+        return cur_style
 
     @app_handle.callback(
         Output('compare-ghg-results-table', 'data'),
@@ -1154,6 +1222,71 @@ def callbacks(app_handle):
                 answer_table = ghg_results_data[COMPARE_COLUMNS_ID].to_dict('records')
 
         return answer_table
+
+    @app_handle.callback(
+        Output('compare-ghg-results-table', 'columns'),
+        [
+            Input('country-input', 'value'),
+            Input('compare-input', 'value'),
+        ]
+    )
+    def update_compare_ghg_results_table_columns_title(country_sel, comp_sel):
+
+        basic_columns_ids = []
+        for col in GHG_COLUMNS_ID:
+            if col != 'labels':
+                basic_columns_ids.append({'name': [LABEL_COLUMNS[col], country_sel], 'id': col})
+                basic_columns_ids.append(
+                    {'name': [LABEL_COLUMNS[col], comp_sel], 'id': 'comp_{}'.format(col)}
+                )
+            else:
+                basic_columns_ids.append({'name': LABEL_COLUMNS[col], 'id': col})
+
+        return basic_columns_ids
+
+    @app_handle.callback(
+        Output('compare-ghg-results-table', 'style_data_conditional'),
+        [Input('compare-ghg-results-table', 'data')],
+        [State('compare-ghg-results-table', 'style_data_conditional')]
+    )
+    def update_compare_ghg_results_table_styling(
+            cur_data,
+            cur_style
+    ):
+
+        data = pd.DataFrame.from_dict(cur_data)
+
+        col_ref = BASIC_COLUMNS_ID[1:]
+        col_comp = ['comp_{}'.format(col) for col in BASIC_COLUMNS_ID[1:]]
+        data = data[col_ref + col_comp].applymap(
+            lambda x: 0 if x == '' else float(x.replace(',', '')))
+        ref = data[col_ref]
+        comp = data[col_comp]
+
+        compare_results_styling = []
+        for j, col in enumerate(col_ref):
+            for i in range(len(ref.index)):
+                apply_condition = True
+                if ref.iloc[i, j] > comp.iloc[i, j]:
+                    color = COLOR_WORSE
+                    font = 'normal'
+                elif ref.iloc[i, j] < comp.iloc[i, j]:
+                    color = COLOR_BETTER
+                    font = 'bold'
+                else:
+                    apply_condition = False
+
+                if apply_condition:
+                    compare_results_styling.append(
+                        {
+                            "if": {"column_id": col, "row_index": i},
+                            'backgroundColor': color,
+                            'fontWeight': font
+                        }
+                    )
+                cur_style = TABLES_COLUMNS_WIDTH + compare_results_styling
+
+        return cur_style
 
     @app_handle.callback(
         Output('country-input', 'value'),
