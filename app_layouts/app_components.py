@@ -51,6 +51,9 @@ TABLES_HEADER_STYLING = {
 }
 
 
+BARPLOT_ELECTRIFICATION_COLORS = ['#7030a0', '#5b9bd5', '#ed7d31', '#a6a6a6']
+
+
 def create_tooltip(cell):
     """Create tooltips for tables"""
     return textwrap.dedent(
@@ -123,7 +126,7 @@ def results_div(aggregate=False):
                         insidetextfont={'size': fs},
                         textposition='auto',
                         marker=dict(
-                            color=['#0000ff', '#ffa500', '#008000', 'red']
+                            color=BARPLOT_ELECTRIFICATION_COLORS,
                         ),
                         hoverinfo='y+text'
                     ),
@@ -134,7 +137,7 @@ def results_div(aggregate=False):
                         insidetextfont={'size': fs},
                         textposition='auto',
                         marker=dict(
-                            color=['#8080ff', '#ffd280', '#1aff1a', 'red']
+                            color=BARPLOT_ELECTRIFICATION_COLORS,
                         ),
                         hoverinfo='y+text'
                     ),
@@ -145,7 +148,7 @@ def results_div(aggregate=False):
                         insidetextfont={'size': fs},
                         textposition='auto',
                         marker=dict(
-                            color=['#ccccff', '#ffedcc', '#99ff99', 'red']
+                            color=BARPLOT_ELECTRIFICATION_COLORS,
                         ),
                         hoverinfo='y+text'
                     )

@@ -39,6 +39,7 @@ from .app_components import (
     compare_div,
     TABLES_COLUMNS_WIDTH,
     TABLES_LABEL_STYLING,
+    BARPLOT_ELECTRIFICATION_COLORS,
 )
 
 URL_PATHNAME = 'static'
@@ -424,7 +425,7 @@ def callbacks(app_handle):
         else:
             z = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
             n = 3
-        colors = ['blue', 'orange', 'green', 'red']
+        colors = BARPLOT_ELECTRIFICATION_COLORS
         for idx, c in centroid.iterrows():
             for j in range(n):
                 points.append(
@@ -566,29 +567,29 @@ def callbacks(app_handle):
                 fs = 12
 
                 fig['data'] = [
-                           go.Bar(
-                               x=x,
-                               y=y,
-                               text=[country_sel for i in range(4)],
-                               insidetextfont={'size': fs},
-                               textposition='auto',
-                               marker=dict(
-                                   color=['#0000ff', '#ffa500', '#008000', 'red']
-                               ),
-                               hoverinfo='y+text'
-                           ),
-                           go.Bar(
-                               x=x,
-                               y=y_comp,
-                               text=[comp_name for i in range(4)],
-                               insidetextfont={'size': fs},
-                               textposition='auto',
-                               marker=dict(
-                                   color=['#8080ff', '#ffd280', '#1aff1a', 'red']
-                               ),
-                               hoverinfo='y+text'
-                           ),
-                       ]
+                    go.Bar(
+                        x=x,
+                        y=y,
+                        text=[country_sel for i in range(4)],
+                        insidetextfont={'size': fs},
+                        textposition='auto',
+                        marker=dict(
+                            color=['#0000ff', '#ffa500', '#008000', 'red']
+                        ),
+                        hoverinfo='y+text'
+                    ),
+                    go.Bar(
+                        x=x,
+                        y=y_comp,
+                        text=[comp_name for i in range(4)],
+                        insidetextfont={'size': fs},
+                        textposition='auto',
+                        marker=dict(
+                            color=['#8080ff', '#ffd280', '#1aff1a', 'red']
+                        ),
+                        hoverinfo='y+text'
+                    ),
+                ]
 
         return fig
 
@@ -1051,7 +1052,7 @@ def callbacks(app_handle):
                 basic_results_data = np.hstack([basic_results_data, comp_results_data])
 
                 comp_ids = ['comp_{}'.format(c) for c in ELECTRIFICATION_OPTIONS] \
-                    + ['comp_No Electricity']
+                           + ['comp_No Electricity']
                 # prepare a DataFrame
                 basic_results_data = pd.DataFrame(
                     data=basic_results_data,
@@ -1136,7 +1137,7 @@ def callbacks(app_handle):
                                 'color': color,
                                 # 'backgroundColor': color,
                                 'fontWeight': font
-                             }
+                            }
                         )
                     cur_style = \
                         TABLES_COLUMNS_WIDTH \
@@ -1235,7 +1236,7 @@ def callbacks(app_handle):
                 ghg_results_data = np.hstack([ghg_results_data, ghg_comp_data])
 
                 comp_ids = ['comp_{}'.format(c) for c in ELECTRIFICATION_OPTIONS] \
-                    + ['comp_No Electricity']
+                           + ['comp_No Electricity']
 
                 # prepare a DataFrame
                 ghg_results_data = pd.DataFrame(
@@ -1247,7 +1248,7 @@ def callbacks(app_handle):
                 ghg_results_data['comp_total'] = pd.Series(total)
                 # Format the digits
                 ghg_results_data.iloc[:, 0:] = ghg_results_data.iloc[:, 0:].applymap(
-                        round_digits
+                    round_digits
                 )
                 # label of the table rows
                 ghg_results_data['labels'] = pd.Series(ghg_rows)
