@@ -93,7 +93,7 @@ def results_div(aggregate=False):
                     go.Bar(
                         x=x_vals,
                         y=[0, 0, 0, 0],
-                        text=[BAU_SCENARIO for i in range(4)],
+                        text=[SCENARIOS_DICT[BAU_SCENARIO] for i in range(4)],
                         insidetextfont={'size': fs},
                         textposition='auto',
                         marker=dict(
@@ -104,7 +104,7 @@ def results_div(aggregate=False):
                     go.Bar(
                         x=x_vals,
                         y=[0, 0, 0, 0],
-                        text=[SE4ALL_SCENARIO for i in range(4)],
+                        text=[SCENARIOS_DICT[SE4ALL_SCENARIO] for i in range(4)],
                         insidetextfont={'size': fs},
                         textposition='auto',
                         marker=dict(
@@ -115,7 +115,7 @@ def results_div(aggregate=False):
                     go.Bar(
                         x=x_vals,
                         y=[0, 0, 0, 0],
-                        text=[PROG_SCENARIO for i in range(4)],
+                        text=[SCENARIOS_DICT[PROG_SCENARIO] for i in range(4)],
                         insidetextfont={'size': fs},
                         textposition='auto',
                         marker=dict(
@@ -233,7 +233,10 @@ def results_div(aggregate=False):
             id='{}-ghg-results-div'.format(id_name),
             className='{}__results'.format(id_name),
             children=[
-                html.H4('Greenhouse Gases emissions'),
+                html.H4(
+                    'Cumulated greenhouse Gases emissions '
+                    'from 2017 until 2030 (in million tons CO2)'
+                ),
                 dash_table.DataTable(
                     id='{}-ghg-results-table'.format(id_name),
                     columns=[
@@ -407,7 +410,10 @@ def compare_div():
             className='{}__results'.format(id_name),
             style={'width': '90%'},
             children=[
-                html.H4('Greenhouse Gases emissions'),
+                html.H4(
+                    'Cumulated greenhouse Gases emissions '
+                    'from 2017 until 2030 (in million tons CO2)'
+                ),
                 dash_table.DataTable(
                     id='{}-ghg-results-table'.format(id_name),
                     columns=ghg_columns_ids,

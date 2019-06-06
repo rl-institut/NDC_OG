@@ -199,9 +199,9 @@ def prepare_results_tables(df, sce=BAU_SCENARIO):
         hh_av_size = np.round(pop[0]/hh_res[0], 2)
         hh_res = np.append(hh_res, pop_no_elec / hh_av_size)
     else:
-        pop = np.append(pop, np.nan)
-        pop_res = np.append(pop_res, np.nan)
-        hh_res = np.append(hh_res, np.nan)
+        pop = np.append(pop, 0)
+        pop_res = np.append(pop_res, 0)
+        hh_res = np.append(hh_res, 0)
 
     cap_res = np.append(np.squeeze(df[HH_CAP].values * 1e-3).round(0), np.nan)
     cap2_res = np.append(np.squeeze(df[HH_SCN2].values * 1e-3).round(0), np.nan)

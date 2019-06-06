@@ -57,15 +57,36 @@ def round_digits(val):
         if np.isnan(val):
             answer = ''
         else:
-            answer = "{:.3}".format(val)
+            if np.round(val, 2) == 0:
+                answer = '0'
+            else:
+                answer = '{:.2f}'.format(val)
     return answer
+
+
+def format_percent(val):
+    """Format number for percents."""
+    if isinstance(val, str):
+        answer = val
+    else:
+        if np.isnan(val):
+            answer = ''
+        else:
+            if np.round(val, 2) == 0:
+                answer = '0%'
+            elif val >= 100:
+                answer = '100%'
+            else:
+                answer = '{:.2f}%'.format(val)
+    return answer
+
 
 def add_comma(val):
     """Formats number by separating thousands with a comma."""
     if np.isnan(val):
         answer = ''
     else:
-        answer = "{:,}".format(val)
+        answer = '{:,}'.format(val)
         answer = answer.split('.')[0]
     return answer
 
@@ -745,17 +766,20 @@ def callbacks(app_handle):
                 )
                 # sums of the rows
                 basic_results_data['total'] = pd.Series(total)
-                # label of the table rows
-                basic_results_data['labels'] = pd.Series(BASIC_ROWS)
-                basic_results_data.iloc[3:5, 0:4] = basic_results_data.iloc[3:5, 0:4].applymap(
+
+                # Format the digits
+                basic_results_data.iloc[3:5, 0:] = basic_results_data.iloc[3:5, 0:].applymap(
                     add_comma
                 )
-                basic_results_data.iloc[1:, 0:4] = basic_results_data.iloc[1:, 0:4].applymap(
+                basic_results_data.iloc[1:, 0:] = basic_results_data.iloc[1:, 0:].applymap(
                     round_digits
                 )
-                basic_results_data.iloc[0, 0:4] = basic_results_data.iloc[0, 0:4].map(
-                    lambda x: '{}%'.format(x)
+                basic_results_data.iloc[0, 0:] = basic_results_data.iloc[0, 0:].map(
+                    format_percent
                 )
+                # label of the table rows
+                basic_results_data['labels'] = pd.Series(BASIC_ROWS)
+
                 answer_table = basic_results_data[BASIC_COLUMNS_ID].to_dict('records')
 
         return answer_table
@@ -795,15 +819,15 @@ def callbacks(app_handle):
 
                 if df_bau is None:
                     ghg_rows = [
-                        'GHG (Mio tCO2)',
-                        'GHG (TIER + 1) (Mio tCO2)',
+                        'GHG',
+                        'GHG (TIER + 1)',
                         # 'GHG CUMUL'
                     ]
                 else:
                     ghg_rows = [
-                        'GHG (Mio tCO2)',
+                        'GHG',
                         'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-                        'GHG (TIER +1) (Mio tCO2)',
+                        'GHG (TIER +1)',
                         'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
                     ]
 
@@ -827,9 +851,9 @@ def callbacks(app_handle):
 
                 # sums of the rows
                 ghg_results_data['total'] = pd.Series(total)
+                ghg_results_data.iloc[:, 0:] = ghg_results_data.iloc[:, 0:].applymap(add_comma)
                 # label of the table rows
                 ghg_results_data['labels'] = pd.Series(ghg_rows)
-                ghg_results_data.iloc[:, 0:4] = ghg_results_data.iloc[:, 0:4].applymap(add_comma)
                 answer_table = ghg_results_data[GHG_COLUMNS_ID].to_dict('records')
 
         return answer_table
@@ -871,14 +895,20 @@ def callbacks(app_handle):
                 )
                 # sums of the rows
                 basic_results_data['total'] = pd.Series(total)
-                # label of the table rows
-                basic_results_data['labels'] = pd.Series(BASIC_ROWS)
-                basic_results_data.iloc[1:, 0:4] = basic_results_data.iloc[1:, 0:4].applymap(
+
+                # Format the digits
+                basic_results_data.iloc[3:5, 0:] = basic_results_data.iloc[3:5, 0:].applymap(
                     add_comma
                 )
-                basic_results_data.iloc[0, 0:4] = basic_results_data.iloc[0, 0:4].map(
-                    lambda x: '' if x == '' else '{}%'.format(x)
+                basic_results_data.iloc[1:, 0:] = basic_results_data.iloc[1:, 0:].applymap(
+                    round_digits
                 )
+                basic_results_data.iloc[0, 0:] = basic_results_data.iloc[0, 0:].map(
+                    format_percent
+                )
+                # label of the table rows
+                basic_results_data['labels'] = pd.Series(BASIC_ROWS)
+
                 answer_table = basic_results_data[BASIC_COLUMNS_ID].to_dict('records')
 
         return answer_table
@@ -918,15 +948,15 @@ def callbacks(app_handle):
 
                 if df_bau is None:
                     ghg_rows = [
-                        'GHG (Mio tCO2)',
-                        'GHG (TIER +1) (Mio tCO2)',
+                        'GHG',
+                        'GHG (TIER +1)',
                         # 'GHG CUMUL'
                     ]
                 else:
                     ghg_rows = [
-                        'GHG (Mio tCO2)',
+                        'GHG',
                         'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-                        'GHG (TIER +1) (Mio tCO2)',
+                        'GHG (TIER +1)',
                         'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
                     ]
                     # aggregate the results
@@ -955,9 +985,10 @@ def callbacks(app_handle):
                 )
                 # sums of the rows
                 ghg_results_data['total'] = pd.Series(total)
-                ghg_results_data['labels'] = pd.Series(ghg_rows)
+                ghg_results_data.iloc[:, 0:] = ghg_results_data.iloc[:, 0:].applymap(add_comma)
                 # label of the table rows
-                ghg_results_data.iloc[:, 0:4] = ghg_results_data.iloc[:, 0:4].applymap(add_comma)
+                ghg_results_data['labels'] = pd.Series(ghg_rows)
+
                 answer_table = ghg_results_data[GHG_COLUMNS_ID].to_dict('records')
 
         return answer_table
@@ -1082,7 +1113,8 @@ def callbacks(app_handle):
                     if comp_sel in REGIONS_NDC:
                         # compare the reference country to a region
                         df_bau_comp = df_bau.loc[df_bau.region == REGIONS_NDC[comp_sel]]
-                        df_bau_comp = df_bau_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(
+                        columns_to_select = EXO_RESULTS + ['pop_newly_electrified_2030']
+                        df_bau_comp = df_bau_comp[columns_to_select].sum(
                             axis=0)
                     else:
                         # compare the reference country to a country
@@ -1090,15 +1122,15 @@ def callbacks(app_handle):
 
                 if df_bau_ref is None:
                     ghg_rows = [
-                        'GHG (Mio tCO2)',
-                        'GHG (TIER +1) (Mio tCO2)',
+                        'GHG',
+                        'GHG (TIER +1)',
                         # 'GHG CUMUL'
                     ]
                 else:
                     ghg_rows = [
-                        'GHG (Mio tCO2)',
+                        'GHG',
                         'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-                        'GHG (TIER +1) (Mio tCO2)',
+                        'GHG (TIER +1)',
                         'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
                     ]
 
@@ -1240,6 +1272,19 @@ def callbacks(app_handle):
             df = pd.read_json(cur_data[scenario])
             answer = 'Results for {}: electrification options'.format(
                 df.loc[df.country_iso == country_iso].country.values[0])
+        return answer
+
+    @app_handle.callback(
+        Output('aggregate-basic-results-title', 'children'),
+        [Input('region-input', 'value')]
+    )
+    def aggregated_basic_results_title(region_id):
+
+        answer = 'Results'
+        if region_id is not None:
+            answer = 'Aggregated results for {}: electrification options'.format(
+                REGIONS_GPD[region_id]
+            )
         return answer
 
     @app_handle.callback(
