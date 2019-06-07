@@ -350,22 +350,22 @@ layout = html.Div(
                                 children=''
                             ),
                             html.Div(
-                                id='aggregate-div',
+                                id='agg-div',
                                 className='cell medium-6',
-                                children=results_div(aggregate=True),
-                                style={'display': 'none'}
+                                children=results_div('aggregate', 'pop'),
+                                #style={'display': 'none'}
                             ),
                             html.Div(
-                                id='results-div',
+                                id='res-div',
                                 className='cell medium-6',
-                                children=results_div(),
-                                style={'display': 'none'}
+                                children=results_div('country', 'pop'),
+                                #style={'display': 'none'}
                             ),
                             html.Div(
-                                id='compare-div',
+                                id='comp-div',
                                 className='cell medium-6',
-                                children=compare_div(),
-                                style={'display': 'none'}
+                                children=results_div('compare', 'pop'),
+                                # style={'display': 'none'}
                             ),
                         ]
                     ),

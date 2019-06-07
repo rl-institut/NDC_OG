@@ -9,6 +9,7 @@ import dash_table
 import plotly.graph_objs as go
 from data.data_preparation import (
     ELECTRIFICATION_OPTIONS,
+    ELECTRIFICATION_DICT,
     BAU_SCENARIO,
     SE4ALL_SCENARIO,
     SCENARIOS_DICT,
@@ -17,12 +18,16 @@ from data.data_preparation import (
     GRID,
     MG,
     SHS,
-    BASIC_ROWS,
-    BASIC_ROWS_FULL,
-    LABEL_COLUMNS,
-    BASIC_COLUMNS_ID,
-    GHG_COLUMNS_ID,
+    # BASIC_ROWS,
+    # BASIC_ROWS_FULL,
+    # LABEL_COLUMNS,
+    # BASIC_COLUMNS_ID,
+    # GHG_COLUMNS_ID,
 )
+
+RES_COUNTRY = 'country'
+RES_AGGREGATE = 'aggregate'
+RES_COMPARE = 'compare'
 
 TABLES_COLUMNS_WIDTH = [
     {'if': {'column_id': 'labels'},
@@ -50,8 +55,72 @@ TABLES_HEADER_STYLING = {
     'fontWeight': 'bold'
 }
 
+# add tables with the results
+# align number on the right
+
 
 BARPLOT_ELECTRIFICATION_COLORS = ['#7030a0', '#5b9bd5', '#ed7d31', '#a6a6a6']
+
+
+
+POP_ROWS = [
+    'People share',
+    'People (Mio)',
+    'HH (Mio)',
+]
+
+INVEST_ROWS = [
+    'Investment BUSD',
+    'Investment (TIER + 1) BUSD',
+]
+
+GHG_ROWS = [
+    'People share',
+    'People (Mio)',
+    'HH (Mio)',
+    'HH demand (MW)',
+    'HH demand (TIER + 1) (MW)',
+    'Investment BUSD',
+    'Investment (TIER + 1) BUSD',
+]
+GHG_ROWS_BAU = [
+    'GHG',
+    'GHG (TIER + 1)',
+]
+GHG_ROWS_BAU_OTHER = [
+    'GHG',
+    'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
+    'GHG (TIER +1)',
+    'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
+]
+
+TABLE_ROWS_TOOLTIPS = {
+    'People share': 'Percentage of people getting electricity access by 2030',
+    'People (Mio)': 'Number of people getting electricity access by 2030',
+    'HH (Mio)': 'Number of households getting electricity access by 2030',
+    'HH demand (MW)': 'Expected household electricity demand by 2030, in MW',
+    'HH demand (TIER + 1) (MW)':
+        'Expected household electricity demand by 2030 for one TIER level up, in MW',
+    'Investment BUSD':
+        'Needed initial investments to supply expected demand by 2030, in million USD',
+    'Investment (TIER + 1) BUSD':
+        'Needed initial investments to supply expected demand by 2030 for one TIER level up, '
+        'in million USD',
+    'GHG': '',
+    'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]): '',
+    'GHG (TIER +1)': '',
+    'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]): '',
+}
+# labels of the columns of the result tables
+TABLE_COLUMNS_LABEL = ELECTRIFICATION_DICT.copy()
+TABLE_COLUMNS_LABEL['labels'] = ''
+TABLE_COLUMNS_LABEL['No Electricity'] = 'No Electricity'
+TABLE_COLUMNS_LABEL['total'] = 'Total'
+TABLE_COLUMNS_ID = ['labels'] + ELECTRIFICATION_OPTIONS + ['No Electricity'] + ['total']
+COMPARE_COLUMNS_ID = ['labels']
+for opt in ELECTRIFICATION_OPTIONS + ['No Electricity'] + ['total']:
+    COMPARE_COLUMNS_ID.append(opt)
+    COMPARE_COLUMNS_ID.append('comp_{}'.format(opt))
 
 
 def create_tooltip(cell):
@@ -94,7 +163,157 @@ def callback_generator(app, input_name, df_name):
     return update_drive_input
 
 
-def results_div(aggregate=False):
+def results_div(result_type, result_category):
+    """
+
+    :param result_type: one of country, aggregate, or compare
+    :param result_category: one of pop, invest or ghg
+    :return: a div with a title, a graph and a table
+    """
+
+    id_name = '{}-{}'.format(result_type, result_category)
+
+    x_vals = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
+    fs = 12
+
+    # add a barplot above the tables with the results
+    barplot = dcc.Graph(
+        id='{}-barplot'.format(id_name),
+        className='cell',
+        figure=go.Figure(
+            data=[
+                go.Bar(
+                    x=x_vals,
+                    y=[0, 0, 0, 0],
+                    text=[SCENARIOS_DICT[BAU_SCENARIO] for i in range(4)],
+                    insidetextfont={'size': fs},
+                    textposition='auto',
+                    marker=dict(
+                        color=BARPLOT_ELECTRIFICATION_COLORS,
+                    ),
+                    hoverinfo='y+text'
+                ),
+                go.Bar(
+                    x=x_vals,
+                    y=[0, 0, 0, 0],
+                    text=[SCENARIOS_DICT[SE4ALL_SCENARIO] for i in range(4)],
+                    insidetextfont={'size': fs},
+                    textposition='auto',
+                    marker=dict(
+                        color=BARPLOT_ELECTRIFICATION_COLORS,
+                    ),
+                    hoverinfo='y+text'
+                ),
+                go.Bar(
+                    x=x_vals,
+                    y=[0, 0, 0, 0],
+                    text=[SCENARIOS_DICT[PROG_SCENARIO] for i in range(4)],
+                    insidetextfont={'size': fs},
+                    textposition='auto',
+                    marker=dict(
+                        color=BARPLOT_ELECTRIFICATION_COLORS,
+                    ),
+                    hoverinfo='y+text'
+                )
+            ],
+            layout=go.Layout(
+                title='',
+                barmode='group',
+                paper_bgcolor='#EBF2FA',
+                plot_bgcolor='#EBF2FA',
+                showlegend=False,
+                height=400,
+                autosize=True,
+                margin=dict(
+                    l=55,
+                    r=0,
+                    b=30,
+                    t=30
+                ),
+                font=dict(size=20, family='Roboto'),
+                titlefont=dict(size=20),
+                yaxis=dict(
+                    hoverformat='.1f'
+                )
+            )
+        ),
+        config={
+            'displayModeBar': True,
+        }
+    )
+
+    number_styling = [
+        {
+            'if': {
+                'column_id': c,
+                'filter': 'labels eq "{}"'.format(label)
+            },
+            'textAlign': 'right'
+        }
+        for c in ELECTRIFICATION_OPTIONS
+        for label in BASIC_ROWS
+    ]
+
+    columns_labels = TABLE_COLUMNS_LABEL
+    columns_ids = []
+    table_rows = TABLE_ROWS[]
+    if result_type in [RES_COUNTRY, RES_AGGREGATE]:
+
+        columns_ids = [{'name': TABLE_COLUMNS_LABEL[col], 'id': col} for col in TABLE_COLUMNS_ID]
+
+    elif result_type == RES_COMPARE:
+        for col in TABLE_COLUMNS_ID:
+            if col != 'labels':
+                columns_ids.append({'name': [TABLE_COLUMNS_LABEL[col], 'value'], 'id': col})
+                columns_ids.append(
+                    {'name': [TABLE_COLUMNS_LABEL[col], 'rel.'], 'id': 'comp_{}'.format(col)}
+                )
+            else:
+                columns_ids.append({'name': TABLE_COLUMNS_LABEL[col], 'id': col})
+
+    else:
+        print('error in the result type in results_div()')
+
+    # tables containing the results
+    results_divs = [
+        html.H4(
+            id='{}-results-title'.format(id_name),
+            className='cell',
+            children='Results'
+        ),
+        dcc.Dropdown(
+            id='{}-barplot-yaxis-input'.format(id_name),
+            className='cell',
+            options=[{'label': r, 'value': r} for r in table_rows],
+            value=table_rows[0],
+        ),
+        barplot,
+        dash_table.DataTable(
+            id='{}-results-table'.format(id_name),
+            columns=columns_ids,
+            style_data_conditional=number_styling + TABLES_LABEL_STYLING,
+            style_cell_conditional=TABLES_COLUMNS_WIDTH,
+            style_header=TABLES_HEADER_STYLING,
+            style_cell={
+                'fontFamily': "Roboto"
+            },
+            tooltips={
+                'labels': [
+                    {
+                        'type': 'markdown',
+                        'value': create_tooltip(TABLE_ROWS_TOOLTIPS[lbl])
+                    }
+                    for lbl in table_rows
+                ]
+
+            }
+        ),
+    ]
+
+    return results_divs
+
+
+def old_results_div(aggregate=False):
     """Fill and return a specific country exogenous results and information.
 
     :param aggregate: (bool) determine whether the results should be summed country wise
@@ -272,6 +491,7 @@ def results_div(aggregate=False):
     return divs
 
 
+# TODO
 def compare_div():
     """Fill and return a comparison to specific country exogenous results.
 
