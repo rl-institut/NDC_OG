@@ -149,7 +149,7 @@ def results_div(result_type, result_category):
 
     id_name = '{}-{}'.format(result_type, result_category)
 
-    x_vals = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
+    x_vals = [SCENARIOS_DICT[sce] for sce in SCENARIOS]
     fs = 12
 
     # add a barplot above the tables with the results
@@ -160,41 +160,21 @@ def results_div(result_type, result_category):
             data=[
                 go.Bar(
                     x=x_vals,
-                    y=[0, 0, 0, 0],
-                    text=[SCENARIOS_DICT[BAU_SCENARIO] for i in range(4)],
+                    y=[0, 0, 0],
+                    name=y_opt,
+                    text=y_opt,
                     insidetextfont={'size': fs},
                     textposition='auto',
                     marker=dict(
-                        color=BARPLOT_ELECTRIFICATION_COLORS,
-                    ),
-                    hoverinfo='y+text'
-                ),
-                go.Bar(
-                    x=x_vals,
-                    y=[0, 0, 0, 0],
-                    text=[SCENARIOS_DICT[SE4ALL_SCENARIO] for i in range(4)],
-                    insidetextfont={'size': fs},
-                    textposition='auto',
-                    marker=dict(
-                        color=BARPLOT_ELECTRIFICATION_COLORS,
-                    ),
-                    hoverinfo='y+text'
-                ),
-                go.Bar(
-                    x=x_vals,
-                    y=[0, 0, 0, 0],
-                    text=[SCENARIOS_DICT[PROG_SCENARIO] for i in range(4)],
-                    insidetextfont={'size': fs},
-                    textposition='auto',
-                    marker=dict(
-                        color=BARPLOT_ELECTRIFICATION_COLORS,
+                        color=BARPLOT_ELECTRIFICATION_COLORS[y_opt],
                     ),
                     hoverinfo='y+text'
                 )
+                for y_opt in BARPLOT_YAXIS_OPT
             ],
             layout=go.Layout(
                 title='',
-                barmode='group',
+                barmode='stack',
                 paper_bgcolor='#EBF2FA',
                 plot_bgcolor='#EBF2FA',
                 showlegend=False,
@@ -218,21 +198,9 @@ def results_div(result_type, result_category):
         }
     )
 
-    number_styling = [
-        {
-            'if': {
-                'column_id': c,
-                'filter': 'labels eq "{}"'.format(label)
-            },
-            'textAlign': 'right'
-        }
-        for c in ELECTRIFICATION_OPTIONS
-        for label in BASIC_ROWS
-    ]
-
-    columns_labels = TABLE_COLUMNS_LABEL
     columns_ids = []
-    table_rows = TABLE_ROWS[]
+    table_rows = TABLE_ROWS[result_category]
+
     if result_type in [RES_COUNTRY, RES_AGGREGATE]:
 
         columns_ids = [{'name': TABLE_COLUMNS_LABEL[col], 'id': col} for col in TABLE_COLUMNS_ID]
@@ -250,8 +218,7 @@ def results_div(result_type, result_category):
     else:
         print('error in the result type in results_div()')
 
-    # tables containing the results
-    results_divs = [
+    results_div_content = [
         html.H4(
             id='{}-results-title'.format(id_name),
             className='cell',
@@ -266,8 +233,9 @@ def results_div(result_type, result_category):
         barplot,
         dash_table.DataTable(
             id='{}-results-table'.format(id_name),
+            css='cell',
             columns=columns_ids,
-            style_data_conditional=number_styling + TABLES_LABEL_STYLING,
+            style_data_conditional=TABLES_LABEL_STYLING,
             style_cell_conditional=TABLES_COLUMNS_WIDTH,
             style_header=TABLES_HEADER_STYLING,
             style_cell={
@@ -286,6 +254,11 @@ def results_div(result_type, result_category):
         ),
     ]
 
+    return html.Div(
+        className='cell',
+        children=html.Div(
+            className='grid-y',
+            children=results_div_content
         )
     )
 
