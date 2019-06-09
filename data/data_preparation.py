@@ -144,6 +144,10 @@ MEDIAN_INVESTMENT_COST = {1: 742, 2: 1273, 3: 2516, 4: 5277, 5: 5492}
 
 RISE_INDICES = ['rise_%s' % opt for opt in ELECTRIFICATION_OPTIONS]
 
+POP_RES = 'pop'
+INVEST_RES = 'invest'
+GHG_BAU_RES = 'ghg-bau'
+GHG_OTHER_RES = 'ghg'
 
 def prepare_results_tables(df, sce=BAU_SCENARIO):
     pop = np.squeeze(df[POP_GET].values * 1e-6)

@@ -24,11 +24,9 @@ from data.data_preparation import (
     GHG,
     GHG_CAP,
     EXO_RESULTS,
-    BASIC_ROWS,
-    BASIC_COLUMNS_ID,
-    LABEL_COLUMNS,
-    GHG_COLUMNS_ID,
-    COMPARE_COLUMNS_ID,
+    POP_RES,
+    INVEST_RES,
+    GHG_BAU_RES,
     compute_ndc_results_from_raw_data,
     prepare_results_tables,
 )
@@ -36,10 +34,18 @@ from data.data_preparation import (
 from .app_components import (
     scenario_div,
     results_div,
-    compare_div,
     TABLES_COLUMNS_WIDTH,
     TABLES_LABEL_STYLING,
     BARPLOT_ELECTRIFICATION_COLORS,
+    RES_AGGREGATE,
+    RES_COMPARE,
+    RES_COUNTRY,
+    GHG_OTHER_RES,
+    TABLE_ROWS,
+    TABLE_COLUMNS_ID,
+    COMPARE_COLUMNS_ID,
+    TABLE_COLUMNS_LABEL,
+    BARPLOT_YAXIS_OPT
 )
 
 URL_PATHNAME = 'static'

@@ -20,21 +20,17 @@ from data.data_preparation import (
     MG,
     SHS,
     NO_ACCESS,
-    # BASIC_ROWS,
-    # BASIC_ROWS_FULL,
-    # LABEL_COLUMNS,
-    # BASIC_COLUMNS_ID,
-    # GHG_COLUMNS_ID,
+    POP_RES,
+    INVEST_RES,
+    GHG_BAU_RES,
+    GHG_OTHER_RES,
 )
 
 RES_COUNTRY = 'country'
 RES_AGGREGATE = 'aggregate'
 RES_COMPARE = 'compare'
 
-POP_RES = 'pop'
-INVEST_RES = 'invest'
-GHG_BAU_RES = 'ghg-bau'
-GHG_OTHER_RES = 'ghg'
+
 
 TABLES_COLUMNS_WIDTH = [
     {'if': {'column_id': 'labels'},
