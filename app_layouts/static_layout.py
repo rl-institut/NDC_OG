@@ -356,22 +356,39 @@ layout = html.Div(
                                 children=''
                             ),
                             html.Div(
-                                id='agg-div',
+                                id='{}-div'.format(RES_AGGREGATE),
                                 className='cell medium-6',
-                                children=results_div('aggregate', 'pop'),
-                                #style={'display': 'none'}
+                                children=html.Div(
+                                    className='grid-x',
+                                    children=[
+                                        results_div(RES_AGGREGATE, res_category)
+                                        for res_category in [POP_RES, INVEST_RES, GHG_RES]
+                                    ]
+                                ),
                             ),
                             html.Div(
-                                id='res-div',
+                                id='{}-div'.format(RES_COUNTRY),
                                 className='cell medium-6',
-                                children=results_div('country', 'pop'),
-                                #style={'display': 'none'}
+                                children=html.Div(
+                                    className='grid-x',
+                                    children=[
+                                        results_div(RES_COUNTRY, res_category)
+                                        for res_category in [POP_RES, INVEST_RES, GHG_RES]
+                                    ]
+                                ),
+                                style={'display': 'none'}
                             ),
                             html.Div(
-                                id='comp-div',
+                                id='{}-div'.format(RES_COMPARE),
                                 className='cell medium-6',
-                                children=results_div('compare', 'pop'),
-                                # style={'display': 'none'}
+                                children=html.Div(
+                                    className='grid-x',
+                                    children=[
+                                        results_div(RES_COMPARE, res_category)
+                                        for res_category in [POP_RES, INVEST_RES, GHG_RES]
+                                    ]
+                                ),
+                                style={'display': 'none'},
                             ),
                         ]
                     ),
