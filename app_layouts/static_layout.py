@@ -21,12 +21,11 @@ from data.data_preparation import (
     SCENARIOS_DESCRIPTIONS,
     ELECTRIFICATION_OPTIONS,
     POP_GET,
-    GHG,
-    GHG_CAP,
     EXO_RESULTS,
     POP_RES,
     INVEST_RES,
-    GHG_BAU_RES,
+    GHG_RES,
+    GHG_ER_RES,
     compute_ndc_results_from_raw_data,
     prepare_results_tables,
 )
@@ -40,7 +39,6 @@ from .app_components import (
     RES_AGGREGATE,
     RES_COMPARE,
     RES_COUNTRY,
-    GHG_OTHER_RES,
     TABLE_ROWS,
     TABLE_COLUMNS_ID,
     COMPARE_COLUMNS_ID,
@@ -443,15 +441,89 @@ def country_barplot_callback(app_handle, result_category):
 
         return fig
 
-    update_barplot.__name__ = 'update_%s_input' % id_name
+    update_barplot.__name__ = 'update_%s_barplot' % id_name
 
     return update_barplot
+
+
+def country_table_callback(app_handle, result_category):
+    """Generate a callback for input components."""
+
+    id_name = '{}-{}'.format(RES_COUNTRY, result_category)
+
+    @app_handle.callback(
+        Output('{}-results-table'.format(id_name), 'data'),
+        [
+            Input('country-input', 'value'),
+            Input('scenario-input', 'value'),
+        ],
+        [State('data-store', 'data')]
+    )
+    def update_table(
+            country_iso,
+            scenario,
+            cur_data,
+    ):
+        """Display information and study's results for a country."""
+
+        result_cat = result_category
+
+        answer_table = []
+        if country_iso is not None:
+            if scenario in SCENARIOS:
+
+                df = pd.read_json(cur_data[scenario])
+                df = df.loc[df.country_iso == country_iso]
+                results_data = prepare_results_tables(df, scenario, result_cat)
+
+                if result_cat == GHG_RES and scenario != BAU_SCENARIO:
+                    # to compare greenhouse gas emissions with BaU scenario
+                    df_bau = pd.read_json(cur_data[BAU_SCENARIO])
+                    results_bau_data = prepare_results_tables(df_bau, BAU_SCENARIO, result_cat)
+
+                    # include the greenhouse gases emissions reduction compared to BaU
+                    results_data_temp = np.zeros((4, 4))
+                    results_data_temp[0, :] = results_data[0, :]
+                    results_data_temp[1, :] = results_data[0, :] - results_bau_data[0, :]
+                    results_data_temp[2, :] = results_data[1, :]
+                    results_data_temp[3, :] = results_data[1, :] - results_bau_data[1, :]
+                    results_data = results_data_temp
+                    result_cat = GHG_ER_RES
+
+                total = np.nansum(results_data, axis=1)
+                # prepare a DataFrame
+                results_data = pd.DataFrame(
+                    data=results_data,
+                    columns=ELECTRIFICATION_OPTIONS + ['No Electricity']
+                )
+                # sums of the rows
+                results_data['total'] = pd.Series(total)
+
+                # Format the digits
+                if result_cat == POP_RES:
+                    results_data.iloc[1:, 0:] = results_data.iloc[1:, 0:].applymap(
+                        round_digits
+                    )
+                    results_data.iloc[0, 0:] = results_data.iloc[0, 0:].map(
+                        format_percent
+                    )
+                else:
+                    results_data = results_data.applymap(round_digits)
+                # label of the table rows
+                table_rows = TABLE_ROWS[result_cat]
+                results_data['labels'] = pd.Series(table_rows)
+
+                answer_table = results_data[TABLE_COLUMNS_ID].to_dict('records')
+        return answer_table
+
+    update_table.__name__ = 'update_%s_table' % id_name
+    return update_table
 
 
 def aggregate_barplot_callback(app_handle, result_category):
     """Generate a callback for input components."""
 
-    id_name = '{}-{}'.format('aggregate', result_category)
+    id_name = '{}-{}'.format(RES_AGGREGATE, result_category)
 
     @app_handle.callback(
         Output('{}-barplot'.format(id_name), 'figure'),
@@ -493,12 +565,95 @@ def aggregate_barplot_callback(app_handle, result_category):
             for j, opt in enumerate(BARPLOT_YAXIS_OPT):
                 fig['data'][j].update({'x': SCENARIOS})
                 fig['data'][j].update({'y': y_vals[:, j]})
-
         return fig
 
-    update_barplot.__name__ = 'update_%s_input' % id_name
-
+    update_barplot.__name__ = 'update_%s_barplot' % id_name
     return update_barplot
+
+
+def aggregate_table_callback(app_handle, result_category):
+    """Generate a callback for input components."""
+
+    id_name = '{}-{}'.format('aggregate', result_category)
+
+    @app_handle.callback(
+        Output('{}-results-table'.format(id_name), 'data'),
+        [
+            Input('region-input', 'value'),
+            Input('scenario-input', 'value'),
+        ],
+        [State('data-store', 'data')]
+    )
+    def update_table(
+            region_id,
+            scenario,
+            cur_data,
+    ):
+        """Display information and study's results for a country."""
+
+        result_cat = result_category
+
+        answer_table = []
+        if region_id is not None:
+            if scenario in SCENARIOS:
+
+                df = pd.read_json(cur_data[scenario])
+                if region_id != WORLD_ID:
+                    # narrow to the region if the scope is not on the whole world
+                    df = df.loc[df.region == REGIONS_NDC[region_id]]
+                # aggregate the results
+                df = df[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
+                results_data = prepare_results_tables(df, scenario, result_cat)
+
+                if result_cat == GHG_RES and scenario != BAU_SCENARIO:
+                    # to compare greenhouse gas emissions with BaU scenario
+                    df_bau = pd.read_json(cur_data[BAU_SCENARIO])
+
+                    if region_id != WORLD_ID:
+                        # narrow to the region if the scope is not on the whole world
+                        df_bau = df_bau.loc[df_bau.region == REGIONS_NDC[region_id]]
+
+                    # aggregate the results
+                    df_bau = df_bau[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
+                    results_bau_data = prepare_results_tables(df_bau, BAU_SCENARIO, result_cat)
+
+                    # include the greenhouse gases emissions reduction compared to BaU
+                    results_data_temp = np.zeros((4, 4))
+                    results_data_temp[0, :] = results_data[0, :]
+                    results_data_temp[1, :] = results_data[0, :] - results_bau_data[0, :]
+                    results_data_temp[2, :] = results_data[1, :]
+                    results_data_temp[3, :] = results_data[1, :] - results_bau_data[1, :]
+                    results_data = results_data_temp
+                    result_cat = GHG_ER_RES
+
+                total = np.nansum(results_data, axis=1)
+                # prepare a DataFrame
+                results_data = pd.DataFrame(
+                    data=results_data,
+                    columns=ELECTRIFICATION_OPTIONS + ['No Electricity']
+                )
+                # sums of the rows
+                results_data['total'] = pd.Series(total)
+
+                # Format the digits
+                if result_cat == POP_RES:
+                    results_data.iloc[1:, 0:] = results_data.iloc[1:, 0:].applymap(
+                        round_digits
+                    )
+                    results_data.iloc[0, 0:] = results_data.iloc[0, 0:].map(
+                        format_percent
+                    )
+                else:
+                    results_data = results_data.applymap(round_digits)
+                # label of the table rows
+                table_rows = TABLE_ROWS[result_cat]
+                results_data['labels'] = pd.Series(table_rows)
+
+                answer_table = results_data[TABLE_COLUMNS_ID].to_dict('records')
+        return answer_table
+
+    update_table.__name__ = 'update_%s_table' % id_name
+    return update_table
 
 
 def compare_barplot_callback(app_handle, result_category):
@@ -575,19 +730,25 @@ def compare_barplot_callback(app_handle, result_category):
                         hoverinfo='y+text'
                     ),
                 ]
-
         return fig
 
-    update_barplot.__name__ = 'update_%s_input' % id_name
+    update_barplot.__name__ = 'update_%s_barplot' % id_name
+    return update_barplot
+
     return update_barplot
 
 
 def callbacks(app_handle):
 
-    for res_cat in [POP_RES, INVEST_RES, GHG_BAU_RES]:
+    for res_cat in [POP_RES, INVEST_RES, GHG_RES]:
         country_barplot_callback(app_handle, res_cat)
+        country_table_callback(app_handle, res_cat)
         aggregate_barplot_callback(app_handle, res_cat)
+        aggregate_table_callback(app_handle, res_cat)
         compare_barplot_callback(app_handle, res_cat)
+
+    for res_type in [RES_COUNTRY, RES_AGGREGATE, RES_COMPARE]:
+        ghg_dropdown_options_callback(app_handle, res_type)
 
     @app_handle.callback(
         Output('map', 'figure'),
@@ -820,262 +981,7 @@ def callbacks(app_handle):
             cur_style.update({'display': 'flex'})
         return cur_style
 
-    @app_handle.callback(
-        Output('country-basic-results-table', 'data'),
-        [
-            Input('country-input', 'value'),
-            Input('scenario-input', 'value'),
-        ],
-        [State('data-store', 'data')]
-    )
-    def update_country_basic_results_table(
-            country_sel,
-            scenario,
-            cur_data,
-    ):
-        """Display information and study's results for a country."""
-        answer_table = []
-        country_iso = country_sel
-        # in case of country_iso is a list of one element
-        if np.shape(country_iso) and len(country_iso) == 1:
-            country_iso = country_iso[0]
 
-        # extract the data from the selected scenario if a country was selected
-        if country_iso is not None:
-            if scenario in SCENARIOS:
-
-                df = pd.read_json(cur_data[scenario])
-                df = df.loc[df.country_iso == country_iso]
-
-                basic_results_data = prepare_results_tables(df, scenario)
-
-                total = np.nansum(basic_results_data, axis=1)
-
-                # prepare a DataFrame
-                basic_results_data = pd.DataFrame(
-                    data=basic_results_data,
-                    columns=ELECTRIFICATION_OPTIONS + ['No Electricity']
-                )
-                # sums of the rows
-                basic_results_data['total'] = pd.Series(total)
-
-                # Format the digits
-                basic_results_data.iloc[1:, 0:] = basic_results_data.iloc[1:, 0:].applymap(
-                    round_digits
-                )
-                basic_results_data.iloc[0, 0:] = basic_results_data.iloc[0, 0:].map(
-                    format_percent
-                )
-                # label of the table rows
-                basic_results_data['labels'] = pd.Series(BASIC_ROWS)
-
-                answer_table = basic_results_data[BASIC_COLUMNS_ID].to_dict('records')
-
-        return answer_table
-
-    @app_handle.callback(
-        Output('country-ghg-results-table', 'data'),
-        [
-            Input('country-input', 'value'),
-            Input('scenario-input', 'value'),
-        ],
-        [State('data-store', 'data')]
-    )
-    def update_country_ghg_results_table(
-            country_sel,
-            scenario,
-            cur_data,
-    ):
-        """Display information and study's results for a country."""
-        answer_table = []
-        df_bau = None
-        country_iso = country_sel
-        # in case of country_iso is a list of one element
-        if np.shape(country_iso) and len(country_iso) == 1:
-            country_iso = country_iso[0]
-
-        # extract the data from the selected scenario if a country was selected
-        if country_iso is not None:
-            if scenario in SCENARIOS:
-
-                df = pd.read_json(cur_data[scenario])
-                df = df.loc[df.country_iso == country_iso]
-
-                if scenario in [SE4ALL_FLEX_SCENARIO, SE4ALL_SCENARIO, PROG_SCENARIO]:
-                    # to compare greenhouse gas emissions with BaU scenario
-                    df_bau = pd.read_json(cur_data[BAU_SCENARIO])
-                    df_bau = df_bau.loc[df_bau.country_iso == country_iso]
-
-                if df_bau is None:
-                    ghg_rows = [
-                        'GHG',
-                        'GHG (TIER + 1)',
-                        # 'GHG CUMUL'
-                    ]
-                else:
-                    ghg_rows = [
-                        'GHG',
-                        'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-                        'GHG (TIER +1)',
-                        'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-                    ]
-
-                # gather the values of the results to display in the table
-                ghg_res = np.squeeze(df[GHG].values).round(0)
-                ghg2_res = np.squeeze(df[GHG_CAP].values).round(0)
-                if df_bau is not None:
-                    ghg_comp_res = ghg_res - np.squeeze(df_bau[GHG].values).round(0)
-                    ghg2_comp_res = ghg2_res - np.squeeze(df_bau[GHG_CAP].values).round(0)
-                    ghg_results_data = np.vstack([ghg_res, ghg_comp_res, ghg2_res, ghg2_comp_res])
-                else:
-                    ghg_results_data = np.vstack([ghg_res, ghg2_res])
-
-                total = np.nansum(ghg_results_data, axis=1)
-
-                # prepare a DataFrame
-                ghg_results_data = pd.DataFrame(
-                    data=ghg_results_data,
-                    columns=ELECTRIFICATION_OPTIONS + ['No Electricity']
-                )
-
-                # sums of the rows
-                ghg_results_data['total'] = pd.Series(total)
-                ghg_results_data.iloc[:, 0:] = ghg_results_data.iloc[:, 0:].applymap(round_digits)
-                # label of the table rows
-                ghg_results_data['labels'] = pd.Series(ghg_rows)
-                answer_table = ghg_results_data[GHG_COLUMNS_ID].to_dict('records')
-
-        return answer_table
-
-    @app_handle.callback(
-        Output('aggregate-basic-results-table', 'data'),
-        [
-            Input('region-input', 'value'),
-            Input('scenario-input', 'value'),
-        ],
-        [State('data-store', 'data')]
-    )
-    def update_aggregate_basic_results_table(
-            region_id,
-            scenario,
-            cur_data,
-    ):
-        """Display information and study's results for a country."""
-        answer_table = []
-        if region_id is not None:
-            if scenario in SCENARIOS:
-
-                df = pd.read_json(cur_data[scenario])
-                if region_id != WORLD_ID:
-                    # narrow to the region if the scope is not on the whole world
-                    df = df.loc[df.region == REGIONS_NDC[region_id]]
-
-                # aggregate the results
-                df = df[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
-
-                basic_results_data = prepare_results_tables(df, scenario)
-
-                total = np.nansum(basic_results_data, axis=1)
-
-                # prepare a DataFrame
-                basic_results_data = pd.DataFrame(
-                    data=basic_results_data,
-                    columns=ELECTRIFICATION_OPTIONS + ['No Electricity']
-                )
-                # sums of the rows
-                basic_results_data['total'] = pd.Series(total)
-
-                # Format the digits
-                basic_results_data.iloc[1:, 0:] = basic_results_data.iloc[1:, 0:].applymap(
-                    round_digits
-                )
-                basic_results_data.iloc[0, 0:] = basic_results_data.iloc[0, 0:].map(
-                    format_percent
-                )
-                # label of the table rows
-                basic_results_data['labels'] = pd.Series(BASIC_ROWS)
-
-                answer_table = basic_results_data[BASIC_COLUMNS_ID].to_dict('records')
-
-        return answer_table
-
-    @app_handle.callback(
-        Output('aggregate-ghg-results-table', 'data'),
-        [
-            Input('region-input', 'value'),
-            Input('scenario-input', 'value'),
-        ],
-        [State('data-store', 'data')]
-    )
-    def update_aggregate_ghg_results_table(
-            region_id,
-            scenario,
-            cur_data,
-    ):
-        """Display information and study's results for a country."""
-        answer_table = []
-        if region_id is not None:
-            if scenario in SCENARIOS:
-
-                df = pd.read_json(cur_data[scenario])
-                df_bau = None
-                if region_id != WORLD_ID:
-                    # narrow to the region if the scope is not on the whole world
-                    df = df.loc[df.region == REGIONS_NDC[region_id]]
-
-                if scenario in [SE4ALL_FLEX_SCENARIO, SE4ALL_SCENARIO, PROG_SCENARIO]:
-
-                    # to compare greenhouse gas emissions with BaU scenario
-                    df_bau = pd.read_json(cur_data[BAU_SCENARIO])
-
-                    if region_id != WORLD_ID:
-                        # narrow to the region if the scope is not on the whole world
-                        df_bau = df_bau.loc[df_bau.region == REGIONS_NDC[region_id]]
-
-                if df_bau is None:
-                    ghg_rows = [
-                        'GHG',
-                        'GHG (TIER +1)',
-                        # 'GHG CUMUL'
-                    ]
-                else:
-                    ghg_rows = [
-                        'GHG',
-                        'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-                        'GHG (TIER +1)',
-                        'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-                    ]
-                    # aggregate the results
-                    df_bau = df_bau[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
-
-                # aggregate the results
-                df = df[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
-
-                # gather the values of the results to display in the table
-                ghg_res = np.squeeze(df[GHG].values).round(0)
-                ghg2_res = np.squeeze(df[GHG_CAP].values).round(0)
-
-                if df_bau is not None:
-                    ghg_comp_res = ghg_res - np.squeeze(df_bau[GHG].values).round(0)
-                    ghg2_comp_res = ghg2_res - np.squeeze(df_bau[GHG_CAP].values).round(0)
-                    ghg_results_data = np.vstack([ghg_res, ghg_comp_res, ghg2_res, ghg2_comp_res])
-                else:
-                    ghg_results_data = np.vstack([ghg_res, ghg2_res])
-
-                total = np.nansum(ghg_results_data, axis=1)
-
-                # prepare a DataFrame
-                ghg_results_data = pd.DataFrame(
-                    data=ghg_results_data,
-                    columns=ELECTRIFICATION_OPTIONS + ['No Electricity']
-                )
-                # sums of the rows
-                ghg_results_data['total'] = pd.Series(total)
-                ghg_results_data.iloc[:, 0:] = ghg_results_data.iloc[:, 0:].applymap(round_digits)
-                # label of the table rows
-                ghg_results_data['labels'] = pd.Series(ghg_rows)
-
-                answer_table = ghg_results_data[GHG_COLUMNS_ID].to_dict('records')
 
         return answer_table
 
