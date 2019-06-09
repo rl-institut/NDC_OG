@@ -13,11 +13,13 @@ from data.data_preparation import (
     BAU_SCENARIO,
     SE4ALL_SCENARIO,
     SCENARIOS_DICT,
+    SCENARIOS,
     SE4ALL_FLEX_SCENARIO,
     PROG_SCENARIO,
     GRID,
     MG,
     SHS,
+    NO_ACCESS,
     # BASIC_ROWS,
     # BASIC_ROWS_FULL,
     # LABEL_COLUMNS,
@@ -28,6 +30,11 @@ from data.data_preparation import (
 RES_COUNTRY = 'country'
 RES_AGGREGATE = 'aggregate'
 RES_COMPARE = 'compare'
+
+POP_RES = 'pop'
+INVEST_RES = 'invest'
+GHG_BAU_RES = 'ghg-bau'
+GHG_OTHER_RES = 'ghg'
 
 TABLES_COLUMNS_WIDTH = [
     {'if': {'column_id': 'labels'},
@@ -55,14 +62,6 @@ TABLES_HEADER_STYLING = {
     'fontWeight': 'bold'
 }
 
-# add tables with the results
-# align number on the right
-
-
-BARPLOT_ELECTRIFICATION_COLORS = ['#7030a0', '#5b9bd5', '#ed7d31', '#a6a6a6']
-
-
-
 POP_ROWS = [
     'People share',
     'People (Mio)',
@@ -74,25 +73,23 @@ INVEST_ROWS = [
     'Investment (TIER + 1) BUSD',
 ]
 
-GHG_ROWS = [
-    'People share',
-    'People (Mio)',
-    'HH (Mio)',
-    'HH demand (MW)',
-    'HH demand (TIER + 1) (MW)',
-    'Investment BUSD',
-    'Investment (TIER + 1) BUSD',
-]
 GHG_ROWS_BAU = [
     'GHG',
     'GHG (TIER + 1)',
 ]
-GHG_ROWS_BAU_OTHER = [
+GHG_ROWS_OTHER = [
     'GHG',
     'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
     'GHG (TIER +1)',
     'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
 ]
+
+TABLE_ROWS = {
+    POP_RES: POP_ROWS,
+    INVEST_RES: INVEST_ROWS,
+    GHG_BAU_RES: GHG_ROWS_BAU,
+    GHG_OTHER_RES: GHG_ROWS_OTHER,
+}
 
 TABLE_ROWS_TOOLTIPS = {
     'People share': 'Percentage of people getting electricity access by 2030',
@@ -121,6 +118,16 @@ COMPARE_COLUMNS_ID = ['labels']
 for opt in ELECTRIFICATION_OPTIONS + ['No Electricity'] + ['total']:
     COMPARE_COLUMNS_ID.append(opt)
     COMPARE_COLUMNS_ID.append('comp_{}'.format(opt))
+
+
+BARPLOT_ELECTRIFICATION_COLORS = {
+    GRID: '#7030a0',
+    MG: '#5b9bd5',
+    SHS: '#ed7d31',
+    NO_ACCESS: '#a6a6a6'
+}
+
+BARPLOT_YAXIS_OPT = ELECTRIFICATION_OPTIONS.copy() + ['No Electricity']
 
 
 def create_tooltip(cell):

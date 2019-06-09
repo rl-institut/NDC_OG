@@ -45,6 +45,7 @@ EXOGENOUS_RESULTS_LABELS = [
 GRID = 'grid'
 MG = 'mg'
 SHS = 'shs'
+NO_ACCESS = 'No Electricity'
 ELECTRIFICATION_OPTIONS = [GRID, MG, SHS]
 BAU_SCENARIO = 'bau'
 SE4ALL_SCENARIO = 'se4all'
@@ -92,11 +93,11 @@ that the frameworks for MG and SHS are 100 (highest possible RISE score).' + '\n
         + 'In this scenario, Sustainable Development Goal 7 is reached.'
 }
 
-
 ELECTRIFICATION_DICT = {
     GRID: 'Grid',
     MG: 'Mini Grid',
-    SHS: 'Solar Home System'
+    SHS: 'Solar Home System',
+    NO_ACCESS: NO_ACCESS
 }
 
 ELECTRIFICATION_DESCRIPTIONS = {
@@ -142,42 +143,6 @@ GRID_INV_COST_HH = 2500
 MEDIAN_INVESTMENT_COST = {1: 742, 2: 1273, 3: 2516, 4: 5277, 5: 5492}
 
 RISE_INDICES = ['rise_%s' % opt for opt in ELECTRIFICATION_OPTIONS]
-
-BASIC_ROWS = [
-    'People share',
-    'People (Mio)',
-    'HH (Mio)',
-    'HH demand (MW)',
-    'HH demand (TIER + 1) (MW)',
-    'Investment BUSD',
-    'Investment (TIER + 1) BUSD',
-]
-
-BASIC_ROWS_FULL = {
-    'People share': 'Percentage of people getting electricity access by 2030',
-    'People (Mio)': 'Number of people getting electricity access by 2030',
-    'HH (Mio)': 'Number of households getting electricity access by 2030',
-    'HH demand (MW)': 'Expected household electricity demand by 2030, in MW',
-    'HH demand (TIER + 1) (MW)':
-        'Expected household electricity demand by 2030 for one TIER level up, in MW',
-    'Investment BUSD':
-        'Needed initial investments to supply expected demand by 2030, in million USD',
-    'Investment (TIER + 1) BUSD':
-        'Needed initial investments to supply expected demand by 2030 for one TIER level up, '
-        'in million USD',
-}
-# labels of the columns of the result tables
-LABEL_COLUMNS = ELECTRIFICATION_DICT.copy()
-# a column for the row labels
-LABEL_COLUMNS['labels'] = ''
-LABEL_COLUMNS['No Electricity'] = 'No Electricity'
-LABEL_COLUMNS['total'] = 'Total'
-BASIC_COLUMNS_ID = ['labels'] + ELECTRIFICATION_OPTIONS + ['No Electricity'] + ['total']
-GHG_COLUMNS_ID = ['labels'] + ELECTRIFICATION_OPTIONS + ['No Electricity'] + ['total']
-COMPARE_COLUMNS_ID = ['labels']
-for opt in ELECTRIFICATION_OPTIONS + ['No Electricity'] + ['total']:
-    COMPARE_COLUMNS_ID.append(opt)
-    COMPARE_COLUMNS_ID.append('comp_{}'.format(opt))
 
 
 def prepare_results_tables(df, sce=BAU_SCENARIO):
