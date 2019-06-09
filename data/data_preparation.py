@@ -149,37 +149,43 @@ INVEST_RES = 'invest'
 GHG_BAU_RES = 'ghg-bau'
 GHG_OTHER_RES = 'ghg'
 
-def prepare_results_tables(df, sce=BAU_SCENARIO):
-    pop = np.squeeze(df[POP_GET].values * 1e-6)
-    # compute the percentage of population with electricity access
-    df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0)
-    # gather the values of the results to display in the table
-    pop_res = np.squeeze(df[POP_GET].values * 100)
 
-    hh_res = np.squeeze(df[HH_GET].values * 1e-6)
+def prepare_results_tables(df, sce=BAU_SCENARIO, result_category=POP_RES):
 
-    if sce == BAU_SCENARIO:
-        total_share = pop_res.sum()
-        total_pop = df.pop_newly_electrified_2030
-        pop_no_elec = total_pop * 1e-6 - pop.sum()
-        pop_res_no_elec = 100 - total_share
-        pop = np.append(pop, pop_no_elec)
-        pop_res = np.append(pop_res, pop_res_no_elec)
-        hh_av_size = np.round(pop[0]/hh_res[0], 2)
-        hh_res = np.append(hh_res, pop_no_elec / hh_av_size)
-    else:
-        pop = np.append(pop, 0)
-        pop_res = np.append(pop_res, 0)
-        hh_res = np.append(hh_res, 0)
+    answer = np.array([0, 0, 0, 0])
 
-    cap_res = np.append(np.squeeze(df[HH_CAP].values * 1e-3).round(0), np.nan)
-    cap2_res = np.append(np.squeeze(df[HH_SCN2].values * 1e-3).round(0), np.nan)
-    invest_res = np.append(np.squeeze(df[INVEST].values * 1e-9).round(3), np.nan)
-    invest2_res = np.append(np.squeeze(df[INVEST_CAP].values * 1e-9).round(3), np.nan)
+    if result_category == POP_RES:
+        pop = np.squeeze(df[POP_GET].values * 1e-6)
+        # compute the percentage of population with electricity access
+        df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0)
+        # gather the values of the results to display in the table
+        pop_res = np.squeeze(df[POP_GET].values * 100)
 
-    return np.vstack(
-        [pop_res, pop, hh_res, cap_res, cap2_res, invest_res, invest2_res]
-    )
+        hh_res = np.squeeze(df[HH_GET].values * 1e-6)
+
+        if sce == BAU_SCENARIO:
+            total_share = pop_res.sum()
+            total_pop = df.pop_newly_electrified_2030
+            pop_no_elec = total_pop * 1e-6 - pop.sum()
+            pop_res_no_elec = 100 - total_share
+            pop = np.append(pop, pop_no_elec)
+            pop_res = np.append(pop_res, pop_res_no_elec)
+            hh_av_size = np.round(pop[0]/hh_res[0], 2)
+            hh_res = np.append(hh_res, pop_no_elec / hh_av_size)
+        else:
+            pop = np.append(pop, 0)
+            pop_res = np.append(pop_res, 0)
+            hh_res = np.append(hh_res, 0)
+        answer = np.vstack([pop_res, pop, hh_res])
+    elif result_category == INVEST_RES:
+
+        # cap_res = np.append(np.squeeze(df[HH_CAP].values * 1e-3).round(0), np.nan)
+        # cap2_res = np.append(np.squeeze(df[HH_SCN2].values * 1e-3).round(0), np.nan)
+        invest_res = np.append(np.squeeze(df[INVEST].values * 1e-9).round(3), np.nan)
+        invest2_res = np.append(np.squeeze(df[INVEST_CAP].values * 1e-9).round(3), np.nan)
+        answer = np.vstack([invest_res, invest2_res])
+
+    return answer
 
 
 def compute_rise_shifts(rise, pop_get, opt, flag=''):
