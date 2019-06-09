@@ -382,7 +382,196 @@ layout = html.Div(
 )
 
 
+def country_barplot_callback(app_handle, result_category):
+    """Generate a callback for input components."""
+
+    id_name = '{}-{}'.format('country', result_category)
+
+    @app_handle.callback(
+        Output('{}-barplot'.format(id_name), 'figure'),
+        [
+            Input('country-input', 'value'),
+            Input('{}-barplot-yaxis-input'.format(id_name), 'value')
+        ],
+        [
+            State('data-store', 'data'),
+            State('{}-barplot'.format(id_name), 'figure')
+        ]
+    )
+    def update_barplot(country_sel, y_sel, cur_data, fig):
+
+        if y_sel is None:
+            idx_y = 0
+        else:
+            idx_y = TABLE_ROWS[result_category].index(y_sel)
+
+        country_iso = country_sel
+        if country_iso is not None:
+            y_vals = []
+            for sce_id, sce in enumerate(SCENARIOS):
+
+                df = pd.read_json(cur_data[sce])
+                # narrow to the country's results
+                df = df.loc[df.country_iso == country_iso]
+                # extract the results formatted with good units
+                results_data = prepare_results_tables(df, sce, result_category)
+                # select the row corresponding to the barplot y axis choice
+                y_vals.append(results_data[idx_y])
+
+            y_vals = np.vstack(y_vals)
+
+            for j, opt in enumerate(BARPLOT_YAXIS_OPT):
+                fig['data'][j].update({'x': SCENARIOS})
+                fig['data'][j].update({'y': y_vals[:, j]})
+
+        return fig
+
+    update_barplot.__name__ = 'update_%s_input' % id_name
+
+    return update_barplot
+
+
+def aggregate_barplot_callback(app_handle, result_category):
+    """Generate a callback for input components."""
+
+    id_name = '{}-{}'.format('aggregate', result_category)
+
+    @app_handle.callback(
+        Output('{}-barplot'.format(id_name), 'figure'),
+        [
+            Input('region-input', 'value'),
+            Input('{}-barplot-yaxis-input'.format(id_name), 'value')
+        ],
+        [
+            State('data-store', 'data'),
+            State('{}-barplot'.format(id_name), 'figure')
+        ]
+    )
+    def update_barplot(region_id, y_sel, cur_data, fig):
+
+        if y_sel is None:
+            idx_y = 0
+        else:
+            idx_y = TABLE_ROWS[result_category].index(y_sel)
+
+        if region_id is not None:
+            y_vals = []
+            for sce_id, sce in enumerate(SCENARIOS):
+                df = pd.read_json(cur_data[sce])
+
+                if region_id != WORLD_ID:
+                    # narrow to the region if the scope is not on the whole world
+                    df = df.loc[df.region == REGIONS_NDC[region_id]]
+
+                # aggregate the results
+                df = df[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
+
+                # compute the percentage of population with electricity access
+                results_data = prepare_results_tables(df, sce, result_category)
+
+                y_vals.append(results_data[idx_y])
+
+            y_vals = np.vstack(y_vals)
+
+            for j, opt in enumerate(BARPLOT_YAXIS_OPT):
+                fig['data'][j].update({'x': SCENARIOS})
+                fig['data'][j].update({'y': y_vals[:, j]})
+
+        return fig
+
+    update_barplot.__name__ = 'update_%s_input' % id_name
+
+    return update_barplot
+
+
+def compare_barplot_callback(app_handle, result_category):
+    """Generate a callback for input components."""
+
+    id_name = '{}-{}'.format('compare', result_category)
+
+    @app_handle.callback(
+        Output('{}-barplot'.format(id_name), 'figure'),
+        [
+            Input('country-input', 'value'),
+            Input('compare-input', 'value'),
+            Input('scenario-input', 'value'),
+            Input('{}-barplot-yaxis-input'.format(id_name), 'value')
+        ],
+        [
+            State('data-store', 'data'),
+            State('{}-barplot'.format(id_name), 'figure')
+        ]
+    )
+    def update_barplot(country_sel, comp_sel, scenario, y_sel, cur_data, fig):
+        if y_sel is None:
+            idx_y = 0
+        else:
+            idx_y = TABLE_ROWS[result_category].index(y_sel)
+
+
+        if country_sel is not None:
+            if comp_sel is not None:
+
+                comp_name = comp_sel
+                df = pd.read_json(cur_data[scenario])
+                df_comp = df.copy()
+                df_ref = df.loc[df.country_iso == country_sel]
+                if comp_sel in REGIONS_NDC:
+                    # compare the reference country to a region
+                    if comp_sel != WORLD_ID:
+                        df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[comp_sel]]
+                    df_comp = df_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
+                    comp_name = REGIONS_GPD[comp_sel]
+                else:
+                    # compare the reference country to a country
+                    df_comp = df_comp.loc[df_comp.country_iso == comp_sel]
+
+                ref_results_data = prepare_results_tables(df_ref, scenario, result_category)
+                comp_results_data = prepare_results_tables(df_comp, scenario, result_category)
+
+                y_ref = ref_results_data[idx_y]
+                y_comp = comp_results_data[idx_y]
+
+                fs = 12
+
+                fig['data'] = [
+                    go.Bar(
+                        x=x,
+                        y=y_ref,
+                        text=[country_sel for i in range(4)],
+                        insidetextfont={'size': fs},
+                        textposition='auto',
+                        marker=dict(
+                            color=['#0000ff', '#ffa500', '#008000', 'red']
+                        ),
+                        hoverinfo='y+text'
+                    ),
+                    go.Bar(
+                        x=x,
+                        y=y_comp,
+                        text=[comp_name for i in range(4)],
+                        insidetextfont={'size': fs},
+                        textposition='auto',
+                        marker=dict(
+                            color=['#8080ff', '#ffd280', '#1aff1a', 'red']
+                        ),
+                        hoverinfo='y+text'
+                    ),
+                ]
+
+        return fig
+
+    update_barplot.__name__ = 'update_%s_input' % id_name
+    return update_barplot
+
+
 def callbacks(app_handle):
+
+    for res_cat in [POP_RES, INVEST_RES, GHG_BAU_RES]:
+        country_barplot_callback(app_handle, res_cat)
+        aggregate_barplot_callback(app_handle, res_cat)
+        compare_barplot_callback(app_handle, res_cat)
+
     @app_handle.callback(
         Output('map', 'figure'),
         [
@@ -453,150 +642,6 @@ def callbacks(app_handle):
         fig['data'][1:] = points
 
         fig['layout']['geo'].update({'scope': region_name.lower()})
-        return fig
-
-    @app_handle.callback(
-        Output('country-barplot', 'figure'),
-        [
-            Input('country-input', 'value'),
-            Input('country-barplot-yaxis-input', 'value')
-        ],
-        [
-            State('data-store', 'data'),
-            State('country-barplot', 'figure')
-        ]
-    )
-    def update_country_barplot(country_sel, y_sel, cur_data, fig):
-        """update the barplot for every scenario"""
-
-        country_iso = country_sel
-        if country_iso is not None:
-            for sce_id, sce in enumerate(SCENARIOS):
-
-                df = pd.read_json(cur_data[sce])
-                # narrow to the country's results
-                df = df.loc[df.country_iso == country_iso]
-                # compute the percentage of population with electricity access
-                basic_results_data = prepare_results_tables(df, sce)
-
-                if y_sel in BASIC_ROWS[0:3]:
-                    x = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
-                else:
-                    x = ELECTRIFICATION_OPTIONS.copy()
-                y = basic_results_data[BASIC_ROWS.index(y_sel)]
-
-                fig['data'][sce_id].update({'x': x})
-                fig['data'][sce_id].update({'y': y})
-
-        return fig
-
-    @app_handle.callback(
-        Output('aggregate-barplot', 'figure'),
-        [
-            Input('region-input', 'value'),
-            Input('aggregate-barplot-yaxis-input', 'value')
-        ],
-        [
-            State('data-store', 'data'),
-            State('aggregate-barplot', 'figure')
-        ]
-    )
-    def update_aggregate_barplot(region_id, y_sel, cur_data, fig):
-        """update the barplot for every scenario"""
-        if region_id is not None:
-            for sce_id, sce in enumerate(SCENARIOS):
-                df = pd.read_json(cur_data[sce])
-
-                if region_id != WORLD_ID:
-                    # narrow to the region if the scope is not on the whole world
-                    df = df.loc[df.region == REGIONS_NDC[region_id]]
-
-                # aggregate the results
-                df = df[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
-
-                # compute the percentage of population with electricity access
-                basic_results_data = prepare_results_tables(df, sce)
-
-                if y_sel in BASIC_ROWS[0:3]:
-                    x = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
-                else:
-                    x = ELECTRIFICATION_OPTIONS.copy()
-                y = basic_results_data[BASIC_ROWS.index(y_sel)]
-
-                fig['data'][sce_id].update({'x': x})
-                fig['data'][sce_id].update({'y': y})
-
-        return fig
-
-    @app_handle.callback(
-        Output('compare-barplot', 'figure'),
-        [
-            Input('country-input', 'value'),
-            Input('compare-input', 'value'),
-            Input('scenario-input', 'value'),
-            Input('compare-barplot-yaxis-input', 'value')
-        ],
-        [
-            State('data-store', 'data'),
-            State('compare-barplot', 'figure')
-        ]
-    )
-    def update_compare_barplot(country_sel, comp_sel, scenario, y_sel, cur_data, fig):
-        """update the barplot whenever the country changes"""
-        if country_sel is not None:
-            if comp_sel is not None:
-
-                comp_name = comp_sel
-                df = pd.read_json(cur_data[scenario])
-                df_comp = df.copy()
-                df = df.loc[df.country_iso == country_sel]
-                if comp_sel in REGIONS_NDC:
-                    # compare the reference country to a region
-                    if comp_sel != WORLD_ID:
-                        df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[comp_sel]]
-                    df_comp = df_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
-                    comp_name = REGIONS_GPD[comp_sel]
-                else:
-                    # compare the reference country to a country
-                    df_comp = df_comp.loc[df_comp.country_iso == comp_sel]
-
-                basic_results_data = prepare_results_tables(df, scenario)
-                comp_results_data = prepare_results_tables(df_comp, scenario)
-
-                if y_sel in BASIC_ROWS[0:3]:
-                    x = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
-                else:
-                    x = ELECTRIFICATION_OPTIONS.copy()
-                y = basic_results_data[BASIC_ROWS.index(y_sel)]
-                y_comp = comp_results_data[BASIC_ROWS.index(y_sel)]
-
-                fs = 12
-
-                fig['data'] = [
-                    go.Bar(
-                        x=x,
-                        y=y,
-                        text=[country_sel for i in range(4)],
-                        insidetextfont={'size': fs},
-                        textposition='auto',
-                        marker=dict(
-                            color=['#0000ff', '#ffa500', '#008000', 'red']
-                        ),
-                        hoverinfo='y+text'
-                    ),
-                    go.Bar(
-                        x=x,
-                        y=y_comp,
-                        text=[comp_name for i in range(4)],
-                        insidetextfont={'size': fs},
-                        textposition='auto',
-                        marker=dict(
-                            color=['#8080ff', '#ffd280', '#1aff1a', 'red']
-                        ),
-                        hoverinfo='y+text'
-                    ),
-                ]
-
         return fig
 
     @app_handle.callback(
