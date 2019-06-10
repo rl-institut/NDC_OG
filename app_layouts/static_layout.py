@@ -333,18 +333,10 @@ layout = html.Div(
                         id='main-results-contents',
                         className='grid-x',
                         children=[
-                            html.Div(
-                                id='map-div',
+                            dcc.Graph(
+                                id='map',
                                 className='cell medium-6',
-                                title='Hover over a country to display information.\n'
-                                      + 'Click on it to access detailed report.',
-                                children=dcc.Graph(
-                                    id='map',
-                                    figure=fig_map,
-                                    # config={
-                                    #     'displayModeBar': True,
-                                    # }
-                                ),
+                                figure=fig_map,
                             ),
                             html.Div(
                                 id='results-info-div',
@@ -1194,12 +1186,12 @@ def callbacks(app_handle):
         return cur_view
 
     @app_handle.callback(
-        Output('map-div', 'style'),
+        Output('map', 'style'),
         [Input('view-store', 'data')],
-        [State('map-div', 'style')]
+        [State('map', 'style')]
     )
     def toggle_map_div_display(cur_view, cur_style):
-        """Change the display of map-div between the app's views."""
+        """Change the display of map between the app's views."""
         if cur_style is None:
             cur_style = {'display': 'flex'}
 
