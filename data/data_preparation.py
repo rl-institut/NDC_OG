@@ -146,8 +146,8 @@ RISE_INDICES = ['rise_%s' % opt for opt in ELECTRIFICATION_OPTIONS]
 
 POP_RES = 'pop'
 INVEST_RES = 'invest'
-GHG_BAU_RES = 'ghg-bau'
-GHG_OTHER_RES = 'ghg'
+GHG_RES = 'ghg'
+GHG_ER_RES = 'ghg-er'
 
 
 def prepare_results_tables(df, sce=BAU_SCENARIO, result_category=POP_RES):
@@ -184,6 +184,11 @@ def prepare_results_tables(df, sce=BAU_SCENARIO, result_category=POP_RES):
         invest_res = np.append(np.squeeze(df[INVEST].values * 1e-9).round(3), np.nan)
         invest2_res = np.append(np.squeeze(df[INVEST_CAP].values * 1e-9).round(3), np.nan)
         answer = np.vstack([invest_res, invest2_res])
+
+    elif result_category in [GHG_RES, GHG_ER_RES]:
+        ghg_res = np.squeeze(df[GHG].values).round(0)
+        ghg2_res = np.squeeze(df[GHG_CAP].values).round(0)
+        answer = np.vstack([ghg_res, ghg2_res])
 
     return answer
 
