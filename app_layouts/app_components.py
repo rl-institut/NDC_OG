@@ -104,11 +104,11 @@ TABLE_ROWS_TOOLTIPS = {
 # labels of the columns of the result tables
 TABLE_COLUMNS_LABEL = ELECTRIFICATION_DICT.copy()
 TABLE_COLUMNS_LABEL['labels'] = ''
-TABLE_COLUMNS_LABEL['No Electricity'] = 'No Electricity'
+TABLE_COLUMNS_LABEL[NO_ACCESS] = NO_ACCESS
 TABLE_COLUMNS_LABEL['total'] = 'Total'
-TABLE_COLUMNS_ID = ['labels'] + ELECTRIFICATION_OPTIONS + ['No Electricity'] + ['total']
+TABLE_COLUMNS_ID = ['labels'] + ELECTRIFICATION_OPTIONS + [NO_ACCESS] + ['total']
 COMPARE_COLUMNS_ID = ['labels']
-for opt in ELECTRIFICATION_OPTIONS + ['No Electricity'] + ['total']:
+for opt in ELECTRIFICATION_OPTIONS + [NO_ACCESS] + ['total']:
     COMPARE_COLUMNS_ID.append(opt)
     COMPARE_COLUMNS_ID.append('comp_{}'.format(opt))
 
@@ -120,7 +120,7 @@ BARPLOT_ELECTRIFICATION_COLORS = {
     NO_ACCESS: '#a6a6a6'
 }
 
-BARPLOT_YAXIS_OPT = ELECTRIFICATION_OPTIONS.copy() + ['No Electricity']
+BARPLOT_YAXIS_OPT = ELECTRIFICATION_OPTIONS.copy() + [NO_ACCESS]
 
 
 def create_tooltip(cell):

@@ -492,7 +492,7 @@ def country_table_callback(app_handle, result_category):
                 # prepare a DataFrame
                 results_data = pd.DataFrame(
                     data=results_data,
-                    columns=ELECTRIFICATION_OPTIONS + ['No Electricity']
+                    columns=ELECTRIFICATION_OPTIONS + [NO_ACCESS]
                 )
                 # sums of the rows
                 results_data['total'] = pd.Series(total)
@@ -628,7 +628,7 @@ def aggregate_table_callback(app_handle, result_category):
                 # prepare a DataFrame
                 results_data = pd.DataFrame(
                     data=results_data,
-                    columns=ELECTRIFICATION_OPTIONS + ['No Electricity']
+                    columns=ELECTRIFICATION_OPTIONS + [NO_ACCESS]
                 )
                 # sums of the rows
                 results_data['total'] = pd.Series(total)
@@ -817,7 +817,7 @@ def compare_table_callback(app_handle, result_category):
                 # prepare a DataFrame
                 results_data = pd.DataFrame(
                     data=results_data,
-                    columns=ELECTRIFICATION_OPTIONS + ['No Electricity'] + comp_ids
+                    columns=ELECTRIFICATION_OPTIONS + [NO_ACCESS] + comp_ids
                 )
                 # sums of the rows
                 results_data['total'] = pd.Series(total)
