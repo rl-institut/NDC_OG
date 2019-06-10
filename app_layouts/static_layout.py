@@ -738,6 +738,88 @@ def compare_barplot_callback(app_handle, result_category):
     return update_barplot
 
 
+def country_aggregate_title_callback(app_handle, result_type, result_category):
+
+    id_name = '{}-{}'.format(result_type, result_category)
+
+    if result_type == RES_COUNTRY:
+        inputs = [Input('country-input', 'value')]
+    elif result_type == RES_AGGREGATE:
+        inputs = [Input('region-input', 'value')]
+
+    if result_category == POP_RES:
+        description = 'electrification mix (scenario {})'
+    elif result_category == INVEST_RES:
+        description = 'initial investments needed (scenario {})'
+    else:
+        description = 'cumulated GHG emissions (2017-2030) (scenario {})'
+
+    @app_handle.callback(
+        Output('{}-results-title'.format(id_name), 'children'),
+        inputs,
+        [
+            State('scenario-input', 'value'),
+            State('data-store', 'data')]
+    )
+    def update_title(input_trigger, scenario, cur_data):
+
+        answer = 'Results'
+        if scenario in SCENARIOS and input_trigger is not None:
+            if result_type == RES_COUNTRY:
+                df = pd.read_json(cur_data[scenario])
+                answer = '{}: '.format(df.loc[df.country_iso == input_trigger].country.values[0])
+            elif result_type == RES_AGGREGATE:
+                answer = '{}: aggregated '.format(
+                    REGIONS_GPD[input_trigger]
+                )
+        return '{}{}'.format(answer, description.format(SCENARIOS_DICT[scenario]))
+
+
+def compare_title_callback(app_handle, result_category):
+
+    id_name = '{}-{}'.format(RES_COMPARE, result_category)
+
+    if result_category == POP_RES:
+        description = 'electrification mix {} (scenario {})'
+    elif result_category == INVEST_RES:
+        description = 'initial investments needed {} (scenario {})'
+    else:
+        description = 'cumulated GHG emissions (2017-2030) {} (scenario {})'
+
+    @app_handle.callback(
+        Output('{}-results-title'.format(id_name), 'children'),
+        [
+            Input('country-input', 'value'),
+            Input('compare-input', 'value')
+        ],
+        [
+            State('scenario-input', 'value'),
+            State('data-store', 'data')]
+    )
+    def update_title(country_iso, comp_sel, scenario, cur_data):
+
+        answer = 'Results'
+        if scenario in SCENARIOS and country_iso is not None and comp_sel is not None:
+            df = pd.read_json(cur_data[scenario])
+            if comp_sel in REGIONS_NDC:
+                comp_name = REGIONS_GPD[comp_sel]
+            else:
+                comp_name = df.loc[df.country_iso == comp_sel].country.values[0]
+            answer = 'Comparison of {}'.format(
+                description.format(
+                    'between {} and {}'.format(
+                        df.loc[df.country_iso == country_iso].country.values[0],
+                        comp_name
+                    ),
+                    scenario
+                )
+            )
+            return answer
+
+    update_title.__name__ = 'update_%s_title' % id_name
+    return update_title
+
+
 def callbacks(app_handle):
 
     for res_cat in [POP_RES, INVEST_RES, GHG_RES]:
@@ -1362,59 +1444,7 @@ def callbacks(app_handle):
 
         return divs
 
-    @app_handle.callback(
-        Output('country-basic-results-title', 'children'),
-        [Input('country-input', 'value')],
-        [
-            State('scenario-input', 'value'),
-            State('data-store', 'data')]
-    )
-    def country_basic_results_title(country_iso, scenario, cur_data):
 
-        answer = 'Results'
-        if scenario in SCENARIOS and country_iso is not None:
-            df = pd.read_json(cur_data[scenario])
-            answer = 'Results for {}: electrification options'.format(
-                df.loc[df.country_iso == country_iso].country.values[0])
-        return answer
-
-    @app_handle.callback(
-        Output('aggregate-basic-results-title', 'children'),
-        [Input('region-input', 'value')]
-    )
-    def aggregated_basic_results_title(region_id):
-
-        answer = 'Results'
-        if region_id is not None:
-            answer = 'Aggregated results for {}: electrification options'.format(
-                REGIONS_GPD[region_id]
-            )
-        return answer
-
-    @app_handle.callback(
-        Output('compare-basic-results-title', 'children'),
-        [
-            Input('country-input', 'value'),
-            Input('compare-input', 'value')
-        ],
-        [
-            State('scenario-input', 'value'),
-            State('data-store', 'data')]
-    )
-    def compare_basic_results_title(country_iso, comp_sel, scenario, cur_data):
-
-        answer = 'Results'
-        if scenario in SCENARIOS and comp_sel is not None:
-            df = pd.read_json(cur_data[scenario])
-            if comp_sel in REGIONS_NDC:
-                comp_name = REGIONS_GPD[comp_sel]
-            else:
-                comp_name = df.loc[df.country_iso == comp_sel].country.values[0]
-            answer = 'Results for {} compared with results {}'.format(
-                comp_name,
-                df.loc[df.country_iso == country_iso].country.values[0]
-            )
-        return answer
 
     @app_handle.callback(
         Output('aggregate-info-div', 'children'),
