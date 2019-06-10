@@ -143,7 +143,7 @@ def results_div(result_type, result_category):
     id_name = '{}-{}'.format(result_type, result_category)
 
     x_vals = [SCENARIOS_DICT[sce] for sce in SCENARIOS]
-    fs = 12
+    fs = 15
 
     # add a barplot above the tables with the results
     barplot = dcc.Graph(

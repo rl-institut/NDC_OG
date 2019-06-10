@@ -420,6 +420,7 @@ def country_barplot_callback(app_handle, result_category):
 
         country_iso = country_sel
         if country_iso is not None:
+            x_vals = [SCENARIOS_DICT[sce] for sce in SCENARIOS]
             y_vals = []
             for sce_id, sce in enumerate(SCENARIOS):
 
@@ -434,7 +435,7 @@ def country_barplot_callback(app_handle, result_category):
             y_vals = np.vstack(y_vals)
 
             for j, opt in enumerate(BARPLOT_YAXIS_OPT):
-                fig['data'][j].update({'x': SCENARIOS})
+                fig['data'][j].update({'x': x_vals})
                 fig['data'][j].update({'y': y_vals[:, j]})
 
         return fig
@@ -542,6 +543,7 @@ def aggregate_barplot_callback(app_handle, result_category):
             idx_y = TABLE_ROWS[result_category].index(y_sel)
 
         if region_id is not None:
+            x_vals = [SCENARIOS_DICT[sce] for sce in SCENARIOS]
             y_vals = []
             for sce_id, sce in enumerate(SCENARIOS):
                 df = pd.read_json(cur_data[sce])
@@ -561,7 +563,7 @@ def aggregate_barplot_callback(app_handle, result_category):
             y_vals = np.vstack(y_vals)
 
             for j, opt in enumerate(BARPLOT_YAXIS_OPT):
-                fig['data'][j].update({'x': SCENARIOS})
+                fig['data'][j].update({'x': x_vals})
                 fig['data'][j].update({'y': y_vals[:, j]})
         return fig
 
@@ -680,7 +682,6 @@ def compare_barplot_callback(app_handle, result_category):
 
         if country_sel is not None:
             if comp_sel is not None:
-
                 comp_name = comp_sel
                 df = pd.read_json(cur_data[scenario])
                 df_comp = df.copy()
@@ -699,7 +700,6 @@ def compare_barplot_callback(app_handle, result_category):
                 comp_results_data = prepare_results_tables(df_comp, scenario, result_category)
 
                 x = ELECTRIFICATION_OPTIONS + [NO_ACCESS]
-
                 y_ref = ref_results_data[idx_y]
                 y_comp = comp_results_data[idx_y]
 
