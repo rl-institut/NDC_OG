@@ -14,11 +14,8 @@ from data.data_preparation import (
     MIN_TIER_LEVEL,
     SCENARIOS,
     BAU_SCENARIO,
-    SE4ALL_SCENARIO,
-    SE4ALL_FLEX_SCENARIO,
-    PROG_SCENARIO,
-    SCENARIOS_DICT,
     SCENARIOS_DESCRIPTIONS,
+    SCENARIOS_DICT,
     ELECTRIFICATION_OPTIONS,
     POP_GET,
     EXO_RESULTS,
@@ -735,6 +732,24 @@ def compare_barplot_callback(app_handle, result_category):
     update_barplot.__name__ = 'update_%s_barplot' % id_name
     return update_barplot
 
+
+def ghg_dropdown_options_callback(app_handle, result_type):
+    """Generate a callback for input components."""
+
+    id_name = '{}-{}'.format(result_type, GHG_RES)
+
+    @app_handle.callback(
+        Output('{}-barplot-yaxis-input'.format(id_name), 'options'),
+        [Input('scenario-input', 'value')]
+    )
+    def update_barplot(scenario):
+        table_rows = TABLE_ROWS[GHG_ER_RES]
+        if scenario == BAU_SCENARIO:
+            table_rows = TABLE_ROWS[GHG_RES]
+
+        return [{'label': r, 'value': r} for r in table_rows]
+
+    update_barplot.__name__ = 'update_%s_dropdown' % id_name
     return update_barplot
 
 

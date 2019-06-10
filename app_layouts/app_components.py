@@ -8,22 +8,19 @@ import dash_daq as daq
 import dash_table
 import plotly.graph_objs as go
 from data.data_preparation import (
+    SCENARIOS,
+    SCENARIOS_DICT,
+    BAU_SCENARIO,
     ELECTRIFICATION_OPTIONS,
     ELECTRIFICATION_DICT,
-    BAU_SCENARIO,
-    SE4ALL_SCENARIO,
-    SCENARIOS_DICT,
-    SCENARIOS,
-    SE4ALL_FLEX_SCENARIO,
-    PROG_SCENARIO,
     GRID,
     MG,
     SHS,
     NO_ACCESS,
     POP_RES,
     INVEST_RES,
-    GHG_BAU_RES,
-    GHG_OTHER_RES,
+    GHG_RES,
+    GHG_ER_RES,
 )
 
 RES_COUNTRY = 'country'
@@ -65,26 +62,26 @@ POP_ROWS = [
 ]
 
 INVEST_ROWS = [
-    'Investment BUSD',
-    'Investment (TIER + 1) BUSD',
+    'Lower TIER cost',
+    'Higher TIER cost',
 ]
 
-GHG_ROWS_BAU = [
-    'GHG',
-    'GHG (TIER + 1)',
+GHG_ROWS = [
+    'Lower TIER',
+    'Higher TIER',
 ]
-GHG_ROWS_OTHER = [
-    'GHG',
+GHG_ER_ROWS = [
+    'Lower TIER',
     'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-    'GHG (TIER +1)',
+    'Higher TIER',
     'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
 ]
 
 TABLE_ROWS = {
     POP_RES: POP_ROWS,
     INVEST_RES: INVEST_ROWS,
-    GHG_BAU_RES: GHG_ROWS_BAU,
-    GHG_OTHER_RES: GHG_ROWS_OTHER,
+    GHG_RES: GHG_ROWS,
+    GHG_ER_RES: GHG_ER_ROWS,
 }
 
 TABLE_ROWS_TOOLTIPS = {
@@ -94,15 +91,15 @@ TABLE_ROWS_TOOLTIPS = {
     'HH demand (MW)': 'Expected household electricity demand by 2030, in MW',
     'HH demand (TIER + 1) (MW)':
         'Expected household electricity demand by 2030 for one TIER level up, in MW',
-    'Investment BUSD':
+    'Lower TIER cost':
         'Needed initial investments to supply expected demand by 2030, in million USD',
-    'Investment (TIER + 1) BUSD':
+    'Higher TIER cost':
         'Needed initial investments to supply expected demand by 2030 for one TIER level up, '
         'in million USD',
-    'GHG': '',
-    'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]): '',
-    'GHG (TIER +1)': '',
-    'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]): '',
+    'Lower TIER': '1',
+    'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]): '2',
+    'Higher TIER': '3',
+    'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]): '4',
 }
 # labels of the columns of the result tables
 TABLE_COLUMNS_LABEL = ELECTRIFICATION_DICT.copy()
