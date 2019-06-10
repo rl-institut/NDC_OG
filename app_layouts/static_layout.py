@@ -713,7 +713,7 @@ def compare_barplot_callback(app_handle, result_category):
                         insidetextfont={'size': fs},
                         textposition='auto',
                         marker=dict(
-                            color=['#0000ff', '#ffa500', '#008000', 'red']
+                            color=list(BARPLOT_ELECTRIFICATION_COLORS.values())
                         ),
                         hoverinfo='y+text'
                     ),
@@ -724,7 +724,7 @@ def compare_barplot_callback(app_handle, result_category):
                         insidetextfont={'size': fs},
                         textposition='auto',
                         marker=dict(
-                            color=['#8080ff', '#ffd280', '#1aff1a', 'red']
+                            color=['#a062d0', '#9ac1e5', '#f3a672', '#cccccc']
                         ),
                         hoverinfo='y+text'
                     ),
