@@ -212,7 +212,11 @@ def compute_rise_shifts(rise, pop_get, opt, flag=''):
 
         for j in range(3):
             df.iloc[4, j] = df.iloc[1].sum() * df.iloc[3, j]
-            df.iloc[5, j] = df.iloc[4, j] / df.iloc[1, j]
+            if df.iloc[1, j] != 0 :
+                df.iloc[5, j] = df.iloc[4, j] / df.iloc[1, j]
+            else:
+                df.iloc[5, j] = np.nan
+
             df.iloc[6, j] = df.iloc[1, j] + df.iloc[4, j]
 
         diff = df.iloc[6].values
@@ -302,7 +306,10 @@ def compute_rise_shifts(rise, pop_get, opt, flag=''):
 
         df.iloc[7] = df.iloc[6] + df.iloc[1]
         for i in range(3):
-            df.iloc[5, i] = df.iloc[6, i] / df.iloc[1, i]
+            if df.iloc[1, i] != 0 :
+                df.iloc[5, i] = df.iloc[6, i] / df.iloc[1, i]
+            else:
+                df.iloc[5, i] = np.nan
 
     if df.iloc[6].sum() > 1e-8:
 
@@ -453,6 +460,9 @@ def prepare_shs_power_and_sales_volumes():
     power_av_5_7 = shs_sales_volumes[['5', '6', '7']].values * cat_power_av_5_7
     # compute the average unit power per region (divide the sum over the
     # categories by the total unit sold)
+
+    # avoid the zero for the division
+    shs_sales_volumes.loc[shs_sales_volumes['tot_5-7'] == 0, 'tot_5-7'] = 1
     shs_sales_volumes['weighted_tot_5-7 [W]'] = \
         power_av_5_7.sum(axis=1) \
         / shs_sales_volumes['tot_5-7'].values
