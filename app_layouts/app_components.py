@@ -142,6 +142,10 @@ def results_div(result_type, result_category):
 
     id_name = '{}-{}'.format(result_type, result_category)
 
+    barplot_mode = 'stack'
+    if result_type == RES_COMPARE:
+        barplot_mode = 'group'
+
     x_vals = [SCENARIOS_DICT[sce] for sce in SCENARIOS]
     fs = 15
 
@@ -167,7 +171,7 @@ def results_div(result_type, result_category):
             ],
             layout=go.Layout(
                 title='',
-                barmode='stack',
+                barmode=barplot_mode,
                 paper_bgcolor='#EBF2FA',
                 plot_bgcolor='#EBF2FA',
                 showlegend=False,
@@ -182,7 +186,7 @@ def results_div(result_type, result_category):
                 font=dict(size=20, family='Roboto'),
                 titlefont=dict(size=20),
                 yaxis=dict(
-                    hoverformat='.1f'
+                    hoverformat='.2f'
                 )
             )
         ),
