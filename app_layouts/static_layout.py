@@ -17,6 +17,7 @@ from data.data_preparation import (
     SCENARIOS_DESCRIPTIONS,
     SCENARIOS_DICT,
     ELECTRIFICATION_OPTIONS,
+    NO_ACCESS,
     POP_GET,
     EXO_RESULTS,
     POP_RES,
@@ -571,7 +572,7 @@ def aggregate_barplot_callback(app_handle, result_category):
 def aggregate_table_callback(app_handle, result_category):
     """Generate a callback for input components."""
 
-    id_name = '{}-{}'.format('aggregate', result_category)
+    id_name = '{}-{}'.format(RES_AGGREGATE, result_category)
 
     @app_handle.callback(
         Output('{}-results-table'.format(id_name), 'data'),
@@ -656,7 +657,7 @@ def aggregate_table_callback(app_handle, result_category):
 def compare_barplot_callback(app_handle, result_category):
     """Generate a callback for input components."""
 
-    id_name = '{}-{}'.format('compare', result_category)
+    id_name = '{}-{}'.format(RES_COMPARE, result_category)
 
     @app_handle.callback(
         Output('{}-barplot'.format(id_name), 'figure'),
@@ -698,6 +699,7 @@ def compare_barplot_callback(app_handle, result_category):
                 ref_results_data = prepare_results_tables(df_ref, scenario, result_category)
                 comp_results_data = prepare_results_tables(df_comp, scenario, result_category)
 
+                x = ELECTRIFICATION_OPTIONS + [NO_ACCESS]
                 y_ref = ref_results_data[idx_y]
                 y_comp = comp_results_data[idx_y]
 
