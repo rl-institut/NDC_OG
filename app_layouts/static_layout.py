@@ -678,7 +678,6 @@ def compare_barplot_callback(app_handle, result_category):
         else:
             idx_y = TABLE_ROWS[result_category].index(y_sel)
 
-
         if country_sel is not None:
             if comp_sel is not None:
 
@@ -700,6 +699,7 @@ def compare_barplot_callback(app_handle, result_category):
                 comp_results_data = prepare_results_tables(df_comp, scenario, result_category)
 
                 x = ELECTRIFICATION_OPTIONS + [NO_ACCESS]
+
                 y_ref = ref_results_data[idx_y]
                 y_comp = comp_results_data[idx_y]
 
@@ -842,6 +842,38 @@ def compare_table_callback(app_handle, result_category):
     update_table.__name__ = 'update_%s_table' % id_name
     return update_table
 
+
+def compare_table_columns_title_callback(app_handle, result_category):
+
+    id_name = '{}-{}'.format(RES_COMPARE, result_category)
+
+    @app_handle.callback(
+        Output('{}-results-table'.format(id_name), 'columns'),
+        [
+            Input('country-input', 'value'),
+            Input('compare-input', 'value'),
+        ]
+    )
+    def update_table_columns_title(country_sel, comp_sel):
+
+        columns_ids = []
+        for col in TABLE_COLUMNS_ID:
+            if col != 'labels':
+                columns_ids.append(
+                    {'name': [TABLE_COLUMNS_LABEL[col], country_sel], 'id': col}
+                )
+                columns_ids.append(
+                    {'name': [TABLE_COLUMNS_LABEL[col], comp_sel], 'id': 'comp_{}'.format(col)}
+                )
+            else:
+                columns_ids.append({'name': TABLE_COLUMNS_LABEL[col], 'id': col})
+
+        return columns_ids
+
+    update_table_columns_title.__name__ = 'update_%s_table_columns_title' % id_name
+    return update_table_columns_title
+
+
 def ghg_dropdown_options_callback(app_handle, result_type):
     """Generate a callback for input components."""
 
@@ -898,6 +930,8 @@ def country_aggregate_title_callback(app_handle, result_type, result_category):
                 )
         return '{}{}'.format(answer, description.format(SCENARIOS_DICT[scenario]))
 
+    update_title.__name__ = 'update_%s_title' % id_name
+    return update_title
 
 def compare_title_callback(app_handle, result_category):
 
@@ -938,7 +972,7 @@ def compare_title_callback(app_handle, result_category):
                     scenario
                 )
             )
-            return answer
+        return answer
 
     update_title.__name__ = 'update_%s_title' % id_name
     return update_title
@@ -952,6 +986,8 @@ def callbacks(app_handle):
         aggregate_barplot_callback(app_handle, res_cat)
         aggregate_table_callback(app_handle, res_cat)
         compare_barplot_callback(app_handle, res_cat)
+        compare_table_callback(app_handle, res_cat)
+        compare_table_columns_title_callback(app_handle, res_cat)
         for res_type in [RES_COUNTRY, RES_AGGREGATE]:
             country_aggregate_title_callback(app_handle, res_type, res_cat)
         compare_title_callback(app_handle, res_cat)
@@ -1187,29 +1223,6 @@ def callbacks(app_handle):
             cur_style.update({'display': 'flex'})
         return cur_style
 
-
-
-    @app_handle.callback(
-        Output('compare-basic-results-table', 'columns'),
-        [
-            Input('country-input', 'value'),
-            Input('compare-input', 'value'),
-        ]
-    )
-    def update_compare_basic_results_table_columns_title(country_sel, comp_sel):
-
-        basic_columns_ids = []
-        for col in BASIC_COLUMNS_ID:
-            if col != 'labels':
-                basic_columns_ids.append({'name': [LABEL_COLUMNS[col], country_sel], 'id': col})
-                basic_columns_ids.append(
-                    {'name': [LABEL_COLUMNS[col], comp_sel], 'id': 'comp_{}'.format(col)}
-                )
-            else:
-                basic_columns_ids.append({'name': LABEL_COLUMNS[col], 'id': col})
-
-        return basic_columns_ids
-
     @app_handle.callback(
         Output('compare-basic-results-table', 'style_data_conditional'),
         [Input('compare-basic-results-table', 'data')],
@@ -1258,28 +1271,6 @@ def callbacks(app_handle):
                         + compare_results_styling
 
         return cur_style
-
-
-    @app_handle.callback(
-        Output('compare-ghg-results-table', 'columns'),
-        [
-            Input('country-input', 'value'),
-            Input('compare-input', 'value'),
-        ]
-    )
-    def update_compare_ghg_results_table_columns_title(country_sel, comp_sel):
-
-        basic_columns_ids = []
-        for col in GHG_COLUMNS_ID:
-            if col != 'labels':
-                basic_columns_ids.append({'name': [LABEL_COLUMNS[col], country_sel], 'id': col})
-                basic_columns_ids.append(
-                    {'name': [LABEL_COLUMNS[col], comp_sel], 'id': 'comp_{}'.format(col)}
-                )
-            else:
-                basic_columns_ids.append({'name': LABEL_COLUMNS[col], 'id': col})
-
-        return basic_columns_ids
 
     @app_handle.callback(
         Output('compare-ghg-results-table', 'style_data_conditional'),
