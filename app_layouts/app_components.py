@@ -280,45 +280,6 @@ def scenario_div(init_scenario):
     return divs
 
 
-def impact_factors_div(opt, title=''):
-    factors = []
-    for input_name in IMPACT_FACTORS.index.to_list():
-        factors.append(
-            html.Div(
-                id='impact-{}-{}-input-div'.format(opt, input_name.replace('_', '-')),
-                title='{} description'.format(input_name.replace('_', ' ')),
-                children=[
-                    html.Div(
-                        id='impact-{}-{}-input_label'.format(opt, input_name.replace('_', '-')),
-                        children=input_name.replace('_', ' ')
-                    ),
-                    dcc.Input(
-                        id='impact-{}-{}-input'.format(opt, input_name.replace('_', '-')),
-                        className='app__input__impact',
-                        value=np.round(IMPACT_FACTORS[opt][input_name], 3),
-                        type='number',
-                        min=0,
-                        max=5,
-                        step=0.001
-                    ),
-                ]
-            )
-        )
-
-    return html.Div(
-        id='impact-{}-drives-div'.format(opt),
-        className='app__input',
-        title=title,
-        children=[
-                     html.Div(
-                         id='impact-{}-label'.format(opt),
-                         className='app__input__label',
-                         children='Impact factors ({})'.format(opt.upper())
-                     )
-                 ] + factors
-    )
-
-
 def controls_div():
     """Return controls for scenario dependent variables."""
 
@@ -433,76 +394,7 @@ def controls_div():
                     ]
                 )
             ]
-        ),
-        html.Div(
-            id='factor-div',
-            className='app__input',
-            children=[
-                html.Div(
-                    id='mentis-weight-div',
-                    className='app__input',
-                    children=[
-                        html.Div(
-                            id='mentis-weight-label',
-                            className='app__input__label',
-                            children='Weight RISE / influence factors'
-                        ),
-                        html.Div(
-                            id='mentis-weight-input-div',
-                            title='mentis weight description',
-                            children=dcc.Input(
-                                id='mentis-weight-input',
-                                className='app__input__mentis-weight',
-                                value=0.2,
-                                type='number',
-                                min=0,
-                                max=1,
-                                step=0.01
-                            )
-                        )
-                    ]
-                ),
-                html.Div(
-                    id='mentis-drives-div',
-                    className='app__input',
-                    children=[
-                                 html.Div(
-                                     id='mentis-label',
-                                     className='app__input__label',
-                                     children='Influence factors'
-                                 )
-                             ] + [
-                                 html.Div(
-                                     id='mentis-%s-input-div' % input_name.replace('_', '-'),
-                                     title='%s description' % input_name.replace('_', ' '),
-                                     children=[
-                                         html.Div(
-                                             id='mentis-%s-input_label' %
-                                                input_name.replace('_', '-'),
-                                             children=input_name.replace('_', ' ')
-                                         ),
-                                         dcc.Input(
-                                             id='mentis-%s-input' %
-                                                input_name.replace('_', '-'),
-                                             className='app__input__influence',
-                                             # options=[
-                                             #     {'label': l, 'value': v}
-                                             #     for l, v in zip(['low', 'medium', 'high'], [0, 0.5, 1])
-                                             # ],
-                                             value=0,
-                                             type='number',
-                                             min=0,
-                                             max=1,
-                                             step=0.5
-                                         ),
-                                     ]
-                                 )
-                                 for input_name in MENTI_DRIVES
-                             ]
-                ),
-                impact_factors_div('mg'),
-                impact_factors_div('shs'),
-            ]
         )
     ]
+
     return divs
