@@ -968,11 +968,11 @@ def country_aggregate_title_callback(app_handle, result_type, result_category):
         inputs = [Input('region-input', 'value')]
 
     if result_category == POP_RES:
-        description = 'electrification mix (scenario {})'
+        description = 'electrification mix - scenario {}'
     elif result_category == INVEST_RES:
-        description = 'initial investments needed (scenario {})'
+        description = 'initial investments needed (in billion USD) - scenario {}'
     else:
-        description = 'cumulated GHG emissions (2017-2030) (scenario {})'
+        description = 'cumulated GHG emissions (2017-2030) (in million tons CO2) - scenario {}'
 
     @app_handle.callback(
         Output('{}-results-title'.format(id_name), 'children'),
@@ -1003,11 +1003,11 @@ def compare_title_callback(app_handle, result_category):
     id_name = '{}-{}'.format(RES_COMPARE, result_category)
 
     if result_category == POP_RES:
-        description = 'electrification mix {} (scenario {})'
+        description = 'electrification mix {} - scenario {}'
     elif result_category == INVEST_RES:
-        description = 'initial investments needed {} (scenario {})'
+        description = 'initial investments needed {} (in billion USD) - scenario {}'
     else:
-        description = 'cumulated GHG emissions (2017-2030) {} (scenario {})'
+        description = 'cumulated GHG emissions (2017-2030) {} (in million tons CO2) - scenario {}'
 
     @app_handle.callback(
         Output('{}-results-title'.format(id_name), 'children'),
@@ -1034,7 +1034,7 @@ def compare_title_callback(app_handle, result_category):
                         df.loc[df.country_iso == country_iso].country.values[0],
                         comp_name
                     ),
-                    scenario
+                    SCENARIOS_DICT[scenario]
                 )
             )
         return answer
