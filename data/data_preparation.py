@@ -186,8 +186,8 @@ def prepare_results_tables(df, sce=BAU_SCENARIO, result_category=POP_RES):
         answer = np.vstack([invest_res, invest2_res])
 
     elif result_category in [GHG_RES, GHG_ER_RES]:
-        ghg_res = np.squeeze(df[GHG].values).round(0)
-        ghg2_res = np.squeeze(df[GHG_CAP].values).round(0)
+        ghg_res = np.squeeze(df[GHG].values * 1e-6).round(3)
+        ghg2_res = np.squeeze(df[GHG_CAP].values * 1e-6).round()
         answer = np.vstack([ghg_res, ghg2_res])
 
     return answer
