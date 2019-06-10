@@ -895,14 +895,15 @@ def callbacks(app_handle):
         i = 0
         if scenario == BAU_SCENARIO:
             z = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
-            z['no_ec'] = 1 - z.sum(axis=1)
-            n = 4
+            z[NO_ACCESS] = 1 - z.sum(axis=1)
+
         else:
             z = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
-            n = 3
+            z[NO_ACCESS] = 0
+        n = 4
         colors = BARPLOT_ELECTRIFICATION_COLORS
         for idx, c in centroid.iterrows():
-            for j in range(n):
+            for j, opt in enumerate(ELECTRIFICATION_OPTIONS + [NO_ACCESS]):
                 points.append(
                     go.Scattergeo(
                         lon=[c['Longitude']],
@@ -910,7 +911,7 @@ def callbacks(app_handle):
                         hoverinfo='skip',
                         marker=go.scattergeo.Marker(
                             size=z.iloc[i, j:n].sum() * 25,
-                            color=colors[j],
+                            color=colors[opt],
                             line=go.scattergeo.marker.Line(width=0)
                         ),
                         showlegend=False,
