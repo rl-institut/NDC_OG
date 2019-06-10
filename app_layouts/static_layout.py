@@ -1236,8 +1236,8 @@ def callbacks(app_handle):
         if comp_sel is not None:
             data = pd.DataFrame.from_dict(cur_data)
 
-            col_ref = BASIC_COLUMNS_ID[1:]
-            col_comp = ['comp_{}'.format(col) for col in BASIC_COLUMNS_ID[1:]]
+            col_ref = TABLE_COLUMNS_ID[1:]
+            col_comp = ['comp_{}'.format(col) for col in TABLE_COLUMNS_ID[1:]]
             data = data[col_ref + col_comp].applymap(
                 lambda x: 0 if x == '' else float(x.replace(',', '').replace('%', '')))
             ref = data[col_ref]
@@ -1285,8 +1285,8 @@ def callbacks(app_handle):
         if comp_sel is not None:
             data = pd.DataFrame.from_dict(cur_data)
 
-            col_ref = BASIC_COLUMNS_ID[1:]
-            col_comp = ['comp_{}'.format(col) for col in BASIC_COLUMNS_ID[1:]]
+            col_ref = TABLE_COLUMNS_ID[1:]
+            col_comp = ['comp_{}'.format(col) for col in TABLE_COLUMNS_ID[1:]]
             data = data[col_ref + col_comp].applymap(
                 lambda x: 0 if x == '' else float(x.replace(',', '')))
             ref = data[col_ref]
@@ -1382,8 +1382,6 @@ def callbacks(app_handle):
             ]
 
         return divs
-
-
 
     @app_handle.callback(
         Output('aggregate-info-div', 'children'),
