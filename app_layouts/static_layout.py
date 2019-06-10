@@ -1009,7 +1009,7 @@ def callbacks(app_handle):
         if cur_view['app_view'] == VIEW_COUNTRY:
             cur_style.update({'display': 'flex'})
         elif cur_view['app_view'] in [VIEW_GENERAL, VIEW_COMPARE]:
-            cur_style.update({'display': 'flex'})
+            cur_style.update({'display': 'none'})
         return cur_style
 
     @app_handle.callback(
@@ -1041,7 +1041,7 @@ def callbacks(app_handle):
         if cur_view['app_view'] == VIEW_COMPARE:
             cur_style.update({'display': 'flex'})
         elif cur_view['app_view'] in [VIEW_GENERAL, VIEW_COUNTRY]:
-            cur_style.update({'display': 'nonw'})
+            cur_style.update({'display': 'none'})
         return cur_style
 
     @app_handle.callback(
