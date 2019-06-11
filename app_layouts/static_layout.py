@@ -797,17 +797,17 @@ def compare_table_columns_title_callback(app_handle, result_category):
     def update_table_columns_title(country_sel, comp_sel):
 
         columns_ids = []
-        for col in TABLE_COLUMNS_ID:
-            if col != 'labels':
-                columns_ids.append(
-                    {'name': [TABLE_COLUMNS_LABEL[col], country_sel], 'id': col}
-                )
-                columns_ids.append(
-                    {'name': [TABLE_COLUMNS_LABEL[col], comp_sel], 'id': 'comp_{}'.format(col)}
-                )
-            else:
-                columns_ids.append({'name': TABLE_COLUMNS_LABEL[col], 'id': col})
-
+        if country_sel is not None and comp_sel is not None:
+            for col in TABLE_COLUMNS_ID:
+                if col != 'labels':
+                    columns_ids.append(
+                        {'name': [TABLE_COLUMNS_LABEL[col], country_sel], 'id': col}
+                    )
+                    columns_ids.append(
+                        {'name': [TABLE_COLUMNS_LABEL[col], comp_sel], 'id': 'comp_{}'.format(col)}
+                    )
+                else:
+                    columns_ids.append({'name': TABLE_COLUMNS_LABEL[col], 'id': col})
         return columns_ids
 
     update_table_columns_title.__name__ = 'update_%s_table_columns_title' % id_name

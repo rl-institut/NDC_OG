@@ -199,10 +199,11 @@ def results_div(result_type, result_category):
     table_rows = TABLE_ROWS[result_category]
 
     if result_type in [RES_COUNTRY, RES_AGGREGATE]:
-
+        duplicate_headers = False
         columns_ids = [{'name': TABLE_COLUMNS_LABEL[col], 'id': col} for col in TABLE_COLUMNS_ID]
 
     elif result_type == RES_COMPARE:
+        duplicate_headers = True
         for col in TABLE_COLUMNS_ID:
             if col != 'labels':
                 columns_ids.append({'name': [TABLE_COLUMNS_LABEL[col], 'value'], 'id': col})
@@ -247,7 +248,8 @@ def results_div(result_type, result_category):
                     for lbl in table_rows
                 ]
 
-            }
+            },
+            merge_duplicate_headers=duplicate_headers
         ),
     ]
 
