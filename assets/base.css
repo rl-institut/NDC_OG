@@ -17,6 +17,11 @@ body {
     margin-top: .5rem;
 }
 
+#intro-text-div {
+    padding-top: 3rem;
+    padding-bottom: 2rem;
+}
+
 #intro-description-content,
 #intro-about-content {
     padding: .75rem 1.5rem 1.5rem;
@@ -27,7 +32,6 @@ body {
     padding-top: 3rem;
     padding-bottom: 2rem;
 }
-
 
 #intro-disclaimer-div {
     text-align: center;

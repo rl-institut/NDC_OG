@@ -32,17 +32,17 @@ layout = html.Div(
             children=[
                 html.Div(
                     id='intro-text-content',
-                    className='grid-x',
+                    className='grid-x align-center',
                     children=[
 
                         html.Div(
                             id='intro-description-content',
-                            className='cell',
+                            className='cell medium-10 large-5',
                             children=description_content,
                         ),
                         html.Div(
                             id='intro-about-content',
-                            className='cell',
+                            className='cell medium-10 large-5',
                             children=about_content
                         ),
                     ]
