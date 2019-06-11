@@ -18,27 +18,17 @@ app.layout = html.Div(
             children=[
                 html.Div(
                     id='header-content',
-                    className='grid-x grid-margin-x',
+                    className='grid-x grid-padding-x align-center',
                     children=[
-                        html.Div(
-                            className='cell medium-3 text-justify',
+                        html.H1(
+                            className='cell',
                             children='NDC Off-Grid alternatives'
                         ),
-                        html.Div(
-                            className='cell medium-6 text-justify',
+                        html.H2(
+                            className='cell large-6',
                             children='Visualization of New Electrification Scenarios by 2030 and the'
                                      ' Relevance of Off-Grid Components in the NDCs',
                         ),
-                        html.Div(
-                            className='cell medium-3 text-justify',
-                            children=[
-                                html.Img(
-                                    src='data:image/png;base64,{}'.format(logo.decode()),
-                                    style={'width': '90px'},
-                                )
-                                for logo in LOGOS
-                            ],
-                        )
                     ]
                 ),
             ]

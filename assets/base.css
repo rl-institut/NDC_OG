@@ -1,8 +1,63 @@
+body {
+    background-color: #FFF;
+}
+
+#header-content {
+    text-align: center;
+}
+
+#header-content h1 {
+    font-size: 1.25rem;
+    margin-bottom: 0;
+}
+
+#header-content h2 {
+    font-size: 2rem;
+    font-weight: 300;
+    margin-top: .5rem;
+    margin-bottom: 2rem;
+}
+
+#intro-text-div {
+    padding-top: 3rem;
+    padding-bottom: 2rem;
+}
+
+#intro-description-content,
+#intro-about-content {
+    padding: .75rem 1.5rem 1.5rem;
+}
+
+#intro-disclaimer-wrap {
+    background-color: #EFEFEF;
+    padding-top: 3rem;
+    padding-bottom: 2rem;
+}
+
+#intro-disclaimer-div {
+    text-align: center;
+    font-size: .875rem;
+    padding-top: 1rem;
+    background-color: #EFEFEF;
+}
+
+.intro-link-div {
+    text-align: center;
+}
+
+.intro-link-div a {
+    width: 12rem;
+}
+
+#footer-div {
+    padding-top: 2rem;
+    text-align: center;
+}
+
 .footer-logo {
     display: inline-block;
-    width: 8rem;
-    padding-left: 1rem;
-    padding-bottom: 1rem;
+    width: 9rem;
+    padding-left: 2rem;
 }
 
 ._dash-undo-redo {
