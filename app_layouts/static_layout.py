@@ -170,6 +170,7 @@ layout = go.Layout(
         b=2,
         t=2
     ),
+    legend=dict(orientation='h', xanchor='center', x=0.5),
     geo=go.layout.Geo(
         bgcolor=APP_BG_COLOR,
         scope='world',
@@ -1092,7 +1093,9 @@ def callbacks(app_handle):
             z[NO_ACCESS] = 0
         n = 4
         colors = BARPLOT_ELECTRIFICATION_COLORS
+        show_legend = True
         for idx, c in centroid.iterrows():
+
             for j, opt in enumerate(ELECTRIFICATION_OPTIONS + [NO_ACCESS]):
                 points.append(
                     go.Scattergeo(
@@ -1104,10 +1107,13 @@ def callbacks(app_handle):
                             color=colors[opt],
                             line=go.scattergeo.marker.Line(width=0)
                         ),
-                        showlegend=False,
+                        showlegend=show_legend,
+                        legendgroup='group{}'.format(j),
+                        name=ELECTRIFICATION_DICT[opt],
                         geo=geo
                     )
                 )
+            show_legend = False
             i = i + 1
 
         fig['data'][1:] = points

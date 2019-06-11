@@ -159,8 +159,7 @@ def results_div(result_type, result_category):
                 barmode=barplot_mode,
                 paper_bgcolor=APP_BG_COLOR,
                 plot_bgcolor=APP_BG_COLOR,
-                showlegend=False,
-                height=400,
+                showlegend=True,
                 autosize=True,
                 margin=dict(
                     l=55,
