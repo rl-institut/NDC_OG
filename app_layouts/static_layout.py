@@ -465,21 +465,13 @@ def country_table_callback(app_handle, result_category):
 
                 df = pd.read_json(cur_data[scenario])
                 df = df.loc[df.country_iso == country_iso]
-                results_data = prepare_results_tables(df, scenario, result_cat)
 
+                ghg_er = False
                 if result_cat == GHG_RES and scenario != BAU_SCENARIO:
-                    # to compare greenhouse gas emissions with BaU scenario
-                    df_bau = pd.read_json(cur_data[BAU_SCENARIO])
-                    results_bau_data = prepare_results_tables(df_bau, BAU_SCENARIO, result_cat)
-
-                    # include the greenhouse gases emissions reduction compared to BaU
-                    results_data_temp = np.zeros((4, 4))
-                    results_data_temp[0, :] = results_data[0, :]
-                    results_data_temp[1, :] = results_data[0, :] - results_bau_data[0, :]
-                    results_data_temp[2, :] = results_data[1, :]
-                    results_data_temp[3, :] = results_data[1, :] - results_bau_data[1, :]
-                    results_data = results_data_temp
+                    ghg_er = True
                     result_cat = GHG_ER_RES
+
+                results_data = prepare_results_tables(df, scenario, result_cat, ghg_er)
 
                 total = np.nansum(results_data, axis=1)
                 # prepare a DataFrame
@@ -595,28 +587,13 @@ def aggregate_table_callback(app_handle, result_category):
                     df = df.loc[df.region == REGIONS_NDC[region_id]]
                 # aggregate the results
                 df = df[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
-                results_data = prepare_results_tables(df, scenario, result_cat)
 
+                ghg_er = False
                 if result_cat == GHG_RES and scenario != BAU_SCENARIO:
-                    # to compare greenhouse gas emissions with BaU scenario
-                    df_bau = pd.read_json(cur_data[BAU_SCENARIO])
-
-                    if region_id != WORLD_ID:
-                        # narrow to the region if the scope is not on the whole world
-                        df_bau = df_bau.loc[df_bau.region == REGIONS_NDC[region_id]]
-
-                    # aggregate the results
-                    df_bau = df_bau[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
-                    results_bau_data = prepare_results_tables(df_bau, BAU_SCENARIO, result_cat)
-
-                    # include the greenhouse gases emissions reduction compared to BaU
-                    results_data_temp = np.zeros((4, 4))
-                    results_data_temp[0, :] = results_data[0, :]
-                    results_data_temp[1, :] = results_data[0, :] - results_bau_data[0, :]
-                    results_data_temp[2, :] = results_data[1, :]
-                    results_data_temp[3, :] = results_data[1, :] - results_bau_data[1, :]
-                    results_data = results_data_temp
+                    ghg_er = True
                     result_cat = GHG_ER_RES
+
+                results_data = prepare_results_tables(df, scenario, result_cat, ghg_er)
 
                 total = np.nansum(results_data, axis=1)
                 # prepare a DataFrame
@@ -762,42 +739,13 @@ def compare_table_callback(app_handle, result_category):
                     # compare the reference country to a country
                     df_comp = df_comp.loc[df_comp.country_iso == comp_sel]
 
-                results_data = prepare_results_tables(df, scenario, result_cat)
-                comp_results_data = prepare_results_tables(df_comp, scenario, result_cat)
-
+                ghg_er = False
                 if result_cat == GHG_RES and scenario != BAU_SCENARIO:
-                    # to compare greenhouse gas emissions with BaU scenario
-                    df_bau = pd.read_json(cur_data[BAU_SCENARIO])
-                    df_bau_ref = df_bau.loc[df_bau.country_iso == country_iso]
-
-                    if comp_sel in REGIONS_NDC:
-                        # compare the reference country to a region
-                        df_bau_comp = df_bau.loc[df_bau.region == REGIONS_NDC[comp_sel]]
-                        columns_to_select = EXO_RESULTS + ['pop_newly_electrified_2030']
-                        df_bau_comp = df_bau_comp[columns_to_select].sum(axis=0)
-                    else:
-                        # compare the reference country to a country
-                        df_bau_comp = df_bau.loc[df_bau.country_iso == comp_sel]
-
-                    results_bau_ref = prepare_results_tables(df_bau_ref, BAU_SCENARIO, result_cat)
-                    results_bau_comp = prepare_results_tables(df_bau_comp, BAU_SCENARIO, result_cat)
-
-                    # include the greenhouse gases emissions reduction compared to BaU
-                    results_data_temp = np.zeros((4, 4))
-                    results_data_temp[0, :] = results_data[0, :]
-                    results_data_temp[1, :] = results_data[0, :] - results_bau_ref[0, :]
-                    results_data_temp[2, :] = results_data[1, :]
-                    results_data_temp[3, :] = results_data[1, :] - results_bau_ref[1, :]
-                    results_data = results_data_temp
-
-                    results_data_temp = np.zeros((4, 4))
-                    results_data_temp[0, :] = comp_results_data[0, :]
-                    results_data_temp[1, :] = comp_results_data[0, :] - results_bau_comp[0, :]
-                    results_data_temp[2, :] = comp_results_data[1, :]
-                    results_data_temp[3, :] = comp_results_data[1, :] - results_bau_comp[1, :]
-                    comp_results_data = results_data_temp
-
+                    ghg_er = True
                     result_cat = GHG_ER_RES
+
+                results_data = prepare_results_tables(df, scenario, result_cat, ghg_er)
+                comp_results_data = prepare_results_tables(df_comp, scenario, result_cat, ghg_er)
 
                 total = np.nansum(results_data, axis=1)
                 comp_total = np.nansum(comp_results_data, axis=1)

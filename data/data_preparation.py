@@ -118,11 +118,15 @@ HH_SCN2 = ['hh_cap_scn2_%s_capacity' % opt for opt in ELECTRIFICATION_OPTIONS]
 INVEST = ['%s_investment_cost' % opt for opt in ELECTRIFICATION_OPTIONS]
 INVEST_CAP = ['tier_capped_%s_investment_cost' % opt for opt in ELECTRIFICATION_OPTIONS]
 GHG = ['ghg_%s_cumul' % opt for opt in ELECTRIFICATION_OPTIONS] + ['ghg_no_access_cumul']
-GHG_ER = ['ghg_ER_cumul']
+GHG_ER = ['ghg_%s_ER_cumul' % opt for opt in ELECTRIFICATION_OPTIONS] \
+         + ['ghg_no_access_ER_cumul']
 GHG_CAP = ['tier_capped_ghg_%s_cumul' % opt for opt in ELECTRIFICATION_OPTIONS] \
           + ['tier_capped_ghg_no_access_cumul']
-GHG_CAP_ER = ['tier_capped_ghg_ER_cumul']
-GHG_ALL = GHG + GHG_ER + GHG_CAP + GHG_CAP_ER + ['ghg_tot_cumul', 'tier_capped_ghg_tot_cumul'] \
+GHG_CAP_ER = ['tier_capped_ghg_%s_ER_cumul' % opt for opt in ELECTRIFICATION_OPTIONS] \
+             + ['tier_capped_ghg_no_access_ER_cumul']
+GHG_ALL = GHG + GHG_ER + GHG_CAP + GHG_CAP_ER \
+          + ['ghg_tot_cumul', 'tier_capped_ghg_tot_cumul'] \
+          + ['ghg_tot_ER_cumul', 'tier_capped_ghg_tot_ER_cumul'] \
     + ['ghg_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS] \
     + ['tier_capped_ghg_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS]
 EXO_RESULTS = POP_GET + HH_GET + HH_CAP + HH_SCN2 + INVEST + INVEST_CAP + GHG_ALL
@@ -150,7 +154,7 @@ GHG_RES = 'ghg'
 GHG_ER_RES = 'ghg-er'
 
 
-def prepare_results_tables(df, sce=BAU_SCENARIO, result_category=POP_RES):
+def prepare_results_tables(df, sce=BAU_SCENARIO, result_category=POP_RES, ghg_er=False):
 
     answer = np.array([0, 0, 0, 0])
 
@@ -187,8 +191,13 @@ def prepare_results_tables(df, sce=BAU_SCENARIO, result_category=POP_RES):
 
     elif result_category in [GHG_RES, GHG_ER_RES]:
         ghg_res = np.squeeze(df[GHG].values * 1e-6).round(3)
-        ghg2_res = np.squeeze(df[GHG_CAP].values * 1e-6).round()
-        answer = np.vstack([ghg_res, ghg2_res])
+        ghg2_res = np.squeeze(df[GHG_CAP].values * 1e-6).round(3)
+        if ghg_er:
+            ghg_er_res = np.squeeze(df[GHG_ER].values * 1e-6).round(3)
+            ghg2_er_res = np.squeeze(df[GHG_CAP_ER].values * 1e-6).round(3)
+            answer = np.vstack([ghg_res, ghg_er_res, ghg2_res, ghg2_er_res])
+        else:
+            answer = np.vstack([ghg_res, ghg2_res])
 
     return answer
 
@@ -735,7 +744,11 @@ def _compute_ghg_emissions(df, min_tier_level, bau_df=None):
         + df.ghg_shs_2030 \
         + df.ghg_no_access_2030
 
-    df['ghg_ER_cumul'] = 0
+    df['ghg_tot_ER_cumul'] = 0
+    df['ghg_grid_ER_cumul'] = 0
+    df['ghg_mg_ER_cumul'] = 0
+    df['ghg_shs_ER_cumul'] = 0
+    df['ghg_no_access_ER_cumul'] = 0
     if bau_df is not None:
         df['ghg_ER_2030'] = bau_df.ghg_tot_2030 - df.ghg_tot_2030
 
@@ -756,7 +769,11 @@ def _compute_ghg_emissions(df, min_tier_level, bau_df=None):
         + df.ghg_no_access_cumul
 
     if bau_df is not None:
-        df.ghg_ER_cumul = bau_df.ghg_tot_cumul - df.ghg_tot_cumul
+        df.ghg_tot_ER_cumul = bau_df.ghg_tot_cumul - df.ghg_tot_cumul
+        df.ghg_grid_ER_cumul = bau_df.ghg_grid_cumul - df.ghg_grid_cumul
+        df.ghg_mg_ER_cumul = bau_df.ghg_mg_cumul - df.ghg_mg_cumul
+        df.ghg_shs_ER_cumul = bau_df.ghg_shs_cumul - df.ghg_shs_cumul
+        df.ghg_no_access_ER_cumul = bau_df.ghg_no_access_cumul - df.ghg_no_access_cumul
 
     # consider the upper tier level minimal consumption value instead of the actual value
     df['hh_grid_tier_cap_yearly_electricity_consumption'] = \
@@ -793,7 +810,11 @@ def _compute_ghg_emissions(df, min_tier_level, bau_df=None):
         + df.tier_capped_ghg_mg_2030 \
         + df.tier_capped_ghg_no_access_2030
 
-    df['tier_capped_ghg_ER_cumul'] = 0
+    df['tier_capped_ghg_tot_ER_cumul'] = 0
+    df['tier_capped_ghg_grid_ER_cumul'] = 0
+    df['tier_capped_ghg_mg_ER_cumul'] = 0
+    df['tier_capped_ghg_shs_ER_cumul'] = 0
+    df['tier_capped_ghg_no_access_ER_cumul'] = 0
     if bau_df is not None:
         df['tier_capped_ghg_ER_2030'] = \
             bau_df.tier_capped_ghg_tot_2030 \
@@ -816,9 +837,17 @@ def _compute_ghg_emissions(df, min_tier_level, bau_df=None):
         + df.tier_capped_ghg_no_access_cumul
 
     if bau_df is not None:
-        df.tier_capped_ghg_ER_cumul = \
+        df.tier_capped_ghg_tot_ER_cumul = \
             bau_df.tier_capped_ghg_tot_cumul \
             - df.tier_capped_ghg_tot_cumul
+        df.tier_capped_ghg_grid_ER_cumul = \
+            bau_df.tier_capped_ghg_grid_cumul - df.tier_capped_ghg_grid_cumul
+        df.tier_capped_ghg_mg_ER_cumul = \
+            bau_df.tier_capped_ghg_mg_cumul - df.tier_capped_ghg_mg_cumul
+        df.tier_capped_ghg_shs_ER_cumul = \
+            bau_df.tier_capped_ghg_shs_cumul - df.tier_capped_ghg_shs_cumul
+        df.tier_capped_ghg_no_access_ER_cumul = \
+            bau_df.tier_capped_ghg_no_access_cumul - df.tier_capped_ghg_no_access_cumul
 
 
 def _compute_investment_cost(df):
