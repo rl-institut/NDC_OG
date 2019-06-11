@@ -907,6 +907,8 @@ def country_aggregate_title_callback(app_handle, result_type, result_category):
     elif result_type == RES_AGGREGATE:
         inputs = [Input('region-input', 'value')]
 
+    inputs.append(Input('scenario-input', 'value'))
+
     if result_category == POP_RES:
         description = 'electrification mix - scenario {}'
     elif result_category == INVEST_RES:
@@ -917,9 +919,7 @@ def country_aggregate_title_callback(app_handle, result_type, result_category):
     @app_handle.callback(
         Output('{}-results-title'.format(id_name), 'children'),
         inputs,
-        [
-            State('scenario-input', 'value'),
-            State('data-store', 'data')]
+        [State('data-store', 'data')]
     )
     def update_title(input_trigger, scenario, cur_data):
 
@@ -953,11 +953,10 @@ def compare_title_callback(app_handle, result_category):
         Output('{}-results-title'.format(id_name), 'children'),
         [
             Input('country-input', 'value'),
-            Input('compare-input', 'value')
+            Input('compare-input', 'value'),
+            Input('scenario-input', 'value')
         ],
-        [
-            State('scenario-input', 'value'),
-            State('data-store', 'data')]
+        [State('data-store', 'data')]
     )
     def update_title(country_iso, comp_sel, scenario, cur_data):
 
