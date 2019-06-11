@@ -14,21 +14,16 @@ from data.data_preparation import (
     MIN_TIER_LEVEL,
     SCENARIOS,
     BAU_SCENARIO,
-    SE4ALL_SCENARIO,
-    SE4ALL_FLEX_SCENARIO,
-    PROG_SCENARIO,
-    SCENARIOS_DICT,
     SCENARIOS_DESCRIPTIONS,
+    SCENARIOS_DICT,
     ELECTRIFICATION_OPTIONS,
+    NO_ACCESS,
     POP_GET,
-    GHG,
-    GHG_CAP,
     EXO_RESULTS,
-    BASIC_ROWS,
-    BASIC_COLUMNS_ID,
-    LABEL_COLUMNS,
-    GHG_COLUMNS_ID,
-    COMPARE_COLUMNS_ID,
+    POP_RES,
+    INVEST_RES,
+    GHG_RES,
+    GHG_ER_RES,
     compute_ndc_results_from_raw_data,
     prepare_results_tables,
 )
@@ -36,9 +31,17 @@ from data.data_preparation import (
 from .app_components import (
     scenario_div,
     results_div,
-    compare_div,
     TABLES_COLUMNS_WIDTH,
     TABLES_LABEL_STYLING,
+    BARPLOT_ELECTRIFICATION_COLORS,
+    RES_AGGREGATE,
+    RES_COMPARE,
+    RES_COUNTRY,
+    TABLE_ROWS,
+    TABLE_COLUMNS_ID,
+    COMPARE_COLUMNS_ID,
+    TABLE_COLUMNS_LABEL,
+    BARPLOT_YAXIS_OPT
 )
 
 URL_PATHNAME = 'static'
@@ -166,19 +169,21 @@ layout = go.Layout(
     paper_bgcolor='#EBF2FA',
     autosize=True,
     margin=dict(
-        l=15,
-        r=15,
-        b=5,
-        t=5
+        l=2,
+        r=2,
+        b=2,
+        t=2
     ),
     geo=go.layout.Geo(
+        bgcolor='#EBF2FA',
         scope='world',
         showlakes=True,
         showcountries=True,
         lakecolor='rgb(255, 255, 255)',
-        projection=dict(type='equirectangular'),
+        projection=dict(type='orthographic'),
     ),
     geo2=go.layout.Geo(
+        bgcolor='#EBF2FA',
         scope='world',
         showlakes=True,
         showcountries=True,
@@ -202,158 +207,804 @@ layout = html.Div(
             children='Visualization of New Electrification Scenarios by 2030 and the'
                      ' Relevance of Off-Grid Components in the NDCs'
         ),
+        dcc.Store(
+            id='data-store',
+            storage_type='session',
+            data=SCENARIOS_DATA.copy()
+        ),
+        dcc.Store(
+            id='view-store',
+            storage_type='session',
+            data={'app_view': VIEW_GENERAL}
+        ),
+        # html.Div(
+        #     id='app-div',
+        #     className='app',
+        #     children=[
         html.Div(
-            id='app-div',
-            className='app',
+            id='main-content',
+            className='grid-y',
             children=[
-                dcc.Store(
-                    id='data-store',
-                    storage_type='session',
-                    data=SCENARIOS_DATA.copy()
-                ),
-                dcc.Store(
-                    id='view-store',
-                    storage_type='session',
-                    data={'app_view': VIEW_GENERAL}
-                ),
                 html.Div(
-                    id='left-panel-div',
-                    className='app__container',
-                    children=[
-                        html.Div(
-                            id='scenario-div',
-                            className='app__options',
-                            children=scenario_div(BAU_SCENARIO)
-                        ),
-                        html.Div(
-                            id='general-info-div',
-                            className='app__info',
-                            children=''
-                        ),
-                        html.Div(
-                            id='aggregate-div',
-                            className='app__aggregate',
-                            children=results_div(aggregate=True),
-                            style={'display': 'none'}
-                        ),
-                        html.Div(
-                            id='results-div',
-                            className='app__results',
-                            children=results_div(),
-                            style={'display': 'none'}
-                        ),
-                    ]
-                ),
-                html.Div(
-                    id='right-panel-div',
-                    className='app__container',
-                    children=[
-                        html.Div(
-                            id='header-div',
-                            className='app__header',
-                            children=[
-                                html.Div(
-                                    id='region-label',
-                                    className='app__input__label',
-                                    children='Region:'
-                                ),
-                                html.Div(
-                                    id='region-input-div',
-                                    className='app__dropdown',
-                                    title='region selection description',
-                                    children=dcc.Dropdown(
-                                        id='region-input',
-                                        className='app__input__dropdown__map',
-                                        options=[
-                                            {'label': v, 'value': k}
-                                            for k, v in REGIONS_GPD.items()
+                    id='main-head-div',
+                    className='cell medium-3',
+                    children=html.Div(
+                        id='meain-head-content',
+                        className='grid-x',
+                        children=[
+                            html.Div(
+                                id='left-header-div',
+                                className='cell medium-6',
+                                children=[
+                                    html.Div(
+                                        id='scenario-div',
+                                        className='app__options',
+                                        children=scenario_div(BAU_SCENARIO)
+                                    ),
+                                    html.Div(
+                                        id='general-info-div',
+                                        className='app__info',
+                                        children=''
+                                    ),
+                                ]
+                            ),
+                            html.Div(
+                                id='right-header-div',
+                                className='cell medium-6',
+                                children=[
+                                    html.Div(
+                                        id='header-div',
+                                        className='grid-x',
+                                        children=[
+                                            html.Div(
+                                                id='region-label',
+                                                className='cell medium-3',
+                                                children='Region:'
+                                            ),
+                                            html.Div(
+                                                id='region-input-div',
+                                                className='cell medium-9',
+                                                title='region selection description',
+                                                children=dcc.Dropdown(
+                                                    id='region-input',
+                                                    options=[
+                                                        {'label': v, 'value': k}
+                                                        for k, v in REGIONS_GPD.items()
+                                                    ],
+                                                    value=WORLD_ID
+                                                )
+                                            ),
+                                        ]
+                                    ),
+                                    html.Div(
+                                        id='country-input-div',
+                                        title='country selection description',
+                                        className='grid-x',
+                                        children=[
+                                            html.Div(
+                                                id='country-label',
+                                                className='cell medium-3',
+                                                children='Country:'
+                                            ),
+                                            html.Div(
+                                                id='country-input-wrapper',
+                                                className='cell medium-9',
+                                                children=dcc.Dropdown(
+                                                    id='country-input',
+                                                    options=[],
+                                                    value=None,
+                                                    multi=False
+                                                )
+                                            ),
+                                        ]
+                                    ),
+                                    html.Div(
+                                        id='compare-input-div',
+                                        className='grid-x',
+                                        style={'display': 'none'},
+                                        children=[
+                                            html.Div(
+                                                id='country-comp-label',
+                                                className='cell medium-3',
+                                                children='compare with:'
+                                            ),
+                                            html.Div(
+                                                id='compare-input-wrapper',
+                                                className='cell medium-9',
+                                                children=dcc.Dropdown(
+                                                    id='compare-input',
+                                                    options=COMPARE_OPTIONS,
+                                                    value=None,
+                                                    multi=False
+                                                )
+                                            )
                                         ],
-                                        value=WORLD_ID
+
                                     )
-                                ),
-                                html.Div(
-                                    id='logo-div',
+                                ]
+                            ),
+                        ]
+                    ),
+                ),
+                html.Div(
+                    id='main-results-div',
+                    className='cell medium-9',
+                    children=html.Div(
+                        id='main-results-contents',
+                        className='grid-x',
+                        children=[
+                            dcc.Graph(
+                                id='map',
+                                className='cell medium-6',
+                                figure=fig_map,
+                            ),
+                            html.Div(
+                                id='results-info-div',
+                                className='cell medium-6',
+                                children=''
+                            ),
+                            html.Div(
+                                id='{}-div'.format(RES_AGGREGATE),
+                                className='cell medium-6',
+                                children=html.Div(
+                                    className='grid-x',
                                     children=[
-                                        html.Img(
-                                            src='data:image/png;base64,{}'.format(logo.decode()),
-                                            className='app__logo',
-                                            # style={'height': '5vh', 'padding': '10px'}
-                                        )
-                                        for logo in logos
+                                        results_div(RES_AGGREGATE, res_category)
+                                        for res_category in [POP_RES, INVEST_RES, GHG_RES]
                                     ]
                                 ),
-                            ]
-                        ),
-                        html.Div(
-                            id='country-input-div',
-                            title='country selection description',
-                            children=[
-                                html.Div(
-                                    id='country-label',
-                                    className='app__input__label',
-                                    children='Country:'
-                                ),
-                                dcc.Dropdown(
-                                    id='country-input',
-                                    className='app__input__dropdown__country',
-                                    options=[],
-                                    value=None,
-                                    multi=False
-                                ),
-                                html.Div(
-                                    id='compare-input-div',
-                                    children=[
-                                        html.Div(
-                                            id='country-comp-label',
-                                            className='app__input__label',
-                                            children='compare with:'
-                                        ),
-                                        dcc.Dropdown(
-                                            id='compare-input',
-                                            className='app__input__dropdown__country',
-                                            options=COMPARE_OPTIONS,
-                                            value=None,
-                                            multi=False
-                                        )
-                                    ],
-                                    style={'display': 'none'}
-                                )
-
-                            ]
-                        ),
-                        html.Div(
-                            id='compare-div',
-                            children=compare_div(),
-                            style={'display': 'none'}
-                        ),
-                        html.Div(
-                            id='results-info-div',
-                            className='results__info',
-                            children=''
-                        ),
-                        html.Div(
-                            id='map-div',
-                            className='app__map',
-                            title='Hover over a country to display information.\n'
-                                  + 'Click on it to access detailed report.',
-                            children=dcc.Graph(
-                                id='map',
-                                figure=fig_map,
-                                config={
-                                    'displayModeBar': True,
-                                }
                             ),
-                        ),
-                    ]
-
-                )
-            ],
-        )
+                            html.Div(
+                                id='{}-div'.format(RES_COUNTRY),
+                                className='cell medium-6',
+                                children=html.Div(
+                                    className='grid-x',
+                                    children=[
+                                        results_div(RES_COUNTRY, res_category)
+                                        for res_category in [POP_RES, INVEST_RES, GHG_RES]
+                                    ]
+                                ),
+                                style={'display': 'none'}
+                            ),
+                            html.Div(
+                                id='{}-div'.format(RES_COMPARE),
+                                className='cell medium-6',
+                                children=html.Div(
+                                    className='grid-x',
+                                    children=[
+                                        results_div(RES_COMPARE, res_category)
+                                        for res_category in [POP_RES, INVEST_RES, GHG_RES]
+                                    ]
+                                ),
+                                style={'display': 'none'},
+                            ),
+                        ]
+                    ),
+                ),
+            ]
+        ),
     ]
 )
 
 
+def country_barplot_callback(app_handle, result_category):
+    """Generate a callback for input components."""
+
+    id_name = '{}-{}'.format('country', result_category)
+
+    @app_handle.callback(
+        Output('{}-barplot'.format(id_name), 'figure'),
+        [
+            Input('country-input', 'value'),
+            Input('{}-barplot-yaxis-input'.format(id_name), 'value')
+        ],
+        [
+            State('data-store', 'data'),
+            State('{}-barplot'.format(id_name), 'figure')
+        ]
+    )
+    def update_barplot(country_sel, y_sel, cur_data, fig):
+
+        if y_sel is None:
+            idx_y = 0
+        else:
+            idx_y = TABLE_ROWS[result_category].index(y_sel)
+
+        country_iso = country_sel
+        if country_iso is not None:
+            x_vals = [SCENARIOS_DICT[sce] for sce in SCENARIOS]
+            y_vals = []
+            for sce_id, sce in enumerate(SCENARIOS):
+
+                df = pd.read_json(cur_data[sce])
+                # narrow to the country's results
+                df = df.loc[df.country_iso == country_iso]
+                # extract the results formatted with good units
+                results_data = prepare_results_tables(df, sce, result_category)
+                # select the row corresponding to the barplot y axis choice
+                y_vals.append(results_data[idx_y])
+
+            y_vals = np.vstack(y_vals)
+
+            for j, opt in enumerate(BARPLOT_YAXIS_OPT):
+                fig['data'][j].update({'x': x_vals})
+                fig['data'][j].update({'y': y_vals[:, j]})
+
+        return fig
+
+    update_barplot.__name__ = 'update_%s_barplot' % id_name
+
+    return update_barplot
+
+
+def country_table_callback(app_handle, result_category):
+    """Generate a callback for input components."""
+
+    id_name = '{}-{}'.format(RES_COUNTRY, result_category)
+
+    @app_handle.callback(
+        Output('{}-results-table'.format(id_name), 'data'),
+        [
+            Input('country-input', 'value'),
+            Input('scenario-input', 'value'),
+        ],
+        [State('data-store', 'data')]
+    )
+    def update_table(
+            country_iso,
+            scenario,
+            cur_data,
+    ):
+        """Display information and study's results for a country."""
+
+        result_cat = result_category
+
+        answer_table = []
+        if country_iso is not None:
+            if scenario in SCENARIOS:
+
+                df = pd.read_json(cur_data[scenario])
+                df = df.loc[df.country_iso == country_iso]
+
+                ghg_er = False
+                if result_cat == GHG_RES and scenario != BAU_SCENARIO:
+                    ghg_er = True
+                    result_cat = GHG_ER_RES
+
+                results_data = prepare_results_tables(df, scenario, result_cat, ghg_er)
+
+                total = np.nansum(results_data, axis=1)
+                # prepare a DataFrame
+                results_data = pd.DataFrame(
+                    data=results_data,
+                    columns=ELECTRIFICATION_OPTIONS + [NO_ACCESS]
+                )
+                # sums of the rows
+                results_data['total'] = pd.Series(total)
+
+                # Format the digits
+                if result_cat == POP_RES:
+                    results_data.iloc[1:, 0:] = results_data.iloc[1:, 0:].applymap(
+                        round_digits
+                    )
+                    results_data.iloc[0, 0:] = results_data.iloc[0, 0:].map(
+                        format_percent
+                    )
+                else:
+                    results_data = results_data.applymap(round_digits)
+                # label of the table rows
+                table_rows = TABLE_ROWS[result_cat]
+                results_data['labels'] = pd.Series(table_rows)
+
+                answer_table = results_data[TABLE_COLUMNS_ID].to_dict('records')
+        return answer_table
+
+    update_table.__name__ = 'update_%s_table' % id_name
+    return update_table
+
+
+def aggregate_barplot_callback(app_handle, result_category):
+    """Generate a callback for input components."""
+
+    id_name = '{}-{}'.format(RES_AGGREGATE, result_category)
+
+    @app_handle.callback(
+        Output('{}-barplot'.format(id_name), 'figure'),
+        [
+            Input('region-input', 'value'),
+            Input('{}-barplot-yaxis-input'.format(id_name), 'value')
+        ],
+        [
+            State('data-store', 'data'),
+            State('{}-barplot'.format(id_name), 'figure')
+        ]
+    )
+    def update_barplot(region_id, y_sel, cur_data, fig):
+
+        if y_sel is None:
+            idx_y = 0
+        else:
+            idx_y = TABLE_ROWS[result_category].index(y_sel)
+
+        if region_id is not None:
+            x_vals = [SCENARIOS_DICT[sce] for sce in SCENARIOS]
+            y_vals = []
+            for sce_id, sce in enumerate(SCENARIOS):
+                df = pd.read_json(cur_data[sce])
+
+                if region_id != WORLD_ID:
+                    # narrow to the region if the scope is not on the whole world
+                    df = df.loc[df.region == REGIONS_NDC[region_id]]
+
+                # aggregate the results
+                df = df[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
+
+                # compute the percentage of population with electricity access
+                results_data = prepare_results_tables(df, sce, result_category)
+
+                y_vals.append(results_data[idx_y])
+
+            y_vals = np.vstack(y_vals)
+
+            for j, opt in enumerate(BARPLOT_YAXIS_OPT):
+                fig['data'][j].update({'x': x_vals})
+                fig['data'][j].update({'y': y_vals[:, j]})
+        return fig
+
+    update_barplot.__name__ = 'update_%s_barplot' % id_name
+    return update_barplot
+
+
+def aggregate_table_callback(app_handle, result_category):
+    """Generate a callback for input components."""
+
+    id_name = '{}-{}'.format(RES_AGGREGATE, result_category)
+
+    @app_handle.callback(
+        Output('{}-results-table'.format(id_name), 'data'),
+        [
+            Input('region-input', 'value'),
+            Input('scenario-input', 'value'),
+        ],
+        [State('data-store', 'data')]
+    )
+    def update_table(
+            region_id,
+            scenario,
+            cur_data,
+    ):
+        """Display information and study's results for a country."""
+
+        result_cat = result_category
+
+        answer_table = []
+        if region_id is not None:
+            if scenario in SCENARIOS:
+
+                df = pd.read_json(cur_data[scenario])
+                if region_id != WORLD_ID:
+                    # narrow to the region if the scope is not on the whole world
+                    df = df.loc[df.region == REGIONS_NDC[region_id]]
+                # aggregate the results
+                df = df[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
+
+                ghg_er = False
+                if result_cat == GHG_RES and scenario != BAU_SCENARIO:
+                    ghg_er = True
+                    result_cat = GHG_ER_RES
+
+                results_data = prepare_results_tables(df, scenario, result_cat, ghg_er)
+
+                total = np.nansum(results_data, axis=1)
+                # prepare a DataFrame
+                results_data = pd.DataFrame(
+                    data=results_data,
+                    columns=ELECTRIFICATION_OPTIONS + [NO_ACCESS]
+                )
+                # sums of the rows
+                results_data['total'] = pd.Series(total)
+
+                # Format the digits
+                if result_cat == POP_RES:
+                    results_data.iloc[1:, 0:] = results_data.iloc[1:, 0:].applymap(
+                        round_digits
+                    )
+                    results_data.iloc[0, 0:] = results_data.iloc[0, 0:].map(
+                        format_percent
+                    )
+                else:
+                    results_data = results_data.applymap(round_digits)
+                # label of the table rows
+                table_rows = TABLE_ROWS[result_cat]
+                results_data['labels'] = pd.Series(table_rows)
+
+                answer_table = results_data[TABLE_COLUMNS_ID].to_dict('records')
+        return answer_table
+
+    update_table.__name__ = 'update_%s_table' % id_name
+    return update_table
+
+
+def compare_barplot_callback(app_handle, result_category):
+    """Generate a callback for input components."""
+
+    id_name = '{}-{}'.format(RES_COMPARE, result_category)
+
+    @app_handle.callback(
+        Output('{}-barplot'.format(id_name), 'figure'),
+        [
+            Input('country-input', 'value'),
+            Input('compare-input', 'value'),
+            Input('scenario-input', 'value'),
+            Input('{}-barplot-yaxis-input'.format(id_name), 'value')
+        ],
+        [
+            State('data-store', 'data'),
+            State('{}-barplot'.format(id_name), 'figure')
+        ]
+    )
+    def update_barplot(country_sel, comp_sel, scenario, y_sel, cur_data, fig):
+        if y_sel is None:
+            idx_y = 0
+        else:
+            idx_y = TABLE_ROWS[result_category].index(y_sel)
+
+        if country_sel is not None and comp_sel is not None:
+            comp_name = comp_sel
+            df = pd.read_json(cur_data[scenario])
+            df_comp = df.copy()
+            df_ref = df.loc[df.country_iso == country_sel]
+            if comp_sel in REGIONS_NDC:
+                # compare the reference country to a region
+                if comp_sel != WORLD_ID:
+                    df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[comp_sel]]
+                df_comp = df_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
+                comp_name = REGIONS_GPD[comp_sel]
+            else:
+                # compare the reference country to a country
+                df_comp = df_comp.loc[df_comp.country_iso == comp_sel]
+
+            ref_results_data = prepare_results_tables(df_ref, scenario, result_category)
+            comp_results_data = prepare_results_tables(df_comp, scenario, result_category)
+
+            x = ELECTRIFICATION_OPTIONS + [NO_ACCESS]
+            y_ref = ref_results_data[idx_y]
+            y_comp = comp_results_data[idx_y]
+
+            fs = 12
+
+            fig['data'] = [
+                go.Bar(
+                    x=x,
+                    y=y_ref,
+                    text=[country_sel for i in range(4)],
+                    insidetextfont={'size': fs},
+                    textposition='auto',
+                    marker=dict(
+                        color=list(BARPLOT_ELECTRIFICATION_COLORS.values())
+                    ),
+                    hoverinfo='y+text'
+                ),
+                go.Bar(
+                    x=x,
+                    y=y_comp,
+                    text=[comp_name for i in range(4)],
+                    insidetextfont={'size': fs},
+                    textposition='auto',
+                    marker=dict(
+                        color=['#a062d0', '#9ac1e5', '#f3a672', '#cccccc']
+                    ),
+                    hoverinfo='y+text'
+                ),
+            ]
+        return fig
+
+    update_barplot.__name__ = 'update_%s_barplot' % id_name
+    return update_barplot
+
+
+def compare_table_callback(app_handle, result_category):
+    """Generate a callback for input components."""
+
+    id_name = '{}-{}'.format(RES_COMPARE, result_category)
+
+    @app_handle.callback(
+        Output('{}-results-table'.format(id_name), 'data'),
+        [
+            Input('country-input', 'value'),
+            Input('compare-input', 'value'),
+            Input('scenario-input', 'value'),
+        ],
+        [State('data-store', 'data')]
+    )
+    def update_table(country_iso, comp_sel, scenario, cur_data):
+        """Display information and study's results comparison between countries."""
+        answer_table = []
+
+        result_cat = result_category
+
+        # extract the data from the selected scenario if a country was selected
+        if country_iso is not None and comp_sel is not None:
+            if scenario in SCENARIOS:
+                df = pd.read_json(cur_data[scenario])
+                df_comp = df.copy()
+                df = df.loc[df.country_iso == country_iso]
+                if comp_sel in REGIONS_NDC:
+                    # compare the reference country to a region
+                    if comp_sel != WORLD_ID:
+                        df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[comp_sel]]
+                    df_comp = df_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
+                else:
+                    # compare the reference country to a country
+                    df_comp = df_comp.loc[df_comp.country_iso == comp_sel]
+
+                ghg_er = False
+                if result_cat == GHG_RES and scenario != BAU_SCENARIO:
+                    ghg_er = True
+                    result_cat = GHG_ER_RES
+
+                results_data = prepare_results_tables(df, scenario, result_cat, ghg_er)
+                comp_results_data = prepare_results_tables(df_comp, scenario, result_cat, ghg_er)
+
+                total = np.nansum(results_data, axis=1)
+                comp_total = np.nansum(comp_results_data, axis=1)
+
+                results_data = np.hstack([results_data, comp_results_data])
+
+                comp_ids = ['comp_{}'.format(c) for c in ELECTRIFICATION_OPTIONS] \
+                    + ['comp_No Electricity']
+                # prepare a DataFrame
+                results_data = pd.DataFrame(
+                    data=results_data,
+                    columns=ELECTRIFICATION_OPTIONS + [NO_ACCESS] + comp_ids
+                )
+                # sums of the rows
+                results_data['total'] = pd.Series(total)
+                results_data['comp_total'] = pd.Series(comp_total)
+                # Format the digits
+                if result_cat == POP_RES:
+                    results_data.iloc[1:, 0:] = results_data.iloc[1:, 0:].applymap(
+                        round_digits
+                    )
+                    results_data.iloc[0, 0:] = results_data.iloc[0, 0:].map(
+                        format_percent
+                    )
+                else:
+                    results_data = results_data.applymap(round_digits)
+                # label of the table rows
+                table_rows = TABLE_ROWS[result_cat]
+                results_data['labels'] = pd.Series(table_rows)
+
+                answer_table = results_data[COMPARE_COLUMNS_ID].to_dict('records')
+        return answer_table
+
+    update_table.__name__ = 'update_%s_table' % id_name
+    return update_table
+
+
+def compare_table_columns_title_callback(app_handle, result_category):
+
+    id_name = '{}-{}'.format(RES_COMPARE, result_category)
+
+    @app_handle.callback(
+        Output('{}-results-table'.format(id_name), 'columns'),
+        [
+            Input('country-input', 'value'),
+            Input('compare-input', 'value'),
+        ]
+    )
+    def update_table_columns_title(country_sel, comp_sel):
+
+        columns_ids = []
+        if country_sel is not None and comp_sel is not None:
+            for col in TABLE_COLUMNS_ID:
+                if col != 'labels':
+                    columns_ids.append(
+                        {'name': [TABLE_COLUMNS_LABEL[col], country_sel], 'id': col}
+                    )
+                    columns_ids.append(
+                        {'name': [TABLE_COLUMNS_LABEL[col], comp_sel], 'id': 'comp_{}'.format(col)}
+                    )
+                else:
+                    columns_ids.append({'name': TABLE_COLUMNS_LABEL[col], 'id': col})
+        return columns_ids
+
+    update_table_columns_title.__name__ = 'update_%s_table_columns_title' % id_name
+    return update_table_columns_title
+
+
+def compare_table_styling_callback(app_handle, result_category):
+
+    id_name = '{}-{}'.format(RES_COMPARE, result_category)
+
+    @app_handle.callback(
+        Output('{}-results-table'.format(id_name), 'style_data_conditional'),
+        [Input('{}-results-table'.format(id_name), 'data')],
+        [
+            State('{}-results-table'.format(id_name), 'style_data_conditional'),
+            State('compare-input', 'value'),
+            State('scenario-input', 'value')
+        ]
+    )
+    def update_table_styling(cur_data, cur_style, comp_sel, scenario):
+
+        if comp_sel is not None:
+            data = pd.DataFrame.from_dict(cur_data)
+
+            col_ref = TABLE_COLUMNS_ID[1:]
+            col_comp = ['comp_{}'.format(col) for col in TABLE_COLUMNS_ID[1:]]
+            data = data[col_ref + col_comp].applymap(
+                lambda x: 0 if x == '' else float(x.replace(',', '').replace('%', '')))
+            ref = data[col_ref]
+            comp = data[col_comp]
+
+            compare_results_styling = []
+            for j, col in enumerate(col_ref):
+                for i in range(len(ref.index)):
+                    apply_condition = True
+                    if ref.iloc[i, j] > comp.iloc[i, j]:
+                        color = COLOR_BETTER
+                        font = 'bold'
+                        if result_category == GHG_RES:
+                            if scenario == BAU_SCENARIO or np.mod(i, 2) == 0:
+                                color = COLOR_WORSE
+                                font = 'normal'
+                    elif ref.iloc[i, j] < comp.iloc[i, j]:
+                        color = COLOR_WORSE
+                        font = 'normal'
+                        if result_category == GHG_RES:
+                            if scenario == BAU_SCENARIO or np.mod(i, 2) == 0:
+                                color = COLOR_BETTER
+                                font = 'bold'
+                    else:
+                        apply_condition = False
+
+                    if apply_condition:
+                        compare_results_styling.append(
+                            {
+                                "if": {"column_id": col, "row_index": i},
+                                'color': color,
+                                'fontWeight': font
+                            }
+                        )
+                    cur_style = \
+                        TABLES_COLUMNS_WIDTH \
+                        + TABLES_LABEL_STYLING \
+                        + compare_results_styling
+        return cur_style
+
+    update_table_styling.__name__ = 'update_%s_table_styling' % id_name
+    return update_table_styling
+
+
+def ghg_dropdown_options_callback(app_handle, result_type):
+    """Generate a callback for input components."""
+
+    id_name = '{}-{}'.format(result_type, GHG_RES)
+
+    @app_handle.callback(
+        Output('{}-barplot-yaxis-input'.format(id_name), 'options'),
+        [Input('scenario-input', 'value')]
+    )
+    def update_barplot(scenario):
+        answer = []
+        if scenario in SCENARIOS:
+            table_rows = TABLE_ROWS[GHG_ER_RES]
+            if scenario == BAU_SCENARIO:
+                table_rows = TABLE_ROWS[GHG_RES]
+            answer = [{'label': r, 'value': r} for r in table_rows]
+        return answer
+
+    update_barplot.__name__ = 'update_%s_dropdown' % id_name
+    return update_barplot
+
+
+def country_aggregate_title_callback(app_handle, result_type, result_category):
+
+    id_name = '{}-{}'.format(result_type, result_category)
+
+    if result_type == RES_COUNTRY:
+        inputs = [Input('country-input', 'value')]
+    elif result_type == RES_AGGREGATE:
+        inputs = [Input('region-input', 'value')]
+
+    inputs.append(Input('scenario-input', 'value'))
+
+    if result_category == POP_RES:
+        description = 'electrification mix - scenario {}'
+    elif result_category == INVEST_RES:
+        description = 'initial investments needed (in billion USD) - scenario {}'
+    else:
+        description = 'cumulated GHG emissions (2017-2030) (in million tons CO2) - scenario {}'
+
+    @app_handle.callback(
+        Output('{}-results-title'.format(id_name), 'children'),
+        inputs,
+        [State('data-store', 'data')]
+    )
+    def update_title(input_trigger, scenario, cur_data):
+
+        answer = 'Results'
+        if scenario in SCENARIOS and input_trigger is not None:
+            if result_type == RES_COUNTRY:
+                df = pd.read_json(cur_data[scenario])
+                answer = '{}: '.format(df.loc[df.country_iso == input_trigger].country.values[0])
+            elif result_type == RES_AGGREGATE:
+                answer = '{}: aggregated '.format(
+                    REGIONS_GPD[input_trigger]
+                )
+        return '{}{}'.format(answer, description.format(SCENARIOS_DICT[scenario]))
+
+    update_title.__name__ = 'update_%s_title' % id_name
+    return update_title
+
+
+def compare_title_callback(app_handle, result_category):
+
+    id_name = '{}-{}'.format(RES_COMPARE, result_category)
+
+    if result_category == POP_RES:
+        description = 'electrification mix {} - scenario {}'
+    elif result_category == INVEST_RES:
+        description = 'initial investments needed {} (in billion USD) - scenario {}'
+    else:
+        description = 'cumulated GHG emissions (2017-2030) {} (in million tons CO2) - scenario {}'
+
+    @app_handle.callback(
+        Output('{}-results-title'.format(id_name), 'children'),
+        [
+            Input('country-input', 'value'),
+            Input('compare-input', 'value'),
+            Input('scenario-input', 'value')
+        ],
+        [State('data-store', 'data')]
+    )
+    def update_title(country_iso, comp_sel, scenario, cur_data):
+
+        answer = 'Results'
+        if scenario in SCENARIOS and country_iso is not None and comp_sel is not None:
+            df = pd.read_json(cur_data[scenario])
+            if comp_sel in REGIONS_NDC:
+                comp_name = REGIONS_GPD[comp_sel]
+            else:
+                comp_name = df.loc[df.country_iso == comp_sel].country.values[0]
+            answer = 'Comparison of {}'.format(
+                description.format(
+                    'between {} and {}'.format(
+                        df.loc[df.country_iso == country_iso].country.values[0],
+                        comp_name
+                    ),
+                    SCENARIOS_DICT[scenario]
+                )
+            )
+        return answer
+
+    update_title.__name__ = 'update_%s_title' % id_name
+    return update_title
+
+
 def callbacks(app_handle):
+
+    for res_cat in [POP_RES, INVEST_RES, GHG_RES]:
+
+        country_barplot_callback(app_handle, res_cat)
+        country_table_callback(app_handle, res_cat)
+
+        aggregate_barplot_callback(app_handle, res_cat)
+        aggregate_table_callback(app_handle, res_cat)
+
+        compare_barplot_callback(app_handle, res_cat)
+        compare_table_callback(app_handle, res_cat)
+        compare_table_styling_callback(app_handle, res_cat)
+        compare_table_columns_title_callback(app_handle, res_cat)
+
+        for res_type in [RES_COUNTRY, RES_AGGREGATE]:
+            country_aggregate_title_callback(app_handle, res_type, res_cat)
+        compare_title_callback(app_handle, res_cat)
+
+    for res_type in [RES_COUNTRY, RES_AGGREGATE, RES_COMPARE]:
+        ghg_dropdown_options_callback(app_handle, res_type)
+
     @app_handle.callback(
         Output('map', 'figure'),
         [
@@ -397,14 +1048,15 @@ def callbacks(app_handle):
         i = 0
         if scenario == BAU_SCENARIO:
             z = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
-            z['no_ec'] = 1 - z.sum(axis=1)
-            n = 4
+            z[NO_ACCESS] = 1 - z.sum(axis=1)
+
         else:
             z = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
-            n = 3
-        colors = ['blue', 'orange', 'green', 'red']
+            z[NO_ACCESS] = 0
+        n = 4
+        colors = BARPLOT_ELECTRIFICATION_COLORS
         for idx, c in centroid.iterrows():
-            for j in range(n):
+            for j, opt in enumerate(ELECTRIFICATION_OPTIONS + [NO_ACCESS]):
                 points.append(
                     go.Scattergeo(
                         lon=[c['Longitude']],
@@ -412,7 +1064,7 @@ def callbacks(app_handle):
                         hoverinfo='skip',
                         marker=go.scattergeo.Marker(
                             size=z.iloc[i, j:n].sum() * 25,
-                            color=colors[j],
+                            color=colors[opt],
                             line=go.scattergeo.marker.Line(width=0)
                         ),
                         showlegend=False,
@@ -424,150 +1076,6 @@ def callbacks(app_handle):
         fig['data'][1:] = points
 
         fig['layout']['geo'].update({'scope': region_name.lower()})
-        return fig
-
-    @app_handle.callback(
-        Output('country-barplot', 'figure'),
-        [
-            Input('country-input', 'value'),
-            Input('country-barplot-yaxis-input', 'value')
-        ],
-        [
-            State('data-store', 'data'),
-            State('country-barplot', 'figure')
-        ]
-    )
-    def update_country_barplot(country_sel, y_sel, cur_data, fig):
-        """update the barplot for every scenario"""
-
-        country_iso = country_sel
-        if country_iso is not None:
-            for sce_id, sce in enumerate(SCENARIOS):
-
-                df = pd.read_json(cur_data[sce])
-                # narrow to the country's results
-                df = df.loc[df.country_iso == country_iso]
-                # compute the percentage of population with electricity access
-                basic_results_data = prepare_results_tables(df, sce)
-
-                if y_sel in BASIC_ROWS[0:3]:
-                    x = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
-                else:
-                    x = ELECTRIFICATION_OPTIONS.copy()
-                y = basic_results_data[BASIC_ROWS.index(y_sel)]
-
-                fig['data'][sce_id].update({'x': x})
-                fig['data'][sce_id].update({'y': y})
-
-        return fig
-
-    @app_handle.callback(
-        Output('aggregate-barplot', 'figure'),
-        [
-            Input('region-input', 'value'),
-            Input('aggregate-barplot-yaxis-input', 'value')
-        ],
-        [
-            State('data-store', 'data'),
-            State('aggregate-barplot', 'figure')
-        ]
-    )
-    def update_aggregate_barplot(region_id, y_sel, cur_data, fig):
-        """update the barplot for every scenario"""
-        if region_id is not None:
-            for sce_id, sce in enumerate(SCENARIOS):
-                df = pd.read_json(cur_data[sce])
-
-                if region_id != WORLD_ID:
-                    # narrow to the region if the scope is not on the whole world
-                    df = df.loc[df.region == REGIONS_NDC[region_id]]
-
-                # aggregate the results
-                df = df[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
-
-                # compute the percentage of population with electricity access
-                basic_results_data = prepare_results_tables(df, sce)
-
-                if y_sel in BASIC_ROWS[0:3]:
-                    x = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
-                else:
-                    x = ELECTRIFICATION_OPTIONS.copy()
-                y = basic_results_data[BASIC_ROWS.index(y_sel)]
-
-                fig['data'][sce_id].update({'x': x})
-                fig['data'][sce_id].update({'y': y})
-
-        return fig
-
-    @app_handle.callback(
-        Output('compare-barplot', 'figure'),
-        [
-            Input('country-input', 'value'),
-            Input('compare-input', 'value'),
-            Input('scenario-input', 'value'),
-            Input('compare-barplot-yaxis-input', 'value')
-        ],
-        [
-            State('data-store', 'data'),
-            State('compare-barplot', 'figure')
-        ]
-    )
-    def update_compare_barplot(country_sel, comp_sel, scenario, y_sel, cur_data, fig):
-        """update the barplot whenever the country changes"""
-        if country_sel is not None:
-            if comp_sel is not None:
-
-                comp_name = comp_sel
-                df = pd.read_json(cur_data[scenario])
-                df_comp = df.copy()
-                df = df.loc[df.country_iso == country_sel]
-                if comp_sel in REGIONS_NDC:
-                    # compare the reference country to a region
-                    if comp_sel != WORLD_ID:
-                        df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[comp_sel]]
-                    df_comp = df_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
-                    comp_name = REGIONS_GPD[comp_sel]
-                else:
-                    # compare the reference country to a country
-                    df_comp = df_comp.loc[df_comp.country_iso == comp_sel]
-
-                basic_results_data = prepare_results_tables(df, scenario)
-                comp_results_data = prepare_results_tables(df_comp, scenario)
-
-                if y_sel in BASIC_ROWS[0:3]:
-                    x = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
-                else:
-                    x = ELECTRIFICATION_OPTIONS.copy()
-                y = basic_results_data[BASIC_ROWS.index(y_sel)]
-                y_comp = comp_results_data[BASIC_ROWS.index(y_sel)]
-
-                fs = 12
-
-                fig['data'] = [
-                           go.Bar(
-                               x=x,
-                               y=y,
-                               text=[country_sel for i in range(4)],
-                               insidetextfont={'size': fs},
-                               textposition='auto',
-                               marker=dict(
-                                   color=['#0000ff', '#ffa500', '#008000', 'red']
-                               ),
-                               hoverinfo='y+text'
-                           ),
-                           go.Bar(
-                               x=x,
-                               y=y_comp,
-                               text=[comp_name for i in range(4)],
-                               insidetextfont={'size': fs},
-                               textposition='auto',
-                               marker=dict(
-                                   color=['#8080ff', '#ffd280', '#1aff1a', 'red']
-                               ),
-                               hoverinfo='y+text'
-                           ),
-                       ]
-
         return fig
 
     @app_handle.callback(
@@ -626,12 +1134,12 @@ def callbacks(app_handle):
         return cur_view
 
     @app_handle.callback(
-        Output('map-div', 'style'),
+        Output('map', 'style'),
         [Input('view-store', 'data')],
-        [State('map-div', 'style')]
+        [State('map', 'style')]
     )
     def toggle_map_div_display(cur_view, cur_style):
-        """Change the display of map-div between the app's views."""
+        """Change the display of map between the app's views."""
         if cur_style is None:
             cur_style = {'display': 'flex'}
 
@@ -642,19 +1150,51 @@ def callbacks(app_handle):
         return cur_style
 
     @app_handle.callback(
-        Output('results-div', 'style'),
+        Output('{}-div'.format(RES_COUNTRY), 'style'),
         [Input('view-store', 'data')],
-        [State('results-div', 'style')]
+        [State('{}-div'.format(RES_COUNTRY), 'style')]
     )
-    def toggle_results_div_display(cur_view, cur_style):
+    def toggle_country_div_display(cur_view, cur_style):
         """Change the display of results-div between the app's views."""
         if cur_style is None:
             cur_style = {'display': 'none'}
 
-        if cur_view['app_view'] == VIEW_GENERAL:
-            cur_style.update({'display': 'none'})
-        elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
+        if cur_view['app_view'] == VIEW_COUNTRY:
             cur_style.update({'display': 'flex'})
+        elif cur_view['app_view'] in [VIEW_GENERAL, VIEW_COMPARE]:
+            cur_style.update({'display': 'none'})
+        return cur_style
+
+    @app_handle.callback(
+        Output('{}-div'.format(RES_AGGREGATE), 'style'),
+        [Input('view-store', 'data')],
+        [State('{}-div'.format(RES_AGGREGATE), 'style')]
+    )
+    def toggle_aggregate_div_display(cur_view, cur_style):
+        """Change the display of aggregate-div between the app's views."""
+        if cur_style is None:
+            cur_style = {'display': 'flex'}
+
+        if cur_view['app_view'] == VIEW_GENERAL:
+            cur_style.update({'display': 'flex'})
+        elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
+            cur_style.update({'display': 'none'})
+        return cur_style
+
+    @app_handle.callback(
+        Output('{}-div'.format(RES_COMPARE), 'style'),
+        [Input('view-store', 'data')],
+        [State('{}-div'.format(RES_COMPARE), 'style')]
+    )
+    def toggle_compare_div_display(cur_view, cur_style):
+        """Change the display of compare-input-div between the app's views."""
+        if cur_style is None:
+            cur_style = {'display': 'none'}
+
+        if cur_view['app_view'] == VIEW_COMPARE:
+            cur_style.update({'display': 'flex'})
+        elif cur_view['app_view'] in [VIEW_GENERAL, VIEW_COUNTRY]:
+            cur_style.update({'display': 'none'})
         return cur_style
 
     @app_handle.callback(
@@ -676,24 +1216,6 @@ def callbacks(app_handle):
         return cur_style
 
     @app_handle.callback(
-        Output('aggregate-div', 'style'),
-        [
-            Input('view-store', 'data'),
-        ],
-        [State('aggregate-div', 'style')]
-    )
-    def toggle_aggregate_div_display(cur_view, cur_style):
-        """Change the display of aggregate-div between the app's views."""
-        if cur_style is None:
-            cur_style = {'display': 'none'}
-
-        if cur_view['app_view'] == VIEW_GENERAL:
-            cur_style.update({'display': 'flex'})
-        elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
-            cur_style.update({'display': 'none'})
-        return cur_style
-
-    @app_handle.callback(
         Output('compare-input-div', 'style'),
         [
             Input('view-store', 'data'),
@@ -709,597 +1231,6 @@ def callbacks(app_handle):
             cur_style.update({'display': 'none'})
         elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
             cur_style.update({'display': 'flex'})
-        return cur_style
-
-    @app_handle.callback(
-        Output('compare-div', 'style'),
-        [
-            Input('view-store', 'data'),
-        ],
-        [State('compare-div', 'style')]
-    )
-    def toggle_compare_div_display(cur_view, cur_style):
-        """Change the display of compare-input-div between the app's views."""
-        if cur_style is None:
-            cur_style = {'display': 'none'}
-
-        if cur_view['app_view'] in [VIEW_GENERAL, VIEW_COUNTRY]:
-            cur_style.update({'display': 'none'})
-        elif cur_view['app_view'] == VIEW_COMPARE:
-            cur_style.update({'display': 'flex'})
-        return cur_style
-
-    @app_handle.callback(
-        Output('country-basic-results-table', 'data'),
-        [
-            Input('country-input', 'value'),
-            Input('scenario-input', 'value'),
-        ],
-        [State('data-store', 'data')]
-    )
-    def update_country_basic_results_table(
-            country_sel,
-            scenario,
-            cur_data,
-    ):
-        """Display information and study's results for a country."""
-        answer_table = []
-        country_iso = country_sel
-        # in case of country_iso is a list of one element
-        if np.shape(country_iso) and len(country_iso) == 1:
-            country_iso = country_iso[0]
-
-        # extract the data from the selected scenario if a country was selected
-        if country_iso is not None:
-            if scenario in SCENARIOS:
-
-                df = pd.read_json(cur_data[scenario])
-                df = df.loc[df.country_iso == country_iso]
-
-                basic_results_data = prepare_results_tables(df, scenario)
-
-                total = np.nansum(basic_results_data, axis=1)
-
-                # prepare a DataFrame
-                basic_results_data = pd.DataFrame(
-                    data=basic_results_data,
-                    columns=ELECTRIFICATION_OPTIONS + ['No Electricity']
-                )
-                # sums of the rows
-                basic_results_data['total'] = pd.Series(total)
-
-                # Format the digits
-                basic_results_data.iloc[1:, 0:] = basic_results_data.iloc[1:, 0:].applymap(
-                    round_digits
-                )
-                basic_results_data.iloc[0, 0:] = basic_results_data.iloc[0, 0:].map(
-                    format_percent
-                )
-                # label of the table rows
-                basic_results_data['labels'] = pd.Series(BASIC_ROWS)
-
-                answer_table = basic_results_data[BASIC_COLUMNS_ID].to_dict('records')
-
-        return answer_table
-
-    @app_handle.callback(
-        Output('country-ghg-results-table', 'data'),
-        [
-            Input('country-input', 'value'),
-            Input('scenario-input', 'value'),
-        ],
-        [State('data-store', 'data')]
-    )
-    def update_country_ghg_results_table(
-            country_sel,
-            scenario,
-            cur_data,
-    ):
-        """Display information and study's results for a country."""
-        answer_table = []
-        df_bau = None
-        country_iso = country_sel
-        # in case of country_iso is a list of one element
-        if np.shape(country_iso) and len(country_iso) == 1:
-            country_iso = country_iso[0]
-
-        # extract the data from the selected scenario if a country was selected
-        if country_iso is not None:
-            if scenario in SCENARIOS:
-
-                df = pd.read_json(cur_data[scenario])
-                df = df.loc[df.country_iso == country_iso]
-
-                if scenario in [SE4ALL_FLEX_SCENARIO, SE4ALL_SCENARIO, PROG_SCENARIO]:
-                    # to compare greenhouse gas emissions with BaU scenario
-                    df_bau = pd.read_json(cur_data[BAU_SCENARIO])
-                    df_bau = df_bau.loc[df_bau.country_iso == country_iso]
-
-                if df_bau is None:
-                    ghg_rows = [
-                        'GHG',
-                        'GHG (TIER + 1)',
-                        # 'GHG CUMUL'
-                    ]
-                else:
-                    ghg_rows = [
-                        'GHG',
-                        'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-                        'GHG (TIER +1)',
-                        'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-                    ]
-
-                # gather the values of the results to display in the table
-                ghg_res = np.squeeze(df[GHG].values).round(0)
-                ghg2_res = np.squeeze(df[GHG_CAP].values).round(0)
-                if df_bau is not None:
-                    ghg_comp_res = ghg_res - np.squeeze(df_bau[GHG].values).round(0)
-                    ghg2_comp_res = ghg2_res - np.squeeze(df_bau[GHG_CAP].values).round(0)
-                    ghg_results_data = np.vstack([ghg_res, ghg_comp_res, ghg2_res, ghg2_comp_res])
-                else:
-                    ghg_results_data = np.vstack([ghg_res, ghg2_res])
-
-                total = np.nansum(ghg_results_data, axis=1)
-
-                # prepare a DataFrame
-                ghg_results_data = pd.DataFrame(
-                    data=ghg_results_data,
-                    columns=ELECTRIFICATION_OPTIONS + ['No Electricity']
-                )
-
-                # sums of the rows
-                ghg_results_data['total'] = pd.Series(total)
-                ghg_results_data.iloc[:, 0:] = ghg_results_data.iloc[:, 0:].applymap(round_digits)
-                # label of the table rows
-                ghg_results_data['labels'] = pd.Series(ghg_rows)
-                answer_table = ghg_results_data[GHG_COLUMNS_ID].to_dict('records')
-
-        return answer_table
-
-    @app_handle.callback(
-        Output('aggregate-basic-results-table', 'data'),
-        [
-            Input('region-input', 'value'),
-            Input('scenario-input', 'value'),
-        ],
-        [State('data-store', 'data')]
-    )
-    def update_aggregate_basic_results_table(
-            region_id,
-            scenario,
-            cur_data,
-    ):
-        """Display information and study's results for a country."""
-        answer_table = []
-        if region_id is not None:
-            if scenario in SCENARIOS:
-
-                df = pd.read_json(cur_data[scenario])
-                if region_id != WORLD_ID:
-                    # narrow to the region if the scope is not on the whole world
-                    df = df.loc[df.region == REGIONS_NDC[region_id]]
-
-                # aggregate the results
-                df = df[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
-
-                basic_results_data = prepare_results_tables(df, scenario)
-
-                total = np.nansum(basic_results_data, axis=1)
-
-                # prepare a DataFrame
-                basic_results_data = pd.DataFrame(
-                    data=basic_results_data,
-                    columns=ELECTRIFICATION_OPTIONS + ['No Electricity']
-                )
-                # sums of the rows
-                basic_results_data['total'] = pd.Series(total)
-
-                # Format the digits
-                basic_results_data.iloc[1:, 0:] = basic_results_data.iloc[1:, 0:].applymap(
-                    round_digits
-                )
-                basic_results_data.iloc[0, 0:] = basic_results_data.iloc[0, 0:].map(
-                    format_percent
-                )
-                # label of the table rows
-                basic_results_data['labels'] = pd.Series(BASIC_ROWS)
-
-                answer_table = basic_results_data[BASIC_COLUMNS_ID].to_dict('records')
-
-        return answer_table
-
-    @app_handle.callback(
-        Output('aggregate-ghg-results-table', 'data'),
-        [
-            Input('region-input', 'value'),
-            Input('scenario-input', 'value'),
-        ],
-        [State('data-store', 'data')]
-    )
-    def update_aggregate_ghg_results_table(
-            region_id,
-            scenario,
-            cur_data,
-    ):
-        """Display information and study's results for a country."""
-        answer_table = []
-        if region_id is not None:
-            if scenario in SCENARIOS:
-
-                df = pd.read_json(cur_data[scenario])
-                df_bau = None
-                if region_id != WORLD_ID:
-                    # narrow to the region if the scope is not on the whole world
-                    df = df.loc[df.region == REGIONS_NDC[region_id]]
-
-                if scenario in [SE4ALL_FLEX_SCENARIO, SE4ALL_SCENARIO, PROG_SCENARIO]:
-
-                    # to compare greenhouse gas emissions with BaU scenario
-                    df_bau = pd.read_json(cur_data[BAU_SCENARIO])
-
-                    if region_id != WORLD_ID:
-                        # narrow to the region if the scope is not on the whole world
-                        df_bau = df_bau.loc[df_bau.region == REGIONS_NDC[region_id]]
-
-                if df_bau is None:
-                    ghg_rows = [
-                        'GHG',
-                        'GHG (TIER +1)',
-                        # 'GHG CUMUL'
-                    ]
-                else:
-                    ghg_rows = [
-                        'GHG',
-                        'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-                        'GHG (TIER +1)',
-                        'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-                    ]
-                    # aggregate the results
-                    df_bau = df_bau[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
-
-                # aggregate the results
-                df = df[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
-
-                # gather the values of the results to display in the table
-                ghg_res = np.squeeze(df[GHG].values).round(0)
-                ghg2_res = np.squeeze(df[GHG_CAP].values).round(0)
-
-                if df_bau is not None:
-                    ghg_comp_res = ghg_res - np.squeeze(df_bau[GHG].values).round(0)
-                    ghg2_comp_res = ghg2_res - np.squeeze(df_bau[GHG_CAP].values).round(0)
-                    ghg_results_data = np.vstack([ghg_res, ghg_comp_res, ghg2_res, ghg2_comp_res])
-                else:
-                    ghg_results_data = np.vstack([ghg_res, ghg2_res])
-
-                total = np.nansum(ghg_results_data, axis=1)
-
-                # prepare a DataFrame
-                ghg_results_data = pd.DataFrame(
-                    data=ghg_results_data,
-                    columns=ELECTRIFICATION_OPTIONS + ['No Electricity']
-                )
-                # sums of the rows
-                ghg_results_data['total'] = pd.Series(total)
-                ghg_results_data.iloc[:, 0:] = ghg_results_data.iloc[:, 0:].applymap(round_digits)
-                # label of the table rows
-                ghg_results_data['labels'] = pd.Series(ghg_rows)
-
-                answer_table = ghg_results_data[GHG_COLUMNS_ID].to_dict('records')
-
-        return answer_table
-
-    @app_handle.callback(
-        Output('compare-basic-results-table', 'data'),
-        [
-            Input('country-input', 'value'),
-            Input('compare-input', 'value'),
-            Input('scenario-input', 'value'),
-        ],
-        [State('data-store', 'data')]
-    )
-    def update_compare_basic_results_table(country_sel, comp_sel, scenario, cur_data):
-        """Display information and study's results comparison between countries."""
-        answer_table = []
-        country_iso = country_sel
-        # in case of country_iso is a list of one element
-        if np.shape(country_iso) and len(country_iso) == 1:
-            country_iso = country_iso[0]
-
-        # extract the data from the selected scenario if a country was selected
-        if country_iso is not None and comp_sel is not None:
-            if scenario in SCENARIOS:
-                df = pd.read_json(cur_data[scenario])
-                df_comp = df.copy()
-                df = df.loc[df.country_iso == country_sel]
-                if comp_sel in REGIONS_NDC:
-                    # compare the reference country to a region
-                    if comp_sel != WORLD_ID:
-                        df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[comp_sel]]
-                    df_comp = df_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
-                else:
-                    # compare the reference country to a country
-                    df_comp = df_comp.loc[df_comp.country_iso == comp_sel]
-
-                basic_results_data = prepare_results_tables(df, scenario)
-                comp_results_data = prepare_results_tables(df_comp, scenario)
-
-                total = np.nansum(basic_results_data, axis=1)
-                comp_total = np.nansum(comp_results_data, axis=1)
-
-                basic_results_data = np.hstack([basic_results_data, comp_results_data])
-
-                comp_ids = ['comp_{}'.format(c) for c in ELECTRIFICATION_OPTIONS] \
-                    + ['comp_No Electricity']
-                # prepare a DataFrame
-                basic_results_data = pd.DataFrame(
-                    data=basic_results_data,
-                    columns=ELECTRIFICATION_OPTIONS + ['No Electricity'] + comp_ids
-                )
-
-                # sums of the rows
-                basic_results_data['total'] = pd.Series(total)
-                basic_results_data['comp_total'] = pd.Series(comp_total)
-                # Format the digits
-                basic_results_data.iloc[1:, 0:] = basic_results_data.iloc[1:, 0:].applymap(
-                    round_digits
-                )
-                basic_results_data.iloc[0, 0:] = basic_results_data.iloc[0, 0:].map(
-                    format_percent
-                )
-                # label of the table rows
-                basic_results_data['labels'] = pd.Series(BASIC_ROWS)
-
-                answer_table = basic_results_data[COMPARE_COLUMNS_ID].to_dict('records')
-
-        return answer_table
-
-    @app_handle.callback(
-        Output('compare-basic-results-table', 'columns'),
-        [
-            Input('country-input', 'value'),
-            Input('compare-input', 'value'),
-        ]
-    )
-    def update_compare_basic_results_table_columns_title(country_sel, comp_sel):
-
-        basic_columns_ids = []
-        for col in BASIC_COLUMNS_ID:
-            if col != 'labels':
-                basic_columns_ids.append({'name': [LABEL_COLUMNS[col], country_sel], 'id': col})
-                basic_columns_ids.append(
-                    {'name': [LABEL_COLUMNS[col], comp_sel], 'id': 'comp_{}'.format(col)}
-                )
-            else:
-                basic_columns_ids.append({'name': LABEL_COLUMNS[col], 'id': col})
-
-        return basic_columns_ids
-
-    @app_handle.callback(
-        Output('compare-basic-results-table', 'style_data_conditional'),
-        [Input('compare-basic-results-table', 'data')],
-        [
-            State('compare-basic-results-table', 'style_data_conditional'),
-            State('compare-input', 'value')
-        ]
-    )
-    def update_compare_basic_results_table_styling(cur_data, cur_style, comp_sel):
-
-        if comp_sel is not None:
-            data = pd.DataFrame.from_dict(cur_data)
-
-            col_ref = BASIC_COLUMNS_ID[1:]
-            col_comp = ['comp_{}'.format(col) for col in BASIC_COLUMNS_ID[1:]]
-            data = data[col_ref + col_comp].applymap(
-                lambda x: 0 if x == '' else float(x.replace(',', '').replace('%', '')))
-            ref = data[col_ref]
-            comp = data[col_comp]
-
-            compare_results_styling = []
-            for j, col in enumerate(col_ref):
-                for i in range(len(ref.index)):
-                    apply_condition = True
-                    if ref.iloc[i, j] > comp.iloc[i, j]:
-                        color = COLOR_BETTER
-                        font = 'bold'
-                    elif ref.iloc[i, j] < comp.iloc[i, j]:
-                        color = COLOR_WORSE
-                        font = 'normal'
-                    else:
-                        apply_condition = False
-
-                    if apply_condition:
-                        compare_results_styling.append(
-                            {
-                                "if": {"column_id": col, "row_index": i},
-                                'color': color,
-                                # 'backgroundColor': color,
-                                'fontWeight': font
-                             }
-                        )
-                    cur_style = \
-                        TABLES_COLUMNS_WIDTH \
-                        + TABLES_LABEL_STYLING \
-                        + compare_results_styling
-
-        return cur_style
-
-    @app_handle.callback(
-        Output('compare-ghg-results-table', 'data'),
-        [
-            Input('country-input', 'value'),
-            Input('compare-input', 'value'),
-            Input('scenario-input', 'value'),
-        ],
-        [State('data-store', 'data')]
-    )
-    def update_compare_ghg_results_table(country_sel, comp_sel, scenario, cur_data):
-        """Display information and study's results for a country."""
-        answer_table = []
-        df_bau_ref = None
-        country_iso = country_sel
-        # in case of country_iso is a list of one element
-        if np.shape(country_iso) and len(country_iso) == 1:
-            country_iso = country_iso[0]
-
-        # extract the data from the selected scenario if a country was selected
-        if country_iso is not None and comp_sel is not None:
-            if scenario in SCENARIOS:
-                df = pd.read_json(cur_data[scenario])
-                df_comp = df.copy()
-                df = df.loc[df.country_iso == country_sel]
-                if comp_sel in REGIONS_NDC:
-                    # compare the reference country to a region
-                    if comp_sel != WORLD_ID:
-                        df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[comp_sel]]
-                    df_comp = df_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
-                else:
-                    # compare the reference country to a country
-                    df_comp = df_comp.loc[df_comp.country_iso == comp_sel]
-                df = df.loc[df.country_iso == country_iso]
-
-                if scenario in [SE4ALL_SCENARIO, PROG_SCENARIO]:
-                    # to compare greenhouse gas emissions with BaU scenario
-                    df_bau = pd.read_json(cur_data[BAU_SCENARIO])
-                    df_bau_ref = df_bau.loc[df_bau.country_iso == country_iso]
-
-                    if comp_sel in REGIONS_NDC:
-                        # compare the reference country to a region
-                        df_bau_comp = df_bau.loc[df_bau.region == REGIONS_NDC[comp_sel]]
-                        columns_to_select = EXO_RESULTS + ['pop_newly_electrified_2030']
-                        df_bau_comp = df_bau_comp[columns_to_select].sum(
-                            axis=0)
-                    else:
-                        # compare the reference country to a country
-                        df_bau_comp = df_bau.loc[df_bau.country_iso == comp_sel]
-
-                if df_bau_ref is None:
-                    ghg_rows = [
-                        'GHG',
-                        'GHG (TIER +1)',
-                        # 'GHG CUMUL'
-                    ]
-                else:
-                    ghg_rows = [
-                        'GHG',
-                        'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-                        'GHG (TIER +1)',
-                        'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-                    ]
-
-                # gather the values of the results to display in the table
-                ghg_res = np.squeeze(df[GHG].values).round(0)
-                ghg2_res = np.squeeze(df[GHG_CAP].values).round(0)
-
-                comp_res = np.squeeze(df_comp[GHG].values).round(0)
-                comp2_res = np.squeeze(df_comp[GHG_CAP].values).round(0)
-
-                if df_bau_ref is not None:
-                    ghg_diff_res = ghg_res - np.squeeze(df_bau_ref[GHG].values).round(0)
-                    ghg2_diff_res = ghg2_res - np.squeeze(df_bau_ref[GHG_CAP].values).round(0)
-                    ghg_results_data = np.vstack([ghg_res, ghg_diff_res, ghg2_res, ghg2_diff_res])
-                else:
-                    ghg_results_data = np.vstack([ghg_res, ghg2_res])
-
-                if df_bau_ref is not None:
-                    ghg_diff_res = comp_res - np.squeeze(df_bau_comp[GHG].values).round(0)
-                    ghg2_diff_res = comp2_res - np.squeeze(df_bau_comp[GHG_CAP].values).round(0)
-                    ghg_comp_data = np.vstack([comp_res, ghg_diff_res, comp2_res, ghg2_diff_res])
-                else:
-                    ghg_comp_data = np.vstack([comp_res, comp2_res])
-
-                total = np.nansum(ghg_results_data, axis=1)
-                comp_total = np.nansum(ghg_comp_data, axis=1)
-
-                ghg_results_data = np.hstack([ghg_results_data, ghg_comp_data])
-
-                comp_ids = ['comp_{}'.format(c) for c in ELECTRIFICATION_OPTIONS] \
-                    + ['comp_No Electricity']
-
-                # prepare a DataFrame
-                ghg_results_data = pd.DataFrame(
-                    data=ghg_results_data,
-                    columns=ELECTRIFICATION_OPTIONS + ['No Electricity'] + comp_ids
-                )
-                # sums of the rows
-                ghg_results_data['total'] = pd.Series(comp_total)
-                ghg_results_data['comp_total'] = pd.Series(total)
-                # Format the digits
-                ghg_results_data.iloc[:, 0:] = ghg_results_data.iloc[:, 0:].applymap(
-                        round_digits
-                )
-                # label of the table rows
-                ghg_results_data['labels'] = pd.Series(ghg_rows)
-                answer_table = ghg_results_data[COMPARE_COLUMNS_ID].to_dict('records')
-
-        return answer_table
-
-    @app_handle.callback(
-        Output('compare-ghg-results-table', 'columns'),
-        [
-            Input('country-input', 'value'),
-            Input('compare-input', 'value'),
-        ]
-    )
-    def update_compare_ghg_results_table_columns_title(country_sel, comp_sel):
-
-        basic_columns_ids = []
-        for col in GHG_COLUMNS_ID:
-            if col != 'labels':
-                basic_columns_ids.append({'name': [LABEL_COLUMNS[col], country_sel], 'id': col})
-                basic_columns_ids.append(
-                    {'name': [LABEL_COLUMNS[col], comp_sel], 'id': 'comp_{}'.format(col)}
-                )
-            else:
-                basic_columns_ids.append({'name': LABEL_COLUMNS[col], 'id': col})
-
-        return basic_columns_ids
-
-    @app_handle.callback(
-        Output('compare-ghg-results-table', 'style_data_conditional'),
-        [Input('compare-ghg-results-table', 'data')],
-        [
-            State('compare-ghg-results-table', 'style_data_conditional'),
-            State('compare-input', 'value')
-        ]
-    )
-    def update_compare_ghg_results_table_styling(cur_data, cur_style, comp_sel):
-
-        if comp_sel is not None:
-            data = pd.DataFrame.from_dict(cur_data)
-
-            col_ref = BASIC_COLUMNS_ID[1:]
-            col_comp = ['comp_{}'.format(col) for col in BASIC_COLUMNS_ID[1:]]
-            data = data[col_ref + col_comp].applymap(
-                lambda x: 0 if x == '' else float(x.replace(',', '')))
-            ref = data[col_ref]
-            comp = data[col_comp]
-
-            compare_results_styling = []
-            for j, col in enumerate(col_ref):
-                for i in range(len(ref.index)):
-                    apply_condition = True
-                    if ref.iloc[i, j] > comp.iloc[i, j]:
-                        color = COLOR_WORSE
-                        font = 'normal'
-                    elif ref.iloc[i, j] < comp.iloc[i, j]:
-                        color = COLOR_BETTER
-                        font = 'bold'
-                    else:
-                        apply_condition = False
-
-                    if apply_condition:
-                        compare_results_styling.append(
-                            {
-                                "if": {"column_id": col, "row_index": i},
-                                'color': color,
-                                'fontWeight': font
-                            }
-                        )
-                    cur_style = \
-                        TABLES_COLUMNS_WIDTH \
-                        + TABLES_LABEL_STYLING \
-                        + compare_results_styling
-
         return cur_style
 
     @app_handle.callback(
@@ -1364,60 +1295,6 @@ def callbacks(app_handle):
             ]
 
         return divs
-
-    @app_handle.callback(
-        Output('country-basic-results-title', 'children'),
-        [Input('country-input', 'value')],
-        [
-            State('scenario-input', 'value'),
-            State('data-store', 'data')]
-    )
-    def country_basic_results_title(country_iso, scenario, cur_data):
-
-        answer = 'Results'
-        if scenario in SCENARIOS and country_iso is not None:
-            df = pd.read_json(cur_data[scenario])
-            answer = 'Results for {}: electrification options'.format(
-                df.loc[df.country_iso == country_iso].country.values[0])
-        return answer
-
-    @app_handle.callback(
-        Output('aggregate-basic-results-title', 'children'),
-        [Input('region-input', 'value')]
-    )
-    def aggregated_basic_results_title(region_id):
-
-        answer = 'Results'
-        if region_id is not None:
-            answer = 'Aggregated results for {}: electrification options'.format(
-                REGIONS_GPD[region_id]
-            )
-        return answer
-
-    @app_handle.callback(
-        Output('compare-basic-results-title', 'children'),
-        [
-            Input('country-input', 'value'),
-            Input('compare-input', 'value')
-        ],
-        [
-            State('scenario-input', 'value'),
-            State('data-store', 'data')]
-    )
-    def compare_basic_results_title(country_iso, comp_sel, scenario, cur_data):
-
-        answer = 'Results'
-        if scenario in SCENARIOS and comp_sel is not None:
-            df = pd.read_json(cur_data[scenario])
-            if comp_sel in REGIONS_NDC:
-                comp_name = REGIONS_GPD[comp_sel]
-            else:
-                comp_name = df.loc[df.country_iso == comp_sel].country.values[0]
-            answer = 'Results for {} compared with results {}'.format(
-                comp_name,
-                df.loc[df.country_iso == country_iso].country.values[0]
-            )
-        return answer
 
     @app_handle.callback(
         Output('aggregate-info-div', 'children'),

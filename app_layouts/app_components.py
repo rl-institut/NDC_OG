@@ -8,21 +8,26 @@ import dash_daq as daq
 import dash_table
 import plotly.graph_objs as go
 from data.data_preparation import (
-    ELECTRIFICATION_OPTIONS,
-    BAU_SCENARIO,
-    SE4ALL_SCENARIO,
+    SCENARIOS,
     SCENARIOS_DICT,
-    SE4ALL_FLEX_SCENARIO,
-    PROG_SCENARIO,
+    BAU_SCENARIO,
+    ELECTRIFICATION_OPTIONS,
+    ELECTRIFICATION_DICT,
     GRID,
     MG,
     SHS,
-    BASIC_ROWS,
-    BASIC_ROWS_FULL,
-    LABEL_COLUMNS,
-    BASIC_COLUMNS_ID,
-    GHG_COLUMNS_ID,
+    NO_ACCESS,
+    POP_RES,
+    INVEST_RES,
+    GHG_RES,
+    GHG_ER_RES,
 )
+
+RES_COUNTRY = 'country'
+RES_AGGREGATE = 'aggregate'
+RES_COMPARE = 'compare'
+
+
 
 TABLES_COLUMNS_WIDTH = [
     {'if': {'column_id': 'labels'},
@@ -50,6 +55,73 @@ TABLES_HEADER_STYLING = {
     'fontWeight': 'bold'
 }
 
+POP_ROWS = [
+    'People share',
+    'People (Mio)',
+    'HH (Mio)',
+]
+
+INVEST_ROWS = [
+    'Lower TIER cost',
+    'Higher TIER cost',
+]
+
+GHG_ROWS = [
+    'Lower TIER',
+    'Higher TIER',
+]
+GHG_ER_ROWS = [
+    'Lower TIER',
+    'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
+    'Higher TIER',
+    'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
+]
+
+TABLE_ROWS = {
+    POP_RES: POP_ROWS,
+    INVEST_RES: INVEST_ROWS,
+    GHG_RES: GHG_ROWS,
+    GHG_ER_RES: GHG_ER_ROWS,
+}
+
+TABLE_ROWS_TOOLTIPS = {
+    'People share': 'Percentage of people getting electricity access by 2030',
+    'People (Mio)': 'Number of people getting electricity access by 2030',
+    'HH (Mio)': 'Number of households getting electricity access by 2030',
+    'HH demand (MW)': 'Expected household electricity demand by 2030, in MW',
+    'HH demand (TIER + 1) (MW)':
+        'Expected household electricity demand by 2030 for one TIER level up, in MW',
+    'Lower TIER cost':
+        'Needed initial investments to supply expected demand by 2030, in million USD',
+    'Higher TIER cost':
+        'Needed initial investments to supply expected demand by 2030 for one TIER level up, '
+        'in million USD',
+    'Lower TIER': '1',
+    'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]): '2',
+    'Higher TIER': '3',
+    'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]): '4',
+}
+# labels of the columns of the result tables
+TABLE_COLUMNS_LABEL = ELECTRIFICATION_DICT.copy()
+TABLE_COLUMNS_LABEL['labels'] = ''
+TABLE_COLUMNS_LABEL[NO_ACCESS] = NO_ACCESS
+TABLE_COLUMNS_LABEL['total'] = 'Total'
+TABLE_COLUMNS_ID = ['labels'] + ELECTRIFICATION_OPTIONS + [NO_ACCESS] + ['total']
+COMPARE_COLUMNS_ID = ['labels']
+for opt in ELECTRIFICATION_OPTIONS + [NO_ACCESS] + ['total']:
+    COMPARE_COLUMNS_ID.append(opt)
+    COMPARE_COLUMNS_ID.append('comp_{}'.format(opt))
+
+
+BARPLOT_ELECTRIFICATION_COLORS = {
+    GRID: '#7030a0',
+    MG: '#5b9bd5',
+    SHS: '#ed7d31',
+    NO_ACCESS: '#a6a6a6'
+}
+
+BARPLOT_YAXIS_OPT = ELECTRIFICATION_OPTIONS.copy() + [NO_ACCESS]
+
 
 def create_tooltip(cell):
     """Create tooltips for tables"""
@@ -60,368 +132,134 @@ def create_tooltip(cell):
     )
 
 
-def callback_generator(app, input_name, df_name):
-    """Generate a callback for input components."""
-
-    @app.callback(
-        Output('%s-input' % input_name, 'value'),
-        [
-            Input('scenario-input', 'value'),
-            Input('country-input', 'value'),
-        ],
-        [State('data-store', 'data')]
-    )
-    def update_drive_input(scenario, country_sel, cur_data):
-
-        answer = 0
-        country_iso = country_sel
-        # in case of country_iso is a list of one element
-        if np.shape(country_iso) and len(country_iso) == 1:
-            country_iso = country_iso[0]
-
-        # extract the data from the selected scenario if a country was selected
-        if country_iso is not None:
-            if scenario == SE4ALL_FLEX_SCENARIO:
-                df = pd.read_json(cur_data[scenario]).set_index('country_iso')
-                answer = df.loc[country_iso, '%s' % df_name]
-        return answer
-
-    update_drive_input.__name__ = 'update_%s_input' % input_name
-
-    return update_drive_input
-
-
-def results_div(aggregate=False):
-    """Fill and return a specific country exogenous results and information.
-
-    :param aggregate: (bool) determine whether the results should be summed country wise
-    :return: the content of the results-div
+def results_div(result_type, result_category):
     """
 
-    if aggregate is True:
-        id_name = 'aggregate'
+    :param result_type: one of country, aggregate, or compare
+    :param result_category: one of pop, invest or ghg
+    :return: a div with a title, a graph and a table
+    """
+
+    id_name = '{}-{}'.format(result_type, result_category)
+
+    barplot_mode = 'stack'
+    if result_type == RES_COMPARE:
+        barplot_mode = 'group'
+
+    x_vals = [SCENARIOS_DICT[sce] for sce in SCENARIOS]
+    fs = 15
+
+    # add a barplot above the tables with the results
+    barplot = dcc.Graph(
+        id='{}-barplot'.format(id_name),
+        className='cell',
+        figure=go.Figure(
+            data=[
+                go.Bar(
+                    x=x_vals,
+                    y=[0, 0, 0],
+                    name=y_opt,
+                    text=y_opt,
+                    insidetextfont={'size': fs},
+                    textposition='auto',
+                    marker=dict(
+                        color=BARPLOT_ELECTRIFICATION_COLORS[y_opt],
+                    ),
+                    hoverinfo='y+text'
+                )
+                for y_opt in BARPLOT_YAXIS_OPT
+            ],
+            layout=go.Layout(
+                title='',
+                barmode=barplot_mode,
+                paper_bgcolor='#EBF2FA',
+                plot_bgcolor='#EBF2FA',
+                showlegend=False,
+                height=400,
+                autosize=True,
+                margin=dict(
+                    l=55,
+                    r=0,
+                    b=30,
+                    t=30
+                ),
+                font=dict(size=20, family='Roboto'),
+                titlefont=dict(size=20),
+                yaxis=dict(
+                    hoverformat='.2f'
+                )
+            )
+        ),
+        config={
+            'displayModeBar': True,
+        }
+    )
+
+    columns_ids = []
+    table_rows = TABLE_ROWS[result_category]
+
+    if result_type in [RES_COUNTRY, RES_AGGREGATE]:
+        duplicate_headers = False
+        columns_ids = [{'name': TABLE_COLUMNS_LABEL[col], 'id': col} for col in TABLE_COLUMNS_ID]
+
+    elif result_type == RES_COMPARE:
+        duplicate_headers = True
+        for col in TABLE_COLUMNS_ID:
+            if col != 'labels':
+                columns_ids.append({'name': [TABLE_COLUMNS_LABEL[col], 'value'], 'id': col})
+                columns_ids.append(
+                    {'name': [TABLE_COLUMNS_LABEL[col], 'rel.'], 'id': 'comp_{}'.format(col)}
+                )
+            else:
+                columns_ids.append({'name': TABLE_COLUMNS_LABEL[col], 'id': col})
 
     else:
-        id_name = 'country'
+        print('error in the result type in results_div()')
 
-    x_vals = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
-    fs = 12
-
-    # add a barplot above the tables with the results
-    barplot = html.Div(
-        id='{}-barplot-div'.format(id_name),
-        className='app__barplot',
-        style={'width': '100%'},
-        children=dcc.Graph(
-            id='{}-barplot'.format(id_name),
-            figure=go.Figure(
-                data=[
-                    go.Bar(
-                        x=x_vals,
-                        y=[0, 0, 0, 0],
-                        text=[SCENARIOS_DICT[BAU_SCENARIO] for i in range(4)],
-                        insidetextfont={'size': fs},
-                        textposition='auto',
-                        marker=dict(
-                            color=['#0000ff', '#ffa500', '#008000', 'red']
-                        ),
-                        hoverinfo='y+text'
-                    ),
-                    go.Bar(
-                        x=x_vals,
-                        y=[0, 0, 0, 0],
-                        text=[SCENARIOS_DICT[SE4ALL_SCENARIO] for i in range(4)],
-                        insidetextfont={'size': fs},
-                        textposition='auto',
-                        marker=dict(
-                            color=['#8080ff', '#ffd280', '#1aff1a', 'red']
-                        ),
-                        hoverinfo='y+text'
-                    ),
-                    go.Bar(
-                        x=x_vals,
-                        y=[0, 0, 0, 0],
-                        text=[SCENARIOS_DICT[PROG_SCENARIO] for i in range(4)],
-                        insidetextfont={'size': fs},
-                        textposition='auto',
-                        marker=dict(
-                            color=['#ccccff', '#ffedcc', '#99ff99', 'red']
-                        ),
-                        hoverinfo='y+text'
-                    )
-                ],
-                layout=go.Layout(
-                    title='',
-                    barmode='group',
-                    paper_bgcolor='#EBF2FA',
-                    plot_bgcolor='#EBF2FA',
-                    showlegend=False,
-                    height=400,
-                    autosize=True,
-                    margin=dict(
-                        l=55,
-                        r=0,
-                        b=30,
-                        t=30
-                    ),
-                    font=dict(size=20, family='Roboto'),
-                    titlefont=dict(size=20),
-                    yaxis=dict(
-                        hoverformat='.1f'
-                    )
-                )
-            ),
-            config={
-                'displayModeBar': True,
-            }
+    results_div_content = [
+        html.H4(
+            id='{}-results-title'.format(id_name),
+            className='cell',
+            children='Results'
         ),
-    )
-
-    # add tables with the results
-    # align number on the right
-    number_styling = [
-        {
-            'if': {
-                'column_id': c,
-                'filter': 'labels eq "{}"'.format(label)
-            },
-            'textAlign': 'right'
-        }
-        for c in ELECTRIFICATION_OPTIONS
-        for label in BASIC_ROWS
-    ]
-
-    # tables containing the results
-    results_divs = [
-        html.Div(
-            id='{}-barplot-title'.format(id_name),
-            children=[
-                dcc.Dropdown(
-                    id='{}-barplot-yaxis-input'.format(id_name),
-                    options=[{'label': r, 'value': r} for r in BASIC_ROWS],
-                    value=BASIC_ROWS[0],
-                )
-            ],
+        dcc.Dropdown(
+            id='{}-barplot-yaxis-input'.format(id_name),
+            className='cell',
+            options=[{'label': r, 'value': r} for r in table_rows],
+            value=table_rows[0],
         ),
         barplot,
-        html.Div(
-            id='{}-basic-results-div'.format(id_name),
-            className='{}__results__basic'.format(id_name),
-            children=[
-                html.H4(id='{}-basic-results-title'.format(id_name), children='Results'),
-                dash_table.DataTable(
-                    id='{}-basic-results-table'.format(id_name),
-                    columns=[
-                        {'name': LABEL_COLUMNS[col], 'id': col} for col in BASIC_COLUMNS_ID
-                    ],
-                    style_data_conditional=number_styling + TABLES_LABEL_STYLING,
-                    style_cell_conditional=TABLES_COLUMNS_WIDTH,
-                    style_header=TABLES_HEADER_STYLING,
-                    style_cell={
-                        'fontFamily': "Roboto"
-                    },
-                    tooltips={
-                        'labels': [
-                            {
-                                'type': 'markdown',
-                                'value': create_tooltip(BASIC_ROWS_FULL[lbl])
-                            }
-                            for lbl in BASIC_ROWS
-                        ]
-
-                    }
-                )
-            ]
-        ),
-        html.Div(
-            id='{}-ghg-results-div'.format(id_name),
-            className='{}__results'.format(id_name),
-            children=[
-                html.H4(
-                    'Cumulated greenhouse Gases emissions '
-                    'from 2017 until 2030 (in million tons CO2)'
-                ),
-                dash_table.DataTable(
-                    id='{}-ghg-results-table'.format(id_name),
-                    columns=[
-                        {'name': LABEL_COLUMNS[col], 'id': col}
-                        for col in GHG_COLUMNS_ID
-                    ],
-                    style_data_conditional=number_styling + TABLES_LABEL_STYLING,
-                    style_cell_conditional=TABLES_COLUMNS_WIDTH,
-                    style_header=TABLES_HEADER_STYLING,
-                    style_cell={
-                        'fontFamily': "Roboto"
-                    },
-                )
-            ]
-        ),
-    ]
-
-    divs = [
-        html.Div(
-            id='{}-results-div'.format(id_name),
-            className='{}__results'.format(id_name),
-            children=results_divs
-        )
-    ]
-
-    return divs
-
-
-def compare_div():
-    """Fill and return a comparison to specific country exogenous results.
-
-    :return: the content of the compare-div
-    """
-
-    id_name = 'compare'
-
-    # add a barplot above the tables with the results
-    barplot = html.Div(
-        id='{}-barplot-div'.format(id_name),
-        className='app__barplot',
-        style={'width': '100%'},
-        children=dcc.Graph(
-            id='{}-barplot'.format(id_name),
-            figure=go.Figure(
-                data=[],
-                layout=go.Layout(
-                    title='',
-                    barmode='group',
-                    paper_bgcolor='#EBF2FA',
-                    plot_bgcolor='#EBF2FA',
-                    showlegend=False,
-                    height=400,
-                    autosize=True,
-                    margin=dict(
-                        l=55,
-                        r=0,
-                        b=30,
-                        t=30
-                    ),
-                    font=dict(size=20, family='Roboto'),
-                    titlefont=dict(size=20),
-                    yaxis=dict(
-                        hoverformat='.1f'
-                    )
-                )
-            ),
-            config={
-                'displayModeBar': True,
-            }
-        ),
-    )
-
-    # add tables with the results
-    # align number on the right
-    number_styling = [
-        {
-            'if': {
-                'column_id': c,
-                'filter': 'labels eq "{}"'.format(label)
+        dash_table.DataTable(
+            id='{}-results-table'.format(id_name),
+            css='cell',
+            columns=columns_ids,
+            style_data_conditional=TABLES_LABEL_STYLING,
+            style_cell_conditional=TABLES_COLUMNS_WIDTH,
+            style_header=TABLES_HEADER_STYLING,
+            style_cell={
+                'fontFamily': "Roboto"
             },
-            'textAlign': 'right'
-        }
-        for c in ELECTRIFICATION_OPTIONS
-        for label in BASIC_ROWS
-    ]
-
-    basic_columns_ids = []
-    for col in BASIC_COLUMNS_ID:
-        if col != 'labels':
-            basic_columns_ids.append({'name': [LABEL_COLUMNS[col], 'value'], 'id': col})
-            basic_columns_ids.append(
-                {'name': [LABEL_COLUMNS[col], 'rel.'], 'id': 'comp_{}'.format(col)}
-            )
-        else:
-            basic_columns_ids.append({'name': LABEL_COLUMNS[col], 'id': col})
-
-    ghg_columns_ids = []
-    for col in GHG_COLUMNS_ID:
-        if col != 'labels':
-            ghg_columns_ids.append({'name': [LABEL_COLUMNS[col], 'value'], 'id': col})
-            ghg_columns_ids.append(
-                {'name': [LABEL_COLUMNS[col], 'rel.'], 'id': 'comp_{}'.format(col)}
-            )
-        else:
-            ghg_columns_ids.append({'name': LABEL_COLUMNS[col], 'id': col})
-
-    # tables containing the results
-    results_divs = [
-        html.Div(
-            id='{}-barplot-title'.format(id_name),
-            children=[
-                dcc.Dropdown(
-                    id='{}-barplot-yaxis-input'.format(id_name),
-                    options=[{'label': r, 'value': r} for r in BASIC_ROWS],
-                    value=BASIC_ROWS[0],
-                )
-            ],
-        ),
-        barplot,
-        html.Div(
-            id='{}-basic-results-div'.format(id_name),
-            className='{}__results__basic'.format(id_name),
-            style={'width': '90%'},
-            children=[
-                html.H4(id='{}-basic-results-title'.format(id_name), children='Results'),
-                dash_table.DataTable(
-                    id='{}-basic-results-table'.format(id_name),
-                    columns=basic_columns_ids,
-                    style_data_conditional=number_styling + TABLES_LABEL_STYLING,
-                    style_cell_conditional=TABLES_COLUMNS_WIDTH,
-                    style_header=TABLES_HEADER_STYLING,
-                    style_cell={
-                        'fontFamily': "Roboto"
-                    },
-                    merge_duplicate_headers=True,
-                    tooltips={
-                        'labels': [
-                            {
-                                'type': 'markdown',
-                                'value': create_tooltip(BASIC_ROWS_FULL[lbl])
-                            }
-                            for lbl in BASIC_ROWS
-                        ]
-
+            tooltips={
+                'labels': [
+                    {
+                        'type': 'markdown',
+                        'value': create_tooltip(TABLE_ROWS_TOOLTIPS[lbl])
                     }
-                )
-            ]
-        ),
-        html.Div(
-            id='{}-ghg-results-div'.format(id_name),
-            className='{}__results'.format(id_name),
-            style={'width': '90%'},
-            children=[
-                html.H4(
-                    'Cumulated greenhouse Gases emissions '
-                    'from 2017 until 2030 (in million tons CO2)'
-                ),
-                dash_table.DataTable(
-                    id='{}-ghg-results-table'.format(id_name),
-                    columns=ghg_columns_ids,
-                    style_data_conditional=number_styling + TABLES_LABEL_STYLING,
-                    style_cell_conditional=TABLES_COLUMNS_WIDTH,
-                    style_header=TABLES_HEADER_STYLING,
-                    style_cell={
-                        'fontFamily': "Roboto"
-                    },
-                    merge_duplicate_headers=True,
-                )
-            ]
+                    for lbl in table_rows
+                ]
+
+            },
+            merge_duplicate_headers=duplicate_headers
         ),
     ]
 
-    divs = [
-        html.Div(
-            id='{}-results-div'.format(id_name),
-            className='{}__results'.format(id_name),
-            children=results_divs
+    return html.Div(
+        className='cell',
+        children=html.Div(
+            className='grid-y',
+            children=results_div_content
         )
-    ]
-
-    return divs
+    )
 
 
 def scenario_div(init_scenario):
@@ -435,9 +273,8 @@ def scenario_div(init_scenario):
         ),
         html.Div(
             id='scenario-input-div',
-            children=dcc.RadioItems(
+            children=dcc.Dropdown(
                 id='scenario-input',
-                className='app__input__radio',
                 options=[
                     {'label': v, 'value': k}
                     for k, v in SCENARIOS_DICT.items()
@@ -447,45 +284,6 @@ def scenario_div(init_scenario):
         )
     ]
     return divs
-
-
-def impact_factors_div(opt, title=''):
-    factors = []
-    for input_name in IMPACT_FACTORS.index.to_list():
-        factors.append(
-            html.Div(
-                id='impact-{}-{}-input-div'.format(opt, input_name.replace('_', '-')),
-                title='{} description'.format(input_name.replace('_', ' ')),
-                children=[
-                    html.Div(
-                        id='impact-{}-{}-input_label'.format(opt, input_name.replace('_', '-')),
-                        children=input_name.replace('_', ' ')
-                    ),
-                    dcc.Input(
-                        id='impact-{}-{}-input'.format(opt, input_name.replace('_', '-')),
-                        className='app__input__impact',
-                        value=np.round(IMPACT_FACTORS[opt][input_name], 3),
-                        type='number',
-                        min=0,
-                        max=5,
-                        step=0.001
-                    ),
-                ]
-            )
-        )
-
-    return html.Div(
-        id='impact-{}-drives-div'.format(opt),
-        className='app__input',
-        title=title,
-        children=[
-                     html.Div(
-                         id='impact-{}-label'.format(opt),
-                         className='app__input__label',
-                         children='Impact factors ({})'.format(opt.upper())
-                     )
-                 ] + factors
-    )
 
 
 def controls_div():
@@ -602,76 +400,7 @@ def controls_div():
                     ]
                 )
             ]
-        ),
-        html.Div(
-            id='factor-div',
-            className='app__input',
-            children=[
-                html.Div(
-                    id='mentis-weight-div',
-                    className='app__input',
-                    children=[
-                        html.Div(
-                            id='mentis-weight-label',
-                            className='app__input__label',
-                            children='Weight RISE / influence factors'
-                        ),
-                        html.Div(
-                            id='mentis-weight-input-div',
-                            title='mentis weight description',
-                            children=dcc.Input(
-                                id='mentis-weight-input',
-                                className='app__input__mentis-weight',
-                                value=0.2,
-                                type='number',
-                                min=0,
-                                max=1,
-                                step=0.01
-                            )
-                        )
-                    ]
-                ),
-                html.Div(
-                    id='mentis-drives-div',
-                    className='app__input',
-                    children=[
-                                 html.Div(
-                                     id='mentis-label',
-                                     className='app__input__label',
-                                     children='Influence factors'
-                                 )
-                             ] + [
-                                 html.Div(
-                                     id='mentis-%s-input-div' % input_name.replace('_', '-'),
-                                     title='%s description' % input_name.replace('_', ' '),
-                                     children=[
-                                         html.Div(
-                                             id='mentis-%s-input_label' %
-                                                input_name.replace('_', '-'),
-                                             children=input_name.replace('_', ' ')
-                                         ),
-                                         dcc.Input(
-                                             id='mentis-%s-input' %
-                                                input_name.replace('_', '-'),
-                                             className='app__input__influence',
-                                             # options=[
-                                             #     {'label': l, 'value': v}
-                                             #     for l, v in zip(['low', 'medium', 'high'], [0, 0.5, 1])
-                                             # ],
-                                             value=0,
-                                             type='number',
-                                             min=0,
-                                             max=1,
-                                             step=0.5
-                                         ),
-                                     ]
-                                 )
-                                 for input_name in MENTI_DRIVES
-                             ]
-                ),
-                impact_factors_div('mg'),
-                impact_factors_div('shs'),
-            ]
         )
     ]
+
     return divs
