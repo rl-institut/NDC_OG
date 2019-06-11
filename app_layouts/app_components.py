@@ -254,9 +254,11 @@ def results_div(result_type, result_category):
     ]
 
     return html.Div(
-        className='cell',
+        id='{}-div'.format(id_name),
+        className='cell medium-6',
+        style={'display': 'none'},
         children=html.Div(
-            className='grid-y',
+            className='grid-x',
             children=results_div_content
         )
     )

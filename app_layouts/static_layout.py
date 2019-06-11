@@ -346,41 +346,11 @@ layout = html.Div(
                                 className='cell medium-6',
                                 children=''
                             ),
-                            html.Div(
-                                id='{}-div'.format(RES_AGGREGATE),
-                                className='cell medium-6',
-                                children=html.Div(
-                                    className='grid-x',
-                                    children=[
-                                        results_div(RES_AGGREGATE, res_category)
-                                        for res_category in [POP_RES, INVEST_RES, GHG_RES]
-                                    ]
-                                ),
-                            ),
-                            html.Div(
-                                id='{}-div'.format(RES_COUNTRY),
-                                className='cell medium-6',
-                                children=html.Div(
-                                    className='grid-x',
-                                    children=[
-                                        results_div(RES_COUNTRY, res_category)
-                                        for res_category in [POP_RES, INVEST_RES, GHG_RES]
-                                    ]
-                                ),
-                                style={'display': 'none'}
-                            ),
-                            html.Div(
-                                id='{}-div'.format(RES_COMPARE),
-                                className='cell medium-6',
-                                children=html.Div(
-                                    className='grid-x',
-                                    children=[
-                                        results_div(RES_COMPARE, res_category)
-                                        for res_category in [POP_RES, INVEST_RES, GHG_RES]
-                                    ]
-                                ),
-                                style={'display': 'none'},
-                            ),
+                        ]
+                        + [
+                             results_div(res_type, res_category)
+                             for res_category in [POP_RES, INVEST_RES, GHG_RES]
+                             for res_type in [RES_COUNTRY, RES_AGGREGATE, RES_COMPARE]
                         ]
                     ),
                 ),
@@ -986,6 +956,49 @@ def compare_title_callback(app_handle, result_category):
     return update_title
 
 
+def toggle_results_div_callback(app_handle, result_type, result_category):
+
+    id_name = '{}-{}'.format(result_type, result_category)
+
+    if result_category == POP_RES:
+        description = 'electrification mix {} - scenario {}'
+    elif result_category == INVEST_RES:
+        description = 'initial investments needed {} (in billion USD) - scenario {}'
+    else:
+        description = 'cumulated GHG emissions (2017-2030) {} (in million tons CO2) - scenario {}'
+
+    @app_handle.callback(
+        Output('{}-div'.format(id_name), 'style'),
+        [Input('view-store', 'data')],
+        [State('{}-div'.format(id_name), 'style')]
+    )
+    def toggle_results_div_display(cur_view, cur_style):
+        """Change the display of results-div between the app's views."""
+        if cur_style is None:
+            cur_style = {'display': 'none'}
+
+        if result_type == RES_COUNTRY:
+            if cur_view['app_view'] == VIEW_COUNTRY:
+                cur_style.update({'display': 'flex'})
+            elif cur_view['app_view'] in [VIEW_GENERAL, VIEW_COMPARE]:
+                cur_style.update({'display': 'none'})
+        elif result_type == RES_AGGREGATE:
+            if cur_view['app_view'] == VIEW_GENERAL:
+                cur_style.update({'display': 'flex'})
+            elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
+                cur_style.update({'display': 'none'})
+        elif result_type == RES_COMPARE:
+            if cur_view['app_view'] == VIEW_COMPARE:
+                cur_style.update({'display': 'flex'})
+            elif cur_view['app_view'] in [VIEW_GENERAL, VIEW_COUNTRY]:
+                cur_style.update({'display': 'none'})
+
+        return cur_style
+
+    toggle_results_div_display.__name__ = 'toggle_%s_display' % id_name
+    return toggle_results_div_display
+
+
 def callbacks(app_handle):
 
     for res_cat in [POP_RES, INVEST_RES, GHG_RES]:
@@ -1004,6 +1017,9 @@ def callbacks(app_handle):
         for res_type in [RES_COUNTRY, RES_AGGREGATE]:
             country_aggregate_title_callback(app_handle, res_type, res_cat)
         compare_title_callback(app_handle, res_cat)
+
+        for res_type in [RES_COUNTRY, RES_AGGREGATE, RES_COMPARE]:
+            toggle_results_div_callback(app_handle, res_type, res_cat)
 
     for res_type in [RES_COUNTRY, RES_AGGREGATE, RES_COMPARE]:
         ghg_dropdown_options_callback(app_handle, res_type)
@@ -1149,54 +1165,6 @@ def callbacks(app_handle):
         if cur_view['app_view'] == VIEW_GENERAL:
             cur_style.update({'display': 'flex'})
         elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
-            cur_style.update({'display': 'none'})
-        return cur_style
-
-    @app_handle.callback(
-        Output('{}-div'.format(RES_COUNTRY), 'style'),
-        [Input('view-store', 'data')],
-        [State('{}-div'.format(RES_COUNTRY), 'style')]
-    )
-    def toggle_country_div_display(cur_view, cur_style):
-        """Change the display of results-div between the app's views."""
-        if cur_style is None:
-            cur_style = {'display': 'none'}
-
-        if cur_view['app_view'] == VIEW_COUNTRY:
-            cur_style.update({'display': 'flex'})
-        elif cur_view['app_view'] in [VIEW_GENERAL, VIEW_COMPARE]:
-            cur_style.update({'display': 'none'})
-        return cur_style
-
-    @app_handle.callback(
-        Output('{}-div'.format(RES_AGGREGATE), 'style'),
-        [Input('view-store', 'data')],
-        [State('{}-div'.format(RES_AGGREGATE), 'style')]
-    )
-    def toggle_aggregate_div_display(cur_view, cur_style):
-        """Change the display of aggregate-div between the app's views."""
-        if cur_style is None:
-            cur_style = {'display': 'flex'}
-
-        if cur_view['app_view'] == VIEW_GENERAL:
-            cur_style.update({'display': 'flex'})
-        elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
-            cur_style.update({'display': 'none'})
-        return cur_style
-
-    @app_handle.callback(
-        Output('{}-div'.format(RES_COMPARE), 'style'),
-        [Input('view-store', 'data')],
-        [State('{}-div'.format(RES_COMPARE), 'style')]
-    )
-    def toggle_compare_div_display(cur_view, cur_style):
-        """Change the display of compare-input-div between the app's views."""
-        if cur_style is None:
-            cur_style = {'display': 'none'}
-
-        if cur_view['app_view'] == VIEW_COMPARE:
-            cur_style.update({'display': 'flex'})
-        elif cur_view['app_view'] in [VIEW_GENERAL, VIEW_COUNTRY]:
             cur_style.update({'display': 'none'})
         return cur_style
 
