@@ -254,7 +254,7 @@ def results_div(result_type, result_category):
     ]
 
     return html.Div(
-        className='cell',
+        className='cell results_style',
         children=html.Div(
             className='grid-y',
             children=results_div_content

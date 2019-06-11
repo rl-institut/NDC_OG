@@ -1147,10 +1147,10 @@ def callbacks(app_handle):
     def toggle_map_div_display(cur_view, cur_style):
         """Change the display of map between the app's views."""
         if cur_style is None:
-            cur_style = {'display': 'flex'}
+            cur_style = {'display': 'block'}
 
         if cur_view['app_view'] == VIEW_GENERAL:
-            cur_style.update({'display': 'flex'})
+            cur_style.update({'display': 'block'})
         elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
             cur_style.update({'display': 'none'})
         return cur_style
@@ -1166,7 +1166,7 @@ def callbacks(app_handle):
             cur_style = {'display': 'none'}
 
         if cur_view['app_view'] == VIEW_COUNTRY:
-            cur_style.update({'display': 'flex'})
+            cur_style.update({'display': 'block'})
         elif cur_view['app_view'] in [VIEW_GENERAL, VIEW_COMPARE]:
             cur_style.update({'display': 'none'})
         return cur_style
@@ -1179,10 +1179,10 @@ def callbacks(app_handle):
     def toggle_aggregate_div_display(cur_view, cur_style):
         """Change the display of aggregate-div between the app's views."""
         if cur_style is None:
-            cur_style = {'display': 'flex'}
+            cur_style = {'display': 'block'}
 
         if cur_view['app_view'] == VIEW_GENERAL:
-            cur_style.update({'display': 'flex'})
+            cur_style.update({'display': 'block'})
         elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
             cur_style.update({'display': 'none'})
         return cur_style
@@ -1198,7 +1198,7 @@ def callbacks(app_handle):
             cur_style = {'display': 'none'}
 
         if cur_view['app_view'] == VIEW_COMPARE:
-            cur_style.update({'display': 'flex'})
+            cur_style.update({'display': 'block'})
         elif cur_view['app_view'] in [VIEW_GENERAL, VIEW_COUNTRY]:
             cur_style.update({'display': 'none'})
         return cur_style
@@ -1216,7 +1216,7 @@ def callbacks(app_handle):
         if cur_view['app_view'] == VIEW_GENERAL:
             cur_style.update({'display': 'none'})
         elif cur_view['app_view'] == VIEW_COUNTRY:
-            cur_style.update({'display': 'flex'})
+            cur_style.update({'display': 'block'})
         elif cur_view['app_view'] == VIEW_COMPARE:
             cur_style.update({'display': 'none'})
         return cur_style
@@ -1236,7 +1236,7 @@ def callbacks(app_handle):
         if cur_view['app_view'] == VIEW_GENERAL:
             cur_style.update({'display': 'none'})
         elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
-            cur_style.update({'display': 'flex'})
+            cur_style.update({'display': 'block'})
         return cur_style
 
     @app_handle.callback(
