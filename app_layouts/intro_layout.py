@@ -69,16 +69,6 @@ layout = html.Div(
                     className="grid-x grid-padding-x align-center",
                     children=[
                         html.Div(
-                            id='intro-disclaimer-div',
-                            className='cell medium-8 large-6',
-                            children=[
-                                html.P(
-                                    'The presented scenarios and figures are meant to support informed policy \
-                                    and planning decisions, but do not represent official planning.'
-                                )
-                            ]
-                        ),
-                        html.Div(
                             className='cell intro-link-div',
                             children=[
                                 dcc.Link(
@@ -97,6 +87,16 @@ layout = html.Div(
                                     className='btn btn--hollow',
                                     children='Advanced',
                                     href='/{}/{}'.format(URL_BASEPATH, flex_layout.URL_PATHNAME)
+                                )
+                            ]
+                        ),
+                        html.Div(
+                            id='intro-disclaimer-div',
+                            className='cell medium-8 large-6',
+                            children=[
+                                html.P(
+                                    'The presented scenarios and figures are meant to support informed policy \
+                                    and planning decisions, but do not represent official planning.'
                                 )
                             ]
                         )

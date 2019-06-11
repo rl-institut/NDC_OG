@@ -3,22 +3,21 @@ body {
 }
 
 #intro-description-content,
-#intro-about-content,
-#intro-disclaimer-div {
+#intro-about-content {
     padding: .75rem 1.5rem 1.5rem;
 }
 
 #intro-disclaimer-wrap {
     background-color: #EFEFEF;
-    padding-top: 2rem;
+    padding-top: 3rem;
     padding-bottom: 2rem;
 }
 
 
 #intro-disclaimer-div {
     text-align: center;
-    font-size: 1.25rem;
-    padding-bottom: 1rem;
+    font-size: .875rem;
+    padding-top: 1rem;
     background-color: #EFEFEF;
 }
 
