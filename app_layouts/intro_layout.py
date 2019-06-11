@@ -45,12 +45,12 @@ layout = html.Div(
 
                                         html.Div(
                                             id='intro-description-content',
-                                            className='cell medium-8 framed',
+                                            className='cell medium-8',
                                             children=description_content,
                                         ),
                                         html.Div(
                                             id='intro-about-content',
-                                            className='cell medium-4 framed',
+                                            className='cell medium-4',
                                             children=about_content
                                         ),
                                     ]
