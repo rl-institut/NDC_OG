@@ -18,7 +18,7 @@ app.layout = html.Div(
             children=[
                 html.Div(
                     id='header-content',
-                    className='grid-x',
+                    className='grid-x grid-padding-x',
                     children=[
                         html.H1(
                             className='cell medium-3',
