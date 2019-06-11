@@ -262,30 +262,6 @@ def results_div(result_type, result_category):
     )
 
 
-def scenario_div(init_scenario):
-    """Return controls for choice of scenario and electrification options."""
-
-    divs = [
-        html.Div(
-            id='scenario-label',
-            className='app__input__label',
-            children='Explore a scenario:'
-        ),
-        html.Div(
-            id='scenario-input-div',
-            children=dcc.Dropdown(
-                id='scenario-input',
-                options=[
-                    {'label': v, 'value': k}
-                    for k, v in SCENARIOS_DICT.items()
-                ],
-                value=init_scenario,
-            )
-        )
-    ]
-    return divs
-
-
 def controls_div():
     """Return controls for scenario dependent variables."""
 

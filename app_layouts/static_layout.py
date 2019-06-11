@@ -29,7 +29,6 @@ from data.data_preparation import (
 )
 
 from .app_components import (
-    scenario_div,
     results_div,
     TABLES_COLUMNS_WIDTH,
     TABLES_LABEL_STYLING,
@@ -212,10 +211,6 @@ layout = html.Div(
             storage_type='session',
             data={'app_view': VIEW_GENERAL}
         ),
-        # html.Div(
-        #     id='app-div',
-        #     className='app',
-        #     children=[
         html.Div(
             id='main-content',
             className='grid-y',
@@ -231,11 +226,7 @@ layout = html.Div(
                                 id='left-header-div',
                                 className='cell medium-6',
                                 children=[
-                                    html.Div(
-                                        id='scenario-div',
-                                        className='app__options',
-                                        children=scenario_div(BAU_SCENARIO)
-                                    ),
+
                                     html.Div(
                                         id='general-info-div',
                                         className='app__info',
@@ -247,6 +238,29 @@ layout = html.Div(
                                 id='right-header-div',
                                 className='cell medium-6',
                                 children=[
+                                    html.Div(
+                                        id='scenario-div',
+                                        className='grid-x',
+                                        children=[
+                                            html.Div(
+                                                id='scenario-label',
+                                                className='cell medium-3',
+                                                children='Explore a scenario:'
+                                            ),
+                                            html.Div(
+                                                id='scenario-input-div',
+                                                className='cell medium-9',
+                                                children=dcc.Dropdown(
+                                                    id='scenario-input',
+                                                    options=[
+                                                        {'label': v, 'value': k}
+                                                        for k, v in SCENARIOS_DICT.items()
+                                                    ],
+                                                    value=BAU_SCENARIO,
+                                                )
+                                            )
+                                        ]
+                                    ),
                                     html.Div(
                                         id='header-div',
                                         className='grid-x',
