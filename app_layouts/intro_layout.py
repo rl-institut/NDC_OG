@@ -24,29 +24,19 @@ about_content = [
 
 layout = html.Div(
     id='intro-div',
-    className='grid-y',
+    className='grid-x',
     children=[
         html.Div(
             id='intro-main-div',
-            className='cell medium-8',
+            className='cell',
             children=[
                 html.Div(
                     id='intro-main-content',
                     className='grid-x',
                     children=[
                         html.Div(
-                            id='intro-placeholder-div',
-                            className='cell medium-5 framed',
-                            children=[
-                                html.Img(
-                                    src='data:image/png;base64,{}'.format(PLACEHOLDER.decode()),
-                                    style={'height': '80%'}
-                                )
-                            ]
-                        ),
-                        html.Div(
                             id='intro-text-div',
-                            className='cell medium-7',
+                            className='cell',
                             children=[
                                 html.Div(
                                     id='intro-text-content',
@@ -73,7 +63,7 @@ layout = html.Div(
         ),
         html.Div(
             id='intro-disclaimer-div',
-            className='cell medium-2 framed',
+            className='cell medium-8 large-6',
             children=[
                 html.P(
                     'The presented scenarios and figures are meant to support informed policy \
