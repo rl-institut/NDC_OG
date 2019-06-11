@@ -10,49 +10,12 @@
     justify-content: space-evenly;
 }
 
-.app__container {
-    width: 48%;
-    margin-left: 30px;
-    margin-right: 30px;
-    //border: solid 1px red;
-    border-radius:4px;
-    display: flex;
-    flex-direction: column;
-}
 
 .app__options {
     border: solid 2px #E8F0F9;
     display: flex;
     flex-direction: row;
     align-items: center
-}
-
-#header-div {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.app__logo{
-    height: 10vh;
-    margin: 0px 10px 0px 10px;
-}
-
-.app__results {
-    border: solid 2px #E8F0F9;
-    display: flex;
-    flex-direction: row;
-    align-items: center
-}
-
-.app__barplot {
-    //border: solid 2px green;
-}
-
-#app-title {
-    text-align: center;
-    font-size: 1.8em;
 }
 
 .app__info {
@@ -79,15 +42,15 @@
     align-items: left
 }
 
-.app__input {
-    //border: solid 2px #E8F0F9;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space evenly;
-    padding-top: 2px;
-    padding-bottom: 2px;
-}
+//.app__input {
+//    //border: solid 2px #E8F0F9;
+//    display: flex;
+//    flex-direction: row;
+//    align-items: center;
+//    justify-content: space evenly;
+//    padding-top: 2px;
+//    padding-bottom: 2px;
+//}
 
 .app__input_num {
     height: 25px;
@@ -105,15 +68,10 @@
     width: 130px;
 }
 
-.app__input__dropdown {
-    width: 140px;
-}
 
 .app__input__radio {
     display: flex;
     flex-direction: row;
-
-
 }
 
 .app__input__radio input {
@@ -141,91 +99,16 @@ width: 20%;
 }
 
 
-#compare-div{
-    margin-top: 147px;
-}
-
 
 .app__input__tier {
 top: 10%
 width: 100%;
 }
 
-.app__input__dropdown__region {
-    width: 100%;
-}
-
-#country-input-div{
-    width: 60%;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    margin-top 10px;
-}
-
-.app__input__dropdown__country {
-    width: 350px;
-    margin-top: 5px;
-    margin-bottom: 5px;
-}
-
-.app__input__influence{
-    height: 60%;
-    width: 60%;
-}
-
-.app__input__impact{
-    height: 60%;
-    width: 80%;
-}
-
 .app__input__label{
     padding-left: 15px;
     padding-right: 15px;
     width: auto;
-}
-#region-input-div {
-    width: 20%;
-}
-
-
-
-
-
-#scenario-input {
-    //width: 15%;
-}
-
-#electrification-input {
-    width: 25%;
-}
-
-#factor-div {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-#results-info-div{
-    border: solid 1px #E8F0F9;
-    display: flex;
-    flex-direction: column;
-}
-
-#results-info-header-div{
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-
-}
-
-#results-info-div p{
-    border: solid 1px black;
-    border-radius: 5px;
-    margin: 5px;
-    padding: 5px;
-
 }
 
 .country__results h4,
@@ -264,11 +147,4 @@ width: 100%;
     align-content: center;
     //border: solid 1px #E8F0F9;
     padding: 10px
-}
-
-.app__display__tier {
-    align-content: center;
-    //border: solid 1px black;
-    //border-radius: 5px;
-    padding: 5px
 }
