@@ -55,18 +55,12 @@ app.layout = html.Div(
             className='cell footer',
             children=[
                 html.Div(
-                    id='footer-content',
-                    className='grid-x grid-margin-x',
-                    children=[
-                        html.Div(
-                            className='footer-logo',
-                            children=html.Img(
-                                src='data:image/png;base64,{}'.format(logo.decode()),
-                            )
-                        )
-                        for logo in LOGOS
-                    ]
+                    className='footer-logo',
+                    children=html.Img(
+                        src='data:image/png;base64,{}'.format(logo.decode()),
+                    )
                 )
+                for logo in LOGOS
             ]
         ),
     ]

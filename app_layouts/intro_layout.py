@@ -24,11 +24,11 @@ about_content = [
 
 layout = html.Div(
     id='intro-div',
-    className='grid-y',
+    className='grid-x',
     children=[
         html.Div(
             id='intro-main-div',
-            className='cell medium-8',
+            className='cell',
             children=[
                 html.Div(
                     id='intro-main-content',
@@ -73,7 +73,7 @@ layout = html.Div(
         ),
         html.Div(
             id='intro-disclaimer-div',
-            className='cell medium-2 framed',
+            className='cell medium-8 large-6',
             children=[
                 html.P(
                     'The presented scenarios and figures are meant to support informed policy \
