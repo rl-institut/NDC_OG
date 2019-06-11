@@ -7,6 +7,7 @@ from dash.dependencies import Output, Input, State
 import dash_daq as daq
 import dash_table
 import plotly.graph_objs as go
+from app_main import APP_BG_COLOR
 from data.data_preparation import (
     SCENARIOS,
     SCENARIOS_DICT,
@@ -26,7 +27,6 @@ from data.data_preparation import (
 RES_COUNTRY = 'country'
 RES_AGGREGATE = 'aggregate'
 RES_COMPARE = 'compare'
-
 
 
 TABLES_COLUMNS_WIDTH = [
@@ -172,8 +172,8 @@ def results_div(result_type, result_category):
             layout=go.Layout(
                 title='',
                 barmode=barplot_mode,
-                paper_bgcolor='#EBF2FA',
-                plot_bgcolor='#EBF2FA',
+                paper_bgcolor=APP_BG_COLOR,
+                plot_bgcolor=APP_BG_COLOR,
                 showlegend=False,
                 height=400,
                 autosize=True,

@@ -2,14 +2,19 @@
   display: none;
 }
 
-.app {
+.app_style {
     font-family: inherit;
-    padding: 5px;
-    height: calc(100vh - 65px);
-    display: flex;
-    justify-content: space-evenly;
+    //padding: 5px;
+    //height: calc(100vh - 65px);
+    //display: flex;
+    //justify-content: space-evenly;
+    background: #FFFFFF;
 }
 
+.header_style {
+    background: #333333;
+    color: #FFFFFF;
+}
 
 .app__options {
     border: solid 2px #E8F0F9;

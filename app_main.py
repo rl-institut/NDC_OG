@@ -12,6 +12,7 @@ LOGOS = [
 
 PLACEHOLDER = base64.b64encode(open('assets/placeholder.png', 'rb').read())
 
+APP_BG_COLOR = '#FFFFFF'
 
 # Initializes dash app
 app = dash.Dash(__name__)

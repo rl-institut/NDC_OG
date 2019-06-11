@@ -9,12 +9,12 @@ server = app.server
 
 # the app and its options are defined in the main_app module
 app.layout = html.Div(
-    className='grid-y medium-grid-frame',
+    className='grid-y medium-grid-frame app_style',
     children=[
         dcc.Location(id='url', refresh=False),
         html.Div(
             id='header-div',
-            className='cell shrink header',
+            className='cell shrink header header_style',
             children=[
                 html.Div(
                     id='header-content',

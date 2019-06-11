@@ -8,7 +8,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 import plotly.graph_objs as go
 
-from app_main import app
+from app_main import app, APP_BG_COLOR
 
 from data.data_preparation import (
     MIN_TIER_LEVEL,
@@ -160,7 +160,7 @@ map_data = [
 
 layout = go.Layout(
     # plot_bgcolor='red',
-    paper_bgcolor='#EBF2FA',
+    paper_bgcolor=APP_BG_COLOR,
     autosize=True,
     margin=dict(
         l=2,
@@ -169,7 +169,7 @@ layout = go.Layout(
         t=2
     ),
     geo=go.layout.Geo(
-        bgcolor='#EBF2FA',
+        bgcolor=APP_BG_COLOR,
         scope='world',
         showlakes=True,
         showcountries=True,
@@ -177,7 +177,7 @@ layout = go.Layout(
         projection=dict(type='orthographic'),
     ),
     geo2=go.layout.Geo(
-        bgcolor='#EBF2FA',
+        bgcolor=APP_BG_COLOR,
         scope='world',
         showlakes=True,
         showcountries=True,
