@@ -9,7 +9,7 @@ server = app.server
 
 # the app and its options are defined in the main_app module
 app.layout = html.Div(
-    className='grid-x grid-padding-x app_style',
+    className='grid-x app_style',
     children=[
         dcc.Location(id='url', refresh=False),
         html.Div(
