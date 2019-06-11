@@ -17,6 +17,7 @@ from data.data_preparation import (
     SCENARIOS_DESCRIPTIONS,
     SCENARIOS_DICT,
     ELECTRIFICATION_OPTIONS,
+    ELECTRIFICATION_DICT,
     NO_ACCESS,
     POP_GET,
     EXO_RESULTS,
@@ -96,6 +97,7 @@ REGIONS_NDC = dict(WD=['LA', 'SSA', 'DA'], SA='LA', AF='SSA', AS='DA')
 
 VIEW_GENERAL = 'general'
 VIEW_COUNTRY = 'specific'
+VIEW_AGGREGATE = 'aggregate'
 VIEW_COMPARE = 'compare'
 
 # A dict with the data for each scenario in json format
@@ -256,7 +258,7 @@ layout = html.Div(
                                         ]
                                     ),
                                     html.Div(
-                                        # id='header-div',
+                                        id='region-input-div',
                                         className='grid-x',
                                         children=[
                                             html.Div(
@@ -265,7 +267,7 @@ layout = html.Div(
                                                 children='Region:'
                                             ),
                                             html.Div(
-                                                id='region-input-div',
+                                                id='region-input-wrapper',
                                                 className='cell medium-9',
                                                 title='region selection description',
                                                 children=dcc.Dropdown(
@@ -308,12 +310,12 @@ layout = html.Div(
                                         children=[
                                             html.Div(
                                                 id='country-comp-label',
-                                                className='cell medium-3',
-                                                children='compare with:'
+                                                className='cell medium-4',
+                                                children='Compare with:'
                                             ),
                                             html.Div(
                                                 id='compare-input-wrapper',
-                                                className='cell medium-9',
+                                                className='cell medium-8',
                                                 children=dcc.Dropdown(
                                                     id='compare-input',
                                                     options=COMPARE_OPTIONS,
@@ -325,11 +327,31 @@ layout = html.Div(
                                         ],
 
                                     ),
-dcc.Graph(
-                                                id='map',
-                                                className='cell',
-                                                figure=fig_map,
-                                            ),
+                                ]
+                            ),
+                            html.Div(
+                                id='left-map-div',
+                                className='cell medium-6',
+                                children=dcc.Graph(
+                                    id='map',
+                                    figure=fig_map,
+                                )
+                            ),
+                            html.Div(
+                                id='right-map-div',
+                                className='cell medium-6',
+                                children=[
+                                    html.P(
+                                        'Hover over the map to view country specific information.'
+                                    ),
+                                    html.P(
+                                        'For more information, click on the country or select it '
+                                        'in the menu above.'
+                                    ),
+                                    html.P(
+                                        'To view the results aggregated over a region, please '
+                                        'select a region in the menu above'
+                                    )
                                 ]
                             ),
                         ]
@@ -337,23 +359,21 @@ dcc.Graph(
                 ),
                 html.Div(
                     id='main-results-div',
-                    # className='cell',
                     children=html.Div(
                         id='main-results-contents',
-                        className='grid-x',
+                        className='grid-x align-center',
                         children=[
 
-                            html.Div(
-                                id='results-info-div',
-                                className='cell medium-6',
-                                children=''
-                            ),
-                        ]
-                        + [
-                             results_div(res_type, res_category)
-                             for res_category in [POP_RES, INVEST_RES, GHG_RES]
-                             for res_type in [RES_COUNTRY, RES_AGGREGATE, RES_COMPARE]
-                        ]
+                                     html.Div(
+                                         id='results-info-div',
+                                         className='cell medium-10 large-8 country_info_style',
+                                         children=''
+                                     ),
+                                 ] + [
+                                     results_div(res_type, res_category)
+                                     for res_category in [POP_RES, INVEST_RES, GHG_RES]
+                                     for res_type in [RES_COUNTRY, RES_AGGREGATE, RES_COMPARE]
+                                 ]
                     ),
                 ),
             ]
@@ -972,17 +992,17 @@ def toggle_results_div_callback(app_handle, result_type, result_category):
         if result_type == RES_COUNTRY:
             if cur_view['app_view'] == VIEW_COUNTRY:
                 cur_style.update({'display': 'block'})
-            elif cur_view['app_view'] in [VIEW_GENERAL, VIEW_COMPARE]:
+            elif cur_view['app_view'] in [VIEW_GENERAL,VIEW_AGGREGATE, VIEW_COMPARE]:
                 cur_style.update({'display': 'none'})
         elif result_type == RES_AGGREGATE:
-            if cur_view['app_view'] == VIEW_GENERAL:
+            if cur_view['app_view'] == VIEW_AGGREGATE:
                 cur_style.update({'display': 'block'})
             elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
                 cur_style.update({'display': 'none'})
         elif result_type == RES_COMPARE:
             if cur_view['app_view'] == VIEW_COMPARE:
                 cur_style.update({'display': 'block'})
-            elif cur_view['app_view'] in [VIEW_GENERAL, VIEW_COUNTRY]:
+            elif cur_view['app_view'] in [VIEW_GENERAL, VIEW_COUNTRY, VIEW_AGGREGATE]:
                 cur_style.update({'display': 'none'})
 
         return cur_style
@@ -1127,11 +1147,17 @@ def callbacks(app_handle):
                     else:
                         cur_view.update({'app_view': VIEW_COUNTRY})
                 else:
-                    cur_view.update({'app_view': VIEW_GENERAL})
+                    if region_id is None:
+                        cur_view.update({'app_view': VIEW_GENERAL})
+                    else:
+                        cur_view.update({'app_view': VIEW_AGGREGATE})
 
             # trigger comes from selecting a region
             elif 'region-input' in prop_id:
-                cur_view.update({'app_view': VIEW_GENERAL})
+                if region_id is None:
+                    cur_view.update({'app_view': VIEW_GENERAL})
+                else:
+                    cur_view.update({'app_view': VIEW_AGGREGATE})
 
             # trigger comes from selection a comparison region/country
             elif 'compare-input' in prop_id:
@@ -1141,20 +1167,39 @@ def callbacks(app_handle):
                     if country_sel:
                         cur_view.update({'app_view': VIEW_COUNTRY})
                     else:
-                        cur_view.update({'app_view': VIEW_GENERAL})
+                        if region_id is None:
+                            cur_view.update({'app_view': VIEW_GENERAL})
+                        else:
+                            cur_view.update({'app_view': VIEW_AGGREGATE})
         return cur_view
 
     @app_handle.callback(
-        Output('map', 'style'),
+        Output('left-map-div', 'style'),
         [Input('view-store', 'data')],
-        [State('map', 'style')]
+        [State('left-map-div', 'style')]
     )
     def toggle_map_div_display(cur_view, cur_style):
         """Change the display of map between the app's views."""
         if cur_style is None:
             cur_style = {'display': 'block'}
 
-        if cur_view['app_view'] == VIEW_GENERAL:
+        if cur_view['app_view'] in [VIEW_GENERAL, VIEW_AGGREGATE]:
+            cur_style.update({'display': 'block'})
+        elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
+            cur_style.update({'display': 'none'})
+        return cur_style
+
+    @app_handle.callback(
+        Output('right-map-div', 'style'),
+        [Input('view-store', 'data')],
+        [State('right-map-div', 'style')]
+    )
+    def toggle_map_div_display(cur_view, cur_style):
+        """Change the display of map between the app's views."""
+        if cur_style is None:
+            cur_style = {'display': 'block'}
+
+        if cur_view['app_view'] in [VIEW_GENERAL, VIEW_AGGREGATE]:
             cur_style.update({'display': 'block'})
         elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
             cur_style.update({'display': 'none'})
@@ -1170,11 +1215,9 @@ def callbacks(app_handle):
         if cur_style is None:
             cur_style = {'display': 'none'}
 
-        if cur_view['app_view'] == VIEW_GENERAL:
-            cur_style.update({'display': 'none'})
-        elif cur_view['app_view'] == VIEW_COUNTRY:
+        if cur_view['app_view'] == VIEW_COUNTRY:
             cur_style.update({'display': 'block'})
-        elif cur_view['app_view'] == VIEW_COMPARE:
+        elif cur_view['app_view'] in [VIEW_GENERAL, VIEW_AGGREGATE, VIEW_COMPARE]:
             cur_style.update({'display': 'none'})
         return cur_style
 
@@ -1190,7 +1233,7 @@ def callbacks(app_handle):
         if cur_style is None:
             cur_style = {'display': 'none'}
 
-        if cur_view['app_view'] == VIEW_GENERAL:
+        if cur_view['app_view'] in [VIEW_GENERAL, VIEW_AGGREGATE]:
             cur_style.update({'display': 'none'})
         elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
             cur_style.update({'display': 'block'})
