@@ -7,6 +7,7 @@ from dash.dependencies import Output, Input, State
 import dash_daq as daq
 import dash_table
 import plotly.graph_objs as go
+from app_main import APP_BG_COLOR
 from data.data_preparation import (
     SCENARIOS,
     SCENARIOS_DICT,
@@ -26,21 +27,6 @@ from data.data_preparation import (
 RES_COUNTRY = 'country'
 RES_AGGREGATE = 'aggregate'
 RES_COMPARE = 'compare'
-
-
-
-TABLES_COLUMNS_WIDTH = [
-    {'if': {'column_id': 'labels'},
-     'width': '30%'},
-    {'if': {'column_id': GRID},
-     'width': '15%'},
-    {'if': {'column_id': MG},
-     'width': '15%'},
-    {'if': {'column_id': SHS},
-     'width': '15%'},
-    {'if': {'column_id': 'total'},
-     'width': '250px'},
-]
 
 TABLES_LABEL_STYLING = [
     {
@@ -152,7 +138,6 @@ def results_div(result_type, result_category):
     # add a barplot above the tables with the results
     barplot = dcc.Graph(
         id='{}-barplot'.format(id_name),
-        className='cell',
         figure=go.Figure(
             data=[
                 go.Bar(
@@ -172,10 +157,9 @@ def results_div(result_type, result_category):
             layout=go.Layout(
                 title='',
                 barmode=barplot_mode,
-                paper_bgcolor='#EBF2FA',
-                plot_bgcolor='#EBF2FA',
-                showlegend=False,
-                height=400,
+                paper_bgcolor=APP_BG_COLOR,
+                plot_bgcolor=APP_BG_COLOR,
+                showlegend=True,
                 autosize=True,
                 margin=dict(
                     l=55,
@@ -217,27 +201,35 @@ def results_div(result_type, result_category):
         print('error in the result type in results_div()')
 
     results_div_content = [
-        html.H4(
+        html.H3(
             id='{}-results-title'.format(id_name),
-            className='cell',
             children='Results'
         ),
         dcc.Dropdown(
             id='{}-barplot-yaxis-input'.format(id_name),
-            className='cell',
             options=[{'label': r, 'value': r} for r in table_rows],
             value=table_rows[0],
         ),
         barplot,
         dash_table.DataTable(
             id='{}-results-table'.format(id_name),
-            css='cell',
             columns=columns_ids,
             style_data_conditional=TABLES_LABEL_STYLING,
-            style_cell_conditional=TABLES_COLUMNS_WIDTH,
             style_header=TABLES_HEADER_STYLING,
+            css=[{
+                'selector': '.dash-cell div.dash-cell-value',
+                'rule': 'display: inline; white-space: inherit; '
+                        'overflow: inherit; text-overflow: inherit;'
+            }],
+            style_table={
+              'marginTop': '10px'
+            },
             style_cell={
-                'fontFamily': "Roboto"
+                'fontFamily': 'roboto',
+                'whiteSpace': 'no-wrap',
+                'overflow': 'hidden',
+                'textOverflow': 'ellipsis',
+                'maxWidth': 0,
             },
             tooltips={
                 'labels': [
@@ -254,36 +246,11 @@ def results_div(result_type, result_category):
     ]
 
     return html.Div(
-        className='cell',
-        children=html.Div(
-            className='grid-y',
-            children=results_div_content
-        )
+        id='{}-div'.format(id_name),
+        className='cell medium-10 large-8 results_style',
+        style={'display': 'none'},
+        children=results_div_content
     )
-
-
-def scenario_div(init_scenario):
-    """Return controls for choice of scenario and electrification options."""
-
-    divs = [
-        html.Div(
-            id='scenario-label',
-            className='app__input__label',
-            children='Explore a scenario:'
-        ),
-        html.Div(
-            id='scenario-input-div',
-            children=dcc.Dropdown(
-                id='scenario-input',
-                options=[
-                    {'label': v, 'value': k}
-                    for k, v in SCENARIOS_DICT.items()
-                ],
-                value=init_scenario,
-            )
-        )
-    ]
-    return divs
 
 
 def controls_div():
