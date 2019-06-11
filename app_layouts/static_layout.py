@@ -214,7 +214,7 @@ layout = html.Div(
                     className='cell medium-3',
                     children=html.Div(
                         id='meain-head-content',
-                        className='grid-x',
+                        className='grid-x grid-padding-x',
                         children=[
                             html.Div(
                                 id='left-header-div',

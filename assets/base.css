@@ -60,6 +60,10 @@ body {
     padding-left: 2rem;
 }
 
+#right-header-div {
+    padding-top: 1.5rem;
+}
+
 ._dash-undo-redo {
   display: none;
 }
