@@ -277,7 +277,7 @@ layout = html.Div(
                                                         {'label': v, 'value': k}
                                                         for k, v in REGIONS_GPD.items()
                                                     ],
-                                                    value=WORLD_ID
+                                                    value=None
                                                 )
                                             ),
                                         ]
@@ -825,12 +825,13 @@ def compare_table_styling_callback(app_handle, result_category):
         [
             State('{}-results-table'.format(id_name), 'style_data_conditional'),
             State('compare-input', 'value'),
+            State('country-input', 'value'),
             State('scenario-input', 'value')
         ]
     )
-    def update_table_styling(cur_data, cur_style, comp_sel, scenario):
+    def update_table_styling(cur_data, cur_style, comp_sel, country_iso, scenario):
 
-        if comp_sel is not None:
+        if comp_sel is not None and country_iso is not None:
             data = pd.DataFrame.from_dict(cur_data)
 
             col_ref = TABLE_COLUMNS_ID[1:]
@@ -1060,6 +1061,9 @@ def callbacks(app_handle):
         # load the data of the scenario
         df = pd.read_json(cur_data[scenario])
 
+        if region_id is None:
+            region_id = WORLD_ID
+
         centroid = pd.read_json(cur_data[region_id])
 
         if region_id != WORLD_ID:
@@ -1125,12 +1129,13 @@ def callbacks(app_handle):
         Output('view-store', 'data'),
         [
             Input('scenario-input', 'value'),
+            Input('region-input', 'value'),
             Input('country-input', 'value'),
             Input('compare-input', 'value')
         ],
         [State('view-store', 'data')]
     )
-    def update_view(scenario, country_sel, comp_sel, cur_view):
+    def update_view(scenario, region_id, country_sel, comp_sel, cur_view):
         """Toggle between the different views of the app.
 
         There are currently two views:
@@ -1345,6 +1350,9 @@ def callbacks(app_handle):
         if scenario is not None:
             # load the data of the scenario
             df = pd.read_json(cur_data[scenario])
+
+            if region_id is None:
+                region_id = WORLD_ID
 
             if region_id != WORLD_ID:
                 # narrow to the region if the scope is not on the whole world
