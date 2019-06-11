@@ -658,6 +658,7 @@ def compare_barplot_callback(app_handle, result_category):
             else:
                 # compare the reference country to a country
                 df_comp = df_comp.loc[df_comp.country_iso == comp_sel]
+                comp_name = df_comp.country.values[0]
 
             ref_results_data = prepare_results_tables(df_ref, scenario, result_category)
             comp_results_data = prepare_results_tables(df_comp, scenario, result_category)
@@ -668,30 +669,35 @@ def compare_barplot_callback(app_handle, result_category):
 
             fs = 12
 
-            fig['data'] = [
-                go.Bar(
-                    x=x,
-                    y=y_ref,
-                    text=[country_sel for i in range(4)],
-                    insidetextfont={'size': fs},
-                    textposition='auto',
-                    marker=dict(
-                        color=list(BARPLOT_ELECTRIFICATION_COLORS.values())
+            fig.update(
+                {'data': [
+                    go.Bar(
+                        x=x,
+                        y=y_ref,
+                        text=[country_sel for i in range(4)],
+                        name=df_ref.country.values[0],
+                        insidetextfont={'size': fs},
+                        textposition='auto',
+                        marker=dict(
+                            color=list(BARPLOT_ELECTRIFICATION_COLORS.values())
+                        ),
+                        hoverinfo='y+text'
                     ),
-                    hoverinfo='y+text'
-                ),
-                go.Bar(
-                    x=x,
-                    y=y_comp,
-                    text=[comp_name for i in range(4)],
-                    insidetextfont={'size': fs},
-                    textposition='auto',
-                    marker=dict(
-                        color=['#a062d0', '#9ac1e5', '#f3a672', '#cccccc']
+                    go.Bar(
+                        x=x,
+                        y=y_comp,
+                        text=[comp_name for i in range(4)],
+                        name=comp_name,
+                        insidetextfont={'size': fs},
+                        textposition='auto',
+                        marker=dict(
+                            color=['#a062d0', '#9ac1e5', '#f3a672', '#cccccc']
+                        ),
+                        hoverinfo='y+text'
                     ),
-                    hoverinfo='y+text'
-                ),
-            ]
+                ]
+                }
+            )
         return fig
 
     update_barplot.__name__ = 'update_%s_barplot' % id_name
