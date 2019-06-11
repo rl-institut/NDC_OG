@@ -195,12 +195,6 @@ fig_map = go.Figure(data=map_data, layout=layout)
 layout = html.Div(
     id='main-div',
     children=[
-        html.Div(
-            id='app-title',
-            className='title',
-            children='Visualization of New Electrification Scenarios by 2030 and the'
-                     ' Relevance of Off-Grid Components in the NDCs'
-        ),
         dcc.Store(
             id='data-store',
             storage_type='session',
