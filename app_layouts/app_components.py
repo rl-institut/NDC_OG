@@ -201,7 +201,7 @@ def results_div(result_type, result_category):
         print('error in the result type in results_div()')
 
     results_div_content = [
-        html.H4(
+        html.H3(
             id='{}-results-title'.format(id_name),
             children='Results'
         ),
@@ -221,6 +221,9 @@ def results_div(result_type, result_category):
                 'rule': 'display: inline; white-space: inherit; '
                         'overflow: inherit; text-overflow: inherit;'
             }],
+            style_table={
+              'marginTop': '10px'
+            },
             style_cell={
                 'fontFamily': 'roboto',
                 'whiteSpace': 'no-wrap',
@@ -244,7 +247,7 @@ def results_div(result_type, result_category):
 
     return html.Div(
         id='{}-div'.format(id_name),
-        className='cell medium-6 results_style',
+        className='cell medium-10 large-8 results_style',
         style={'display': 'none'},
         children=results_div_content
     )
