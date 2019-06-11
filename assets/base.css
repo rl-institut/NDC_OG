@@ -23,7 +23,7 @@
     align-items: center
 }
 
-.app__info {
+.scenario__info {
     border-radius: 5px;
     padding: 20px;
     margin-left: 20px;
@@ -31,7 +31,8 @@
     margin-top: 20px;
     margin-bottom: 20px;
     text-align: justify;
-    background: #002E4F;
+    background: #333333;
+    //background: #002E4F;
     color: #FFFFFF;
 }
 

@@ -229,7 +229,7 @@ layout = html.Div(
 
                                     html.Div(
                                         id='general-info-div',
-                                        className='app__info',
+                                        className='scenario__info',
                                         children=''
                                     ),
                                 ]
