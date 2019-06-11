@@ -27,38 +27,26 @@ layout = html.Div(
     className='grid-x',
     children=[
         html.Div(
-            id='intro-main-div',
+            id='intro-text-div',
             className='cell',
             children=[
                 html.Div(
-                    id='intro-main-content',
+                    id='intro-text-content',
                     className='grid-x',
                     children=[
-                        html.Div(
-                            id='intro-text-div',
-                            className='cell',
-                            children=[
-                                html.Div(
-                                    id='intro-text-content',
-                                    className='grid-x',
-                                    children=[
 
-                                        html.Div(
-                                            id='intro-description-content',
-                                            className='cell',
-                                            children=description_content,
-                                        ),
-                                        html.Div(
-                                            id='intro-about-content',
-                                            className='cell',
-                                            children=about_content
-                                        ),
-                                    ]
-                                )
-                            ]
+                        html.Div(
+                            id='intro-description-content',
+                            className='cell',
+                            children=description_content,
                         ),
-                    ],
-                ),
+                        html.Div(
+                            id='intro-about-content',
+                            className='cell',
+                            children=about_content
+                        ),
+                    ]
+                )
             ]
         ),
         html.Div(
