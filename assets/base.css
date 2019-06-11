@@ -2,6 +2,21 @@ body {
     background-color: #FFF;
 }
 
+#header-content {
+    text-align: center;
+}
+
+#header-content h1 {
+    font-size: 1.25rem;
+    margin-bottom: 0;
+}
+
+#header-content h2 {
+    font-size: 2rem;
+    font-weight: 300;
+    margin-top: .5rem;
+}
+
 #intro-description-content,
 #intro-about-content {
     padding: .75rem 1.5rem 1.5rem;

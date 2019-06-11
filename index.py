@@ -18,14 +18,14 @@ app.layout = html.Div(
             children=[
                 html.Div(
                     id='header-content',
-                    className='grid-x grid-padding-x',
+                    className='grid-x grid-padding-x align-center',
                     children=[
                         html.H1(
-                            className='cell medium-3',
+                            className='cell',
                             children='NDC Off-Grid alternatives'
                         ),
                         html.H2(
-                            className='cell medium-9 large-6',
+                            className='cell large-6',
                             children='Visualization of New Electrification Scenarios by 2030 and the'
                                      ' Relevance of Off-Grid Components in the NDCs',
                         ),
