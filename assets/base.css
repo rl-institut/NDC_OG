@@ -29,11 +29,15 @@ body {
     width: 12rem;
 }
 
+#footer-div {
+    padding-top: 2rem;
+    text-align: center;
+}
+
 .footer-logo {
     display: inline-block;
-    width: 8rem;
-    padding-left: 1rem;
-    padding-bottom: 1rem;
+    width: 9rem;
+    padding-left: 2rem;
 }
 
 ._dash-undo-redo {
