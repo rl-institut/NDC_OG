@@ -28,20 +28,6 @@ RES_COUNTRY = 'country'
 RES_AGGREGATE = 'aggregate'
 RES_COMPARE = 'compare'
 
-
-TABLES_COLUMNS_WIDTH = [
-    {'if': {'column_id': 'labels'},
-     'width': '30%'},
-    {'if': {'column_id': GRID},
-     'width': '15%'},
-    {'if': {'column_id': MG},
-     'width': '15%'},
-    {'if': {'column_id': SHS},
-     'width': '15%'},
-    {'if': {'column_id': 'total'},
-     'width': '250px'},
-]
-
 TABLES_LABEL_STYLING = [
     {
         'if': {'column_id': 'labels'},
@@ -152,7 +138,6 @@ def results_div(result_type, result_category):
     # add a barplot above the tables with the results
     barplot = dcc.Graph(
         id='{}-barplot'.format(id_name),
-        className='cell',
         figure=go.Figure(
             data=[
                 go.Bar(
@@ -219,25 +204,30 @@ def results_div(result_type, result_category):
     results_div_content = [
         html.H4(
             id='{}-results-title'.format(id_name),
-            className='cell',
             children='Results'
         ),
         dcc.Dropdown(
             id='{}-barplot-yaxis-input'.format(id_name),
-            className='cell',
             options=[{'label': r, 'value': r} for r in table_rows],
             value=table_rows[0],
         ),
         barplot,
         dash_table.DataTable(
             id='{}-results-table'.format(id_name),
-            css='cell',
             columns=columns_ids,
             style_data_conditional=TABLES_LABEL_STYLING,
-            style_cell_conditional=TABLES_COLUMNS_WIDTH,
             style_header=TABLES_HEADER_STYLING,
+            css=[{
+                'selector': '.dash-cell div.dash-cell-value',
+                'rule': 'display: inline; white-space: inherit; '
+                        'overflow: inherit; text-overflow: inherit;'
+            }],
             style_cell={
-                'fontFamily': "Roboto"
+                'fontFamily': 'roboto',
+                'whiteSpace': 'no-wrap',
+                'overflow': 'hidden',
+                'textOverflow': 'ellipsis',
+                'maxWidth': 0,
             },
             tooltips={
                 'labels': [
@@ -255,12 +245,10 @@ def results_div(result_type, result_category):
 
     return html.Div(
         id='{}-div'.format(id_name),
-        className='cell medium-6',
+        className='cell medium-6 results_style',
         style={'display': 'none'},
-        children=html.Div(
-            className='grid-x',
-            children=results_div_content
-        )
+        children=results_div_content
+    )
     )
 
 

@@ -30,7 +30,6 @@ from data.data_preparation import (
 
 from .app_components import (
     results_div,
-    TABLES_COLUMNS_WIDTH,
     TABLES_LABEL_STYLING,
     BARPLOT_ELECTRIFICATION_COLORS,
     RES_AGGREGATE,
@@ -207,11 +206,11 @@ layout = html.Div(
         ),
         html.Div(
             id='main-content',
-            className='grid-y',
+            className='grid-x',
             children=[
                 html.Div(
                     id='main-head-div',
-                    className='cell medium-3',
+                    className='cell',
                     children=html.Div(
                         id='meain-head-content',
                         className='grid-x',
@@ -256,7 +255,7 @@ layout = html.Div(
                                         ]
                                     ),
                                     html.Div(
-                                        id='header-div',
+                                        # id='header-div',
                                         className='grid-x',
                                         children=[
                                             html.Div(
@@ -331,7 +330,7 @@ layout = html.Div(
                 ),
                 html.Div(
                     id='main-results-div',
-                    className='cell medium-9',
+                    # className='cell',
                     children=html.Div(
                         id='main-results-contents',
                         className='grid-x',
@@ -840,10 +839,7 @@ def compare_table_styling_callback(app_handle, result_category):
                                 'fontWeight': font
                             }
                         )
-                    cur_style = \
-                        TABLES_COLUMNS_WIDTH \
-                        + TABLES_LABEL_STYLING \
-                        + compare_results_styling
+                    cur_style = TABLES_LABEL_STYLING + compare_results_styling
         return cur_style
 
     update_table_styling.__name__ = 'update_%s_table_styling' % id_name
@@ -960,13 +956,6 @@ def toggle_results_div_callback(app_handle, result_type, result_category):
 
     id_name = '{}-{}'.format(result_type, result_category)
 
-    if result_category == POP_RES:
-        description = 'electrification mix {} - scenario {}'
-    elif result_category == INVEST_RES:
-        description = 'initial investments needed {} (in billion USD) - scenario {}'
-    else:
-        description = 'cumulated GHG emissions (2017-2030) {} (in million tons CO2) - scenario {}'
-
     @app_handle.callback(
         Output('{}-div'.format(id_name), 'style'),
         [Input('view-store', 'data')],
@@ -979,17 +968,17 @@ def toggle_results_div_callback(app_handle, result_type, result_category):
 
         if result_type == RES_COUNTRY:
             if cur_view['app_view'] == VIEW_COUNTRY:
-                cur_style.update({'display': 'flex'})
+                cur_style.update({'display': 'block'})
             elif cur_view['app_view'] in [VIEW_GENERAL, VIEW_COMPARE]:
                 cur_style.update({'display': 'none'})
         elif result_type == RES_AGGREGATE:
             if cur_view['app_view'] == VIEW_GENERAL:
-                cur_style.update({'display': 'flex'})
+                cur_style.update({'display': 'block'})
             elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
                 cur_style.update({'display': 'none'})
         elif result_type == RES_COMPARE:
             if cur_view['app_view'] == VIEW_COMPARE:
-                cur_style.update({'display': 'flex'})
+                cur_style.update({'display': 'block'})
             elif cur_view['app_view'] in [VIEW_GENERAL, VIEW_COUNTRY]:
                 cur_style.update({'display': 'none'})
 
