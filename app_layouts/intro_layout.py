@@ -35,18 +35,8 @@ layout = html.Div(
                     className='grid-x',
                     children=[
                         html.Div(
-                            id='intro-placeholder-div',
-                            className='cell medium-5 framed',
-                            children=[
-                                html.Img(
-                                    src='data:image/png;base64,{}'.format(PLACEHOLDER.decode()),
-                                    style={'height': '80%'}
-                                )
-                            ]
-                        ),
-                        html.Div(
                             id='intro-text-div',
-                            className='cell medium-7',
+                            className='cell',
                             children=[
                                 html.Div(
                                     id='intro-text-content',
