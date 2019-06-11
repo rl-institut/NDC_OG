@@ -29,16 +29,6 @@ app.layout = html.Div(
                             children='Visualization of New Electrification Scenarios by 2030 and the'
                                      ' Relevance of Off-Grid Components in the NDCs',
                         ),
-                        html.Div(
-                            className='cell medium-3 text-justify',
-                            children=[
-                                html.Img(
-                                    src='data:image/png;base64,{}'.format(logo.decode()),
-                                    style={'width': '90px'},
-                                )
-                                for logo in LOGOS
-                            ],
-                        )
                     ]
                 ),
             ]

@@ -81,13 +81,13 @@ layout = html.Div(
                     children=[
                         dcc.Link(
                             id='intro-link-static',
-                            className='cell medium-4 framed',
+                            className='cell btn btn-cta',
                             children='Start tour',
                             href='/{}/{}'.format(URL_BASEPATH, static_layout.URL_PATHNAME)
                         ),
                         dcc.Link(
                             id='intro-link-flex',
-                            className='cell medium-4 framed',
+                            className='cell btn btn--hollow',
                             children='Advanced',
                             href='/{}/{}'.format(URL_BASEPATH, flex_layout.URL_PATHNAME)
                         ),
