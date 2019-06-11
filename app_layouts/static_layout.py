@@ -649,55 +649,54 @@ def compare_barplot_callback(app_handle, result_category):
         else:
             idx_y = TABLE_ROWS[result_category].index(y_sel)
 
-        if country_sel is not None:
-            if comp_sel is not None:
-                comp_name = comp_sel
-                df = pd.read_json(cur_data[scenario])
-                df_comp = df.copy()
-                df_ref = df.loc[df.country_iso == country_sel]
-                if comp_sel in REGIONS_NDC:
-                    # compare the reference country to a region
-                    if comp_sel != WORLD_ID:
-                        df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[comp_sel]]
-                    df_comp = df_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
-                    comp_name = REGIONS_GPD[comp_sel]
-                else:
-                    # compare the reference country to a country
-                    df_comp = df_comp.loc[df_comp.country_iso == comp_sel]
+        if country_sel is not None and comp_sel is not None:
+            comp_name = comp_sel
+            df = pd.read_json(cur_data[scenario])
+            df_comp = df.copy()
+            df_ref = df.loc[df.country_iso == country_sel]
+            if comp_sel in REGIONS_NDC:
+                # compare the reference country to a region
+                if comp_sel != WORLD_ID:
+                    df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[comp_sel]]
+                df_comp = df_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
+                comp_name = REGIONS_GPD[comp_sel]
+            else:
+                # compare the reference country to a country
+                df_comp = df_comp.loc[df_comp.country_iso == comp_sel]
 
-                ref_results_data = prepare_results_tables(df_ref, scenario, result_category)
-                comp_results_data = prepare_results_tables(df_comp, scenario, result_category)
+            ref_results_data = prepare_results_tables(df_ref, scenario, result_category)
+            comp_results_data = prepare_results_tables(df_comp, scenario, result_category)
 
-                x = ELECTRIFICATION_OPTIONS + [NO_ACCESS]
-                y_ref = ref_results_data[idx_y]
-                y_comp = comp_results_data[idx_y]
+            x = ELECTRIFICATION_OPTIONS + [NO_ACCESS]
+            y_ref = ref_results_data[idx_y]
+            y_comp = comp_results_data[idx_y]
 
-                fs = 12
+            fs = 12
 
-                fig['data'] = [
-                    go.Bar(
-                        x=x,
-                        y=y_ref,
-                        text=[country_sel for i in range(4)],
-                        insidetextfont={'size': fs},
-                        textposition='auto',
-                        marker=dict(
-                            color=list(BARPLOT_ELECTRIFICATION_COLORS.values())
-                        ),
-                        hoverinfo='y+text'
+            fig['data'] = [
+                go.Bar(
+                    x=x,
+                    y=y_ref,
+                    text=[country_sel for i in range(4)],
+                    insidetextfont={'size': fs},
+                    textposition='auto',
+                    marker=dict(
+                        color=list(BARPLOT_ELECTRIFICATION_COLORS.values())
                     ),
-                    go.Bar(
-                        x=x,
-                        y=y_comp,
-                        text=[comp_name for i in range(4)],
-                        insidetextfont={'size': fs},
-                        textposition='auto',
-                        marker=dict(
-                            color=['#a062d0', '#9ac1e5', '#f3a672', '#cccccc']
-                        ),
-                        hoverinfo='y+text'
+                    hoverinfo='y+text'
+                ),
+                go.Bar(
+                    x=x,
+                    y=y_comp,
+                    text=[comp_name for i in range(4)],
+                    insidetextfont={'size': fs},
+                    textposition='auto',
+                    marker=dict(
+                        color=['#a062d0', '#9ac1e5', '#f3a672', '#cccccc']
                     ),
-                ]
+                    hoverinfo='y+text'
+                ),
+            ]
         return fig
 
     update_barplot.__name__ = 'update_%s_barplot' % id_name
@@ -888,11 +887,13 @@ def ghg_dropdown_options_callback(app_handle, result_type):
         [Input('scenario-input', 'value')]
     )
     def update_barplot(scenario):
-        table_rows = TABLE_ROWS[GHG_ER_RES]
-        if scenario == BAU_SCENARIO:
-            table_rows = TABLE_ROWS[GHG_RES]
-
-        return [{'label': r, 'value': r} for r in table_rows]
+        answer = []
+        if scenario in SCENARIOS:
+            table_rows = TABLE_ROWS[GHG_ER_RES]
+            if scenario == BAU_SCENARIO:
+                table_rows = TABLE_ROWS[GHG_RES]
+            answer = [{'label': r, 'value': r} for r in table_rows]
+        return answer
 
     update_barplot.__name__ = 'update_%s_dropdown' % id_name
     return update_barplot
