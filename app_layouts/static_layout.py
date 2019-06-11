@@ -125,18 +125,18 @@ def country_hover_text(input_df):
     df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0)
 
     return df.country + '<br>' \
-        + '2017 <br>' \
-        + '  Pop : ' + df.pop_2017.div(1e6).map('{:.1f} MIO'.format) + '<br>' \
-        + '  Household electric consumption: ' + '<br>' \
-        + '  ' + df.hh_yearly_electricity_consumption.map('{:.1f} kWh/year'.format) + '<br>' \
-        + '  Grid share: ' + df.pop_grid_share.map('{:.1%}'.format) + '<br>' \
-        + '  MG: ' + df.pop_mg_share.map('{:.1%}'.format) + '<br>' \
-        + '  SHS: ' + df.pop_shs_share.map('{:.1%}'.format) + '<br>' \
-        + '2030 <br>' \
-        + '  Est Pop (2030): ' + df.pop_2030.div(1e6).map('{:.1f} MIO'.format) + '<br>' \
-        + '  Grid share: ' + df.pop_get_grid_2030.map('{:.1%}'.format) + '<br>' \
-        + '  MG: ' + df.pop_get_mg_2030.map('{:.1%}'.format) + '<br>' \
-        + '  SHS: ' + df.pop_get_shs_2030.map('{:.1%}'.format) + '<br>'
+           + '2017 <br>' \
+           + '  Pop : ' + df.pop_2017.div(1e6).map('{:.1f} MIO'.format) + '<br>' \
+           + '  Household electric consumption: ' + '<br>' \
+           + '  ' + df.hh_yearly_electricity_consumption.map('{:.1f} kWh/year'.format) + '<br>' \
+           + '  Grid share: ' + df.pop_grid_share.map('{:.1%}'.format) + '<br>' \
+           + '  MG: ' + df.pop_mg_share.map('{:.1%}'.format) + '<br>' \
+           + '  SHS: ' + df.pop_shs_share.map('{:.1%}'.format) + '<br>' \
+           + '2030 <br>' \
+           + '  Est Pop (2030): ' + df.pop_2030.div(1e6).map('{:.1f} MIO'.format) + '<br>' \
+           + '  Grid share: ' + df.pop_get_grid_2030.map('{:.1%}'.format) + '<br>' \
+           + '  MG: ' + df.pop_get_mg_2030.map('{:.1%}'.format) + '<br>' \
+           + '  SHS: ' + df.pop_get_shs_2030.map('{:.1%}'.format) + '<br>'
 
 
 # # Initial input data for the map
@@ -160,7 +160,8 @@ map_data = [
 layout = go.Layout(
     # plot_bgcolor='red',
     paper_bgcolor=APP_BG_COLOR,
-    autosize=True,
+    #autosize=True,
+    height=500,
     margin=dict(
         l=2,
         r=2,
@@ -213,7 +214,7 @@ layout = html.Div(
                     className='cell',
                     children=html.Div(
                         id='meain-head-content',
-                        className='grid-x',
+                        className='grid-x grid-padding-x',
                         children=[
                             html.Div(
                                 id='left-header-div',
@@ -319,10 +320,16 @@ layout = html.Div(
                                                     value=None,
                                                     multi=False
                                                 )
-                                            )
+                                            ),
+
                                         ],
 
-                                    )
+                                    ),
+dcc.Graph(
+                                                id='map',
+                                                className='cell',
+                                                figure=fig_map,
+                                            ),
                                 ]
                             ),
                         ]
@@ -335,11 +342,7 @@ layout = html.Div(
                         id='main-results-contents',
                         className='grid-x',
                         children=[
-                            dcc.Graph(
-                                id='map',
-                                className='cell medium-6',
-                                figure=fig_map,
-                            ),
+
                             html.Div(
                                 id='results-info-div',
                                 className='cell medium-6',
@@ -724,7 +727,7 @@ def compare_table_callback(app_handle, result_category):
                 results_data = np.hstack([results_data, comp_results_data])
 
                 comp_ids = ['comp_{}'.format(c) for c in ELECTRIFICATION_OPTIONS] \
-                    + ['comp_No Electricity']
+                           + ['comp_No Electricity']
                 # prepare a DataFrame
                 results_data = pd.DataFrame(
                     data=results_data,
@@ -1149,10 +1152,10 @@ def callbacks(app_handle):
     def toggle_map_div_display(cur_view, cur_style):
         """Change the display of map between the app's views."""
         if cur_style is None:
-            cur_style = {'display': 'flex'}
+            cur_style = {'display': 'block'}
 
         if cur_view['app_view'] == VIEW_GENERAL:
-            cur_style.update({'display': 'flex'})
+            cur_style.update({'display': 'block'})
         elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
             cur_style.update({'display': 'none'})
         return cur_style
@@ -1170,7 +1173,7 @@ def callbacks(app_handle):
         if cur_view['app_view'] == VIEW_GENERAL:
             cur_style.update({'display': 'none'})
         elif cur_view['app_view'] == VIEW_COUNTRY:
-            cur_style.update({'display': 'flex'})
+            cur_style.update({'display': 'block'})
         elif cur_view['app_view'] == VIEW_COMPARE:
             cur_style.update({'display': 'none'})
         return cur_style
@@ -1190,7 +1193,7 @@ def callbacks(app_handle):
         if cur_view['app_view'] == VIEW_GENERAL:
             cur_style.update({'display': 'none'})
         elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
-            cur_style.update({'display': 'flex'})
+            cur_style.update({'display': 'block'})
         return cur_style
 
     @app_handle.callback(

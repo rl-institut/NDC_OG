@@ -249,7 +249,6 @@ def results_div(result_type, result_category):
         style={'display': 'none'},
         children=results_div_content
     )
-    )
 
 
 def controls_div():
