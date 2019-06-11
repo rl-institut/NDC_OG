@@ -64,6 +64,10 @@ body {
     padding-top: 1.5rem;
 }
 
+#map {
+    padding-top: 3rem;
+}
+
 ._dash-undo-redo {
   display: none;
 }
