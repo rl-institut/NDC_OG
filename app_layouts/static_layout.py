@@ -31,6 +31,8 @@ from data.data_preparation import (
 from .app_components import (
     scenario_div,
     results_div,
+    round_digits,
+    format_percent,
     TABLES_COLUMNS_WIDTH,
     TABLES_LABEL_STYLING,
     BARPLOT_ELECTRIFICATION_COLORS,
@@ -55,40 +57,7 @@ def extract_centroids(reg):
     return centroids.loc[centroids.region.isin(reg)].copy()
 
 
-def round_digits(val):
-    """Formats number by rounding to 2 digits and add commas for thousands"""
-    if np.isnan(val):
-        answer = ''
-    else:
-        if len('{:d}'.format(int(val))) > 3:
-            # add commas and no dot if in the thousands range
-            answer = '{:,}'.format(val)
-            answer = answer.split('.')[0]
-        else:
-            # add dot if not in the thousands range
-            answer = '{:.2f}'.format(val)
 
-        if np.round(val, 2) == 0:
-            # always round the zero
-            answer = '0'
-    return answer
-
-
-def format_percent(val):
-    """Format number for percents."""
-    if isinstance(val, str):
-        answer = val
-    else:
-        if np.isnan(val):
-            answer = ''
-        else:
-            if np.round(val, 2) == 0:
-                answer = '0%'
-            elif val >= 100:
-                answer = '100%'
-            else:
-                answer = '{:.2f}%'.format(val)
-    return answer
 
 
 WORLD_ID = 'WD'
