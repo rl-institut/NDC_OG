@@ -8,15 +8,26 @@ body {
     padding: .75rem 1.5rem 1.5rem;
 }
 
-#intro-about-content {
+#intro-disclaimer-wrap {
     background-color: #EFEFEF;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
 }
+
 
 #intro-disclaimer-div {
     text-align: center;
     font-size: 1.25rem;
-    padding-top: 4rem;
     padding-bottom: 1rem;
+    background-color: #EFEFEF;
+}
+
+.intro-link-div {
+    text-align: center;
+}
+
+.intro-link-div a {
+    width: 12rem;
 }
 
 .footer-logo {
