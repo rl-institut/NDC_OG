@@ -22,19 +22,28 @@ from data.data_preparation import (
     GHG,
     GHG_CAP,
     EXO_RESULTS,
-    BASIC_ROWS,
-    BASIC_COLUMNS_ID,
-    GHG_COLUMNS_ID,
-    COMPARE_COLUMNS_ID,
     _find_tier_level,
     compute_ndc_results_from_raw_data,
     prepare_results_tables,
+    POP_RES,
+    INVEST_RES,
+    GHG_RES,
+    GHG_ER_RES
 )
 
 from .app_components import (
     results_div,
-    scenario_div,
     controls_div,
+    TABLES_LABEL_STYLING,
+    BARPLOT_ELECTRIFICATION_COLORS,
+    RES_AGGREGATE,
+    RES_COMPARE,
+    RES_COUNTRY,
+    TABLE_ROWS,
+    TABLE_COLUMNS_ID,
+    COMPARE_COLUMNS_ID,
+    TABLE_COLUMNS_LABEL,
+    BARPLOT_YAXIS_OPT
 )
 
 URL_PATHNAME = 'flex'
@@ -152,9 +161,9 @@ layout = go.Layout(
 
 fig_map = go.Figure(data=data, layout=layout)
 
+
 layout = html.Div(
     id='flex-main-div',
-    className='grid-y',
     children=[
         dcc.Store(
             id='flex-data-store',
@@ -172,156 +181,110 @@ layout = html.Div(
             data={'app_view': VIEW_COUNTRY_SELECT}
         ),
         html.Div(
-            id='flex-general-info-div',
-            className='app__info',
-            children=html.Div('Information here about what the user can do with '
-                              'RISE')
-        ),
-        html.Div(
-            id='flex-app-div',
-            className='cell grid-x',
-            # children=html.Div(
-            #     id='flex-app-content',
-            #     className='grid-x',
-                children=[
-                    # dcc.Store(
-                    #     id='flex-data-store',
-                    #     storage_type='session',
-                    #     data=SCENARIOS_DATA.copy()
-                    # ),
-
-                    html.Div(
-                        id='flex-left-panel-div',
-                        className='cell medium-6',
+            id='flex-main-content',
+            className='grid-x',
+            children=[
+                html.Div(
+                    id='flex-main-head-div',
+                    className='cell',
+                    children=html.Div(
+                        id='flex-main-head-content',
+                        className='grid-x grid-padding-x',
                         children=[
                             html.Div(
-                                id='flex-header-div',
-                                className='app__header',
-                                style={'display': 'none'},
+                                id='flex-left-header-div',
+                                className='cell medium-6',
                                 children=[
                                     html.Div(
-                                        id='flex-region-label',
-                                        className='app__input__label',
-                                        children='Region:'
-                                    ),
-                                    html.Div(
-                                        id='flex-region-input-div',
-                                        className='app__dropdown',
-                                        title='region selection description',
-                                        children=dcc.Dropdown(
-                                            id='flex-region-input',
-                                            className='app__input__dropdown__map',
-                                            options=[
-                                                {'label': v, 'value': k}
-                                                for k, v in REGIONS_GPD.items()
-                                            ],
-                                            value=WORLD_ID
-                                        )
-                                    ),
-                                    # html.Div(
-                                    #     id='flex-logo-div',
-                                    #     children=[
-                                    #         html.Img(
-                                    #             src='data:image/png;base64,{}'.format(logo.decode()),
-                                    #             className='app__logo',
-                                    #             # style={'height': '5vh', 'padding': '10px'}
-                                    #         )
-                                    #         for logo in logos
-                                    #     ]
-                                    # ),
-                                ]
-                            ),
-
-                            html.Div(
-                                id='flex-country-input-div',
-                                title='country selection description',
-                                className='grid-x',
-                                children=[
-                                    html.Div(
-                                        id='flex-country-label',
-                                        className='cell medium-3 app__input__label',
-                                        children='Country:'
-                                    ),
-                                    dcc.Dropdown(
-                                        id='flex-country-input',
-                                        className='cell medium-6 app__input__dropdown__country',
-                                        options=list_countries_dropdown,
-                                        value=None,
-                                        multi=False
-                                    ),
-
-
-
-                                    # html.Div(
-                                    #     id='flex-compare-input-div',
-                                    #     children=[
-                                    #         html.Div(
-                                    #             id='flex-country-comp-label',
-                                    #             className='app__input__label',
-                                    #             children='compare with:'
-                                    #         ),
-                                    #         dcc.Dropdown(
-                                    #             id='flex-compare-input',
-                                    #             className='app__input__dropdown__country',
-                                    #             options=COMPARE_OPTIONS,
-                                    #             value=None,
-                                    #             multi=False
-                                    #         )
-                                    #     ],
-                                    #     style={'display': 'none'}
-                                    # )
-
-                                ]
-                            ),
-                            html.Div(
-                                id='flex-options-div',
-                                style={'display': 'none'},
-                                className='grid-y',
-                                children=[
-                                    html.Div(
-                                        id='flex-country-info-div',
-                                        className='cell medium-7 results__info',
+                                        id='flex-general-info-div',
+                                        className='scenario__info',
                                         children=''
                                     ),
-                                    html.Div(
-                                        id='flex-controls-div',
-                                        className='cell medium-3 app__controls',
-                                        children=controls_div(),
-                                    ),
+                                ]
+                            ),
+                            html.Div(
+                                id='flex-right-header-div',
+                                className='cell medium-6',
+                                children=[
                                     html.Div(
                                         id='flex-scenario-div',
-                                        className='cell medium-2 app__options',
-                                        children=scenario_div(BAU_SCENARIO, scenario_type='flex-')
+                                        className='grid-x',
+                                        children=[
+                                            html.Div(
+                                                id='flex-scenario-label',
+                                                className='cell medium-3',
+                                                children='Explore a scenario:'
+                                            ),
+                                            html.Div(
+                                                id='flex-scenario-input-div',
+                                                className='cell medium-9',
+                                                children=dcc.Dropdown(
+                                                    id='flex-scenario-input',
+                                                    options=[
+                                                        {'label': v, 'value': k}
+                                                        for k, v in SCENARIOS_DICT.items()
+                                                    ],
+                                                    value=BAU_SCENARIO,
+                                                )
+                                            )
+                                        ]
                                     ),
-
+                                    html.Div(
+                                        id='flex-country-input-div',
+                                        title='country selection description',
+                                        className='grid-x',
+                                        children=[
+                                            html.Div(
+                                                id='flex-country-label',
+                                                className='cell medium-3',
+                                                children='Country:'
+                                            ),
+                                            html.Div(
+                                                id='flex-country-input-wrapper',
+                                                className='cell medium-9',
+                                                children=dcc.Dropdown(
+                                                    id='flex-country-input',
+                                                    options=[],
+                                                    value=None,
+                                                    multi=False
+                                                )
+                                            ),
+                                        ]
+                                    ),
                                 ]
-                            )
-                            # html.Div(
-                            #     id='flex-compare-div',
-                            #     children=compare_div(),
-                            #     style={'display': 'none'}
-                            # ),
+                            ),
                         ]
-
                     ),
-                    html.Div(
-                        id='flex-results-div',
-                        className='cell medium-6 grid-y',
-                        children=results_div(scenario_type='flex-'),
-                        # children=[
-                        #     html.Div(
-                        #         id='flex-results-div',
-                        #         className='grid-y',
-                        #
-                        #         style={'display': 'none'}
-                        #     ),
-                        # ]
+                ),
+                html.Div(
+                    id='flex-controls-div',
+                    className='cell',
+                    children=html.Div(
+                        className='grid-x',
+                        children=controls_div(),
+                    )
+                ),
+                html.Div(
+                    id='flex-main-results-div',
+                    className='cell',
+                    children=html.Div(
+                        id='flex-main-results-contents',
+                        className='grid-x align-center',
+                        children=[
+
+                                     html.Div(
+                                         id='flex-results-info-div',
+                                         className='cell medium-10 large-8 country_info_style',
+                                         children=''
+                                     ),
+                                 ] + [
+                                     results_div(RES_COMPARE, res_category)
+                                     for res_category in [POP_RES, INVEST_RES, GHG_RES]
+                                 ]
                     ),
-
-                ],
-            # )
-        )
-
+                ),
+            ]
+        ),
     ]
 )
 
@@ -349,9 +312,9 @@ def callbacks(app_handle):
                 # compute the percentage of population with electricity access
                 basic_results_data = prepare_results_tables(df)
 
-                y = basic_results_data[BASIC_ROWS.index(y_sel)]
+                y = basic_results_data[TABLE_ROWS.index(y_sel)]
 
-                if sce == BAU_SCENARIO and y_sel == BASIC_ROWS[0]:
+                if sce == BAU_SCENARIO and y_sel == TABLE_ROWS[0]:
                     y = np.append(y, 0)
                     y[3] = 100 - y.sum()
                     ELECTRIFICATION_OPTIONS.copy()
@@ -401,12 +364,12 @@ def callbacks(app_handle):
                 basic_results_data = prepare_results_tables(df)
                 comp_results_data = prepare_results_tables(df_comp)
 
-                y = basic_results_data[BASIC_ROWS.index(y_sel)]
-                y_comp = comp_results_data[BASIC_ROWS.index(y_sel)]
+                y = basic_results_data[TABLE_ROWS.index(y_sel)]
+                y_comp = comp_results_data[TABLE_ROWS.index(y_sel)]
 
                 x_vals = ELECTRIFICATION_OPTIONS.copy()
 
-                if scenario == BAU_SCENARIO and y_sel == BASIC_ROWS[0]:
+                if scenario == BAU_SCENARIO and y_sel == TABLE_ROWS[0]:
                     y = np.append(y, 0)
                     y_comp = np.append(y_comp, 0)
                     y[3] = 100 - y.sum()
@@ -600,14 +563,14 @@ def callbacks(app_handle):
                 # sums of the rows
                 basic_results_data['total'] = pd.Series(total)
                 # label of the table rows
-                basic_results_data['labels'] = pd.Series(BASIC_ROWS)
+                basic_results_data['labels'] = pd.Series(TABLE_ROWS)
                 basic_results_data.iloc[1:, 0:4] = basic_results_data.iloc[1:, 0:4].applymap(
                     add_comma
                 )
                 basic_results_data.iloc[0, 0:4] = basic_results_data.iloc[0, 0:4].map(
                     lambda x: '{}%'.format(x)
                 )
-                answer_table = basic_results_data[BASIC_COLUMNS_ID].to_dict('records')
+                answer_table = basic_results_data[TABLE_COLUMNS_ID].to_dict('records')
 
         return answer_table
 
@@ -679,7 +642,7 @@ def callbacks(app_handle):
                 # label of the table rows
                 ghg_results_data['labels'] = pd.Series(ghg_rows)
                 ghg_results_data.iloc[:, 0:4] = ghg_results_data.iloc[:, 0:4].applymap(add_comma)
-                answer_table = ghg_results_data[GHG_COLUMNS_ID].to_dict('records')
+                answer_table = ghg_results_data[BASIC_COLUMNS_ID].to_dict('records')
 
         return answer_table
 
@@ -744,7 +707,7 @@ def callbacks(app_handle):
                 basic_results_data['total'] = pd.Series(comp_total)
                 basic_results_data['comp_total'] = pd.Series(total)
                 # label of the table rows
-                basic_results_data['labels'] = pd.Series(BASIC_ROWS)
+                basic_results_data['labels'] = pd.Series(TABLE_ROWS)
                 basic_results_data.iloc[:, 0:8] = \
                     basic_results_data.iloc[:, 0:8].applymap(
                         add_comma
@@ -1091,7 +1054,7 @@ def callbacks(app_handle):
             answer = '{}'.format(
                 _find_tier_level(
                     df.loc[df.country_iso == country_iso]
-                    .hh_yearly_electricity_consumption.values[0],
+                        .hh_yearly_electricity_consumption.values[0],
                     1
                 )
             )
