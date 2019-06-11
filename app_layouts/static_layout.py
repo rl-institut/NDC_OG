@@ -822,10 +822,11 @@ def compare_table_styling_callback(app_handle, result_category):
         [Input('{}-results-table'.format(id_name), 'data')],
         [
             State('{}-results-table'.format(id_name), 'style_data_conditional'),
-            State('compare-input', 'value')
+            State('compare-input', 'value'),
+            State('scenario-input', 'value')
         ]
     )
-    def update_table_styling(cur_data, cur_style, comp_sel):
+    def update_table_styling(cur_data, cur_style, comp_sel, scenario):
 
         if comp_sel is not None:
             data = pd.DataFrame.from_dict(cur_data)
@@ -842,20 +843,19 @@ def compare_table_styling_callback(app_handle, result_category):
                 for i in range(len(ref.index)):
                     apply_condition = True
                     if ref.iloc[i, j] > comp.iloc[i, j]:
+                        color = COLOR_BETTER
+                        font = 'bold'
                         if result_category == GHG_RES:
-                            color = COLOR_WORSE
-                            font = 'normal'
-                        else:
-                            color = COLOR_BETTER
-                            font = 'bold'
-
+                            if scenario == BAU_SCENARIO or np.mod(i, 2) == 0:
+                                color = COLOR_WORSE
+                                font = 'normal'
                     elif ref.iloc[i, j] < comp.iloc[i, j]:
+                        color = COLOR_WORSE
+                        font = 'normal'
                         if result_category == GHG_RES:
-                            color = COLOR_BETTER
-                            font = 'bold'
-                        else:
-                            color = COLOR_WORSE
-                            font = 'normal'
+                            if scenario == BAU_SCENARIO or np.mod(i, 2) == 0:
+                                color = COLOR_BETTER
+                                font = 'bold'
                     else:
                         apply_condition = False
 
