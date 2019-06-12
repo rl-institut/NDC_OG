@@ -1145,11 +1145,20 @@ def callbacks(app_handle):
             for opt in RISE_INDICES:
                 if opt in flex_data:
                     df.loc[df.country_iso == country_iso, opt] = flex_data[opt]
+            # restrict recalculation to one country to save time
+            df = df.loc[df.country_iso == country_iso]
             # Compute endogenous results for the given scenario
-            df = prepare_scenario_data(df, SE4ALL_SCENARIO, min_tier_mg_level, prepare_endogenous=True)
+            df = prepare_scenario_data(
+                df,
+                SE4ALL_SCENARIO,
+                min_tier_mg_level,
+                prepare_endogenous=True
+            )
             # Compute the exogenous results
             df = extract_results_scenario(df, SE4ALL_SCENARIO, min_tier_mg_level)
             flex_data.update({SE4ALL_FLEX_SCENARIO: df.to_json()})
+            flex_data.update({'country_name': df.country.values[0]})
+
         return flex_data
 
     @app_handle.callback(
