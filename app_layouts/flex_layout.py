@@ -21,11 +21,17 @@ from data.data_preparation import (
     NO_ACCESS,
     RISE_INDICES,
     POP_GET,
+    POP_RES,
+    INVEST_RES,
     GHG,
     GHG_CAP,
+    GHG_RES,
+    GHG_ER_RES,
     EXO_RESULTS,
     _find_tier_level,
     compute_ndc_results_from_raw_data,
+    extract_results_scenario,
+    prepare_scenario_data,
     prepare_results_tables,
     prepare_scenario_data,
     extract_results_scenario,
@@ -38,6 +44,8 @@ from data.data_preparation import (
 from .app_components import (
     results_div,
     controls_div,
+    format_percent,
+    round_digits,
     TABLES_LABEL_STYLING,
     BARPLOT_ELECTRIFICATION_COLORS,
     RES_AGGREGATE,
@@ -288,6 +296,7 @@ layout = html.Div(
     ]
 )
 
+
 def compare_barplot_callback(app_handle, result_category):
     """Generate a callback for input components."""
 
@@ -319,7 +328,6 @@ def compare_barplot_callback(app_handle, result_category):
             # narrow to the country's results
             df_flex = df_flex.loc[df_flex.country_iso == country_iso]
             df_comp = df_comp.loc[df_comp.country_iso == country_iso]
-
 
             flex_results_data = prepare_results_tables(
                 df_flex,
@@ -371,6 +379,72 @@ def compare_barplot_callback(app_handle, result_category):
     return flex_update_barplot
 
 
+def compare_table_callback(app_handle, result_category):
+    """Generate a callback for input components."""
+
+    id_name = 'flex-{}-{}'.format(RES_COMPARE, result_category)
+
+    @app_handle.callback(
+        Output('{}-results-table'.format(id_name), 'data'),
+        [
+            Input('flex-store', 'data'),
+            Input('flex-scenario-input', 'value'),
+        ],
+        [State('flex-country-input', 'value')]
+    )
+    def flex_update_table(cur_data, scenario, country_iso):
+        """Display information and study's results comparison between countries."""
+        answer_table = []
+        # extract the data from the selected scenario if a country was selected
+        if scenario is not None and country_iso is not None:
+
+            df_flex = pd.read_json(cur_data[SE4ALL_FLEX_SCENARIO])
+            df_comp = pd.read_json(cur_data[scenario])
+            # narrow to the country's results
+            df_flex = df_flex.loc[df_flex.country_iso == country_iso]
+            df_comp = df_comp.loc[df_comp.country_iso == country_iso]
+
+            flex_results_data = prepare_results_tables(
+                df_flex,
+                SE4ALL_FLEX_SCENARIO,
+                result_category
+            )
+            comp_results_data = prepare_results_tables(df_comp, scenario, result_category)
+
+            flex_total = np.nansum(flex_results_data, axis=0)
+            comp_total = np.nansum(comp_results_data, axis=0)
+
+            results_data = np.hstack([flex_results_data, comp_results_data])
+
+            comp_ids = ['comp_{}'.format(c) for c in ELECTRIFICATION_OPTIONS] \
+                       + ['comp_{}'.format(NO_ACCESS)]
+            # prepare a DataFrame
+            results_data = pd.DataFrame(
+                data=results_data,
+                columns=ELECTRIFICATION_OPTIONS + [NO_ACCESS] + comp_ids
+            )
+            # sums of the rows
+            results_data['total'] = pd.Series(flex_total)
+            results_data['comp_total'] = pd.Series(comp_total)
+            # Format the digits
+            if result_category == POP_RES:
+                results_data.iloc[1:, 0:] = results_data.iloc[1:, 0:].applymap(
+                    round_digits
+                )
+                results_data.iloc[0, 0:] = results_data.iloc[0, 0:].map(
+                    format_percent
+                )
+            else:
+                results_data = results_data.applymap(round_digits)
+            # label of the table rows
+            table_rows = TABLE_ROWS[result_category]
+            results_data['labels'] = pd.Series(table_rows)
+
+            answer_table = results_data[COMPARE_COLUMNS_ID].to_dict('records')
+        return answer_table
+
+    flex_update_table.__name__ = 'flex_update_%s_table' % id_name
+    return flex_update_table
 def toggle_results_div_callback(app_handle, result_category):
 
     id_name = 'flex-{}-{}'.format(RES_COMPARE, result_category)
@@ -400,6 +474,7 @@ def callbacks(app_handle):
 
     for res_cat in [POP_RES, INVEST_RES, GHG_RES]:
         compare_barplot_callback(app_handle, res_cat)
+        compare_table_callback(app_handle, res_cat)
         toggle_results_div_callback(app_handle, res_cat)
 
     @app_handle.callback(
