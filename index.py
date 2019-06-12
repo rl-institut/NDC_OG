@@ -65,7 +65,7 @@ app.layout = html.Div(
 
 # define the callbacks
 static_layout.callbacks(app)
-flex_layout.callbacks(app)
+# flex_layout.callbacks(app)
 
 
 @app.callback(
@@ -80,8 +80,8 @@ def display_page(pathname):
         return intro_layout.layout
     elif pathname == '/{}/{}'.format(URL_BASEPATH, static_layout.URL_PATHNAME):
         return static_layout.layout
-    elif pathname == '/{}/{}'.format(URL_BASEPATH, flex_layout.URL_PATHNAME):
-        return flex_layout.layout
+    # elif pathname == '/{}/{}'.format(URL_BASEPATH, flex_layout.URL_PATHNAME):
+    #     return flex_layout.layout
 
 
 @app.callback(
