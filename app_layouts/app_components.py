@@ -28,6 +28,7 @@ RES_COUNTRY = 'country'
 RES_AGGREGATE = 'aggregate'
 RES_COMPARE = 'compare'
 
+
 TABLES_LABEL_STYLING = [
     {
         'if': {'column_id': 'labels'},
@@ -108,6 +109,41 @@ BARPLOT_ELECTRIFICATION_COLORS = {
 
 BARPLOT_YAXIS_OPT = ELECTRIFICATION_OPTIONS.copy() + [NO_ACCESS]
 
+def round_digits(val):
+    """Formats number by rounding to 2 digits and add commas for thousands"""
+    if np.isnan(val):
+        answer = ''
+    else:
+        if len('{:d}'.format(int(val))) > 3:
+            # add commas and no dot if in the thousands range
+            answer = '{:,}'.format(val)
+            answer = answer.split('.')[0]
+        else:
+            # add dot if not in the thousands range
+            answer = '{:.2f}'.format(val)
+
+        if np.round(val, 2) == 0:
+            # always round the zero
+            answer = '0'
+    return answer
+
+
+def format_percent(val):
+    """Format number for percents."""
+    if isinstance(val, str):
+        answer = val
+    else:
+        if np.isnan(val):
+            answer = ''
+        else:
+            if np.round(val, 2) == 0:
+                answer = '0%'
+            elif val >= 100:
+                answer = '100%'
+            else:
+                answer = '{:.2f}%'.format(val)
+    return answer
+
 
 def create_tooltip(cell):
     """Create tooltips for tables"""
@@ -118,15 +154,20 @@ def create_tooltip(cell):
     )
 
 
-def results_div(result_type, result_category):
+def results_div(result_type, result_category, flex_case=''):
     """
-
     :param result_type: one of country, aggregate, or compare
     :param result_category: one of pop, invest or ghg
+    :param flex_case: string to distinguish the components' ids
     :return: a div with a title, a graph and a table
     """
 
-    id_name = '{}-{}'.format(result_type, result_category)
+    id_name = '{}{}-{}'.format(flex_case, result_type, result_category)
+
+    if flex_case == 'flex-':
+        class_name = 'cell small-12 medium-11 large-9 results_style'
+    else:
+        class_name = 'cell small-11 medium-10 large-8 results_style'
 
     barplot_mode = 'stack'
     if result_type == RES_COMPARE:
@@ -222,7 +263,7 @@ def results_div(result_type, result_category):
                         'overflow: inherit; text-overflow: inherit;'
             }],
             style_table={
-              'marginTop': '10px'
+                'marginTop': '10px'
             },
             style_cell={
                 'fontFamily': 'roboto',
@@ -247,7 +288,7 @@ def results_div(result_type, result_category):
 
     return html.Div(
         id='{}-div'.format(id_name),
-        className='cell medium-10 large-8 results_style',
+        className=class_name,
         style={'display': 'none'},
         children=results_div_content
     )
@@ -258,115 +299,170 @@ def controls_div():
 
     divs = [
         html.Div(
-            id='tier-div',
-            className='app__input',
-            children=[
-                html.Div(
-                    id='min-tier-label',
-                    className='app__input__label',
-                    children='Min TIER level'
-                ),
-                html.Div(
-                    id='min-tier-input-div',
-                    className='app__input__input',
-                    title='min tier level description',
-                    children=dcc.Input(
-                        id='min-tier-input',
-                        className='app__input__tier',
-                        value=3,
-                        type='number',
-                        min=1,
-                        max=5,
-                        step=1
-                    )
-                ),
-                html.Div(
-                    id='tier-label',
-                    className='app__input__label',
-                    children='Lower TIER level'
-                ),
-                html.Div(
-                    id='tier-value-div',
-                    title='tier level description',
-                    children=html.Div(
-                        id='tier-value',
-                        className='app__display__tier',
-                        children=''
-                    )
-                ),
-            ]
+            id='flex-tier-div',
+            className='cell',
+            children=html.Div(
+                id='flex-tier-mg-content',
+                className='grid-x',
+                children=[
+                    html.Div(
+                        id='flex-min-tier-mg-label',
+                        className='cell medium-2',
+                        children='Min MG TIER level'
+                    ),
+                    html.Div(
+                        id='flex-min-tier-mg-input-div',
+                        className='cell medium-2',
+                        title='min tier level description',
+                        children=dcc.Input(
+                            id='flex-min-tier-mg-input',
+                            value=3,
+                            type='number',
+                            min=3,
+                            max=4,
+                            step=1
+                        )
+                    ),
+                    html.Div(
+                        id='flex-tier-mg-value-div',
+                        className='cell medium-3',
+                        title='tier level description',
+                        children=html.Div(
+                            id='flex-tier-mg-value',
+                            children=''
+                        )
+                    ),
+                    html.Div(
+                        id='flex-min-tier-shs-label',
+                        className='cell medium-2',
+                        children='Min SHS TIER level'
+                    ),
+                    html.Div(
+                        id='flex-min-tier-shs-input-div',
+                        className='cell medium-2',
+                        title='min tier level description',
+                        children=dcc.Input(
+                            id='flex-min-tier-shs-input',
+                            value=3,
+                            type='number',
+                            min=2,
+                            max=5,
+                            step=1
+                        )
+                    ),
+                    html.Div(
+                        id='flex-tier-shs-value-div',
+                        className='cell medium-3',
+                        title='tier level description',
+                        children=html.Div(
+                            id='flex-tier-shs-value',
+                            children=''
+                        )
+                    ),
+                ]
+            )
         ),
         html.Div(
-            id='rise-div',
-            className='app__input',
-            children=[
-                html.Div(
-                    id='rise-grid-div',
-                    className='app__input__slider',
-                    title='rise grid description',
-                    children=[
-                        html.Div(
-                            id='rise-grid-label',
-                            className='app__input__label',
-                            children='RISE-GRID'
-                        ),
-                        daq.Slider(
-                            id='rise-grid-input',
-                            className='daq__slider',
-                            min=0,
-                            max=100,
-                            value=14,
-                            handleLabel={
-                                "showCurrentValue": True, "label": "VALUE"},
-                            step=1,
-                        ),
-                    ]
-                ),
-                html.Div(
-                    id='rise-shs-div',
-                    className='app__input__slider',
-                    title='rise shs description',
-                    children=[
-                        html.Div(
-                            id='rise-shs-label',
-                            className='app__input__label',
-                            children='RISE-SHS'
-                        ),
-                        daq.Slider(
-                            id='rise-shs-input',
-                            className='daq__slider',
-                            min=0,
-                            max=100,
-                            value=14,
-                            handleLabel={
-                                "showCurrentValue": True, "label": "VALUE"},
-                            step=1,
-                        ),
-                    ]
-                ),
-                html.Div(
-                    id='rise-mg-div',
-                    className='app__input__slider',
-                    title='rise mg description',
-                    children=[
-                        html.Div(
-                            id='rise-label',
-                            className='app__input__label',
-                            children='RISE-MG'
-                        ),
-                        daq.Slider(
-                            id='rise-mg-input',
-                            className='daq__slider',
-                            min=0,
-                            max=100,
-                            value=67,
-                            handleLabel={
-                                "showCurrentValue": True, "label": "VALUE"},
-                            step=1,
-                        ),
-                    ]
-                )
-            ]
+            id='flex-rise-div',
+            className='cell',
+            children=html.Div(
+                className='grid-x',
+                children=[
+                    html.Div(
+                        id='flex-rise-grid-div',
+                        className='cell medium-4 grid-x',
+                        title='rise grid description',
+                        children=[
+                            html.Div(
+                                id='flex-rise-grid-label',
+                                className='cell medium-2',
+                                children='RISE-GRID'
+                            ),
+                            daq.Slider(
+                                id='flex-rise-grid-input',
+                                className='cell medium-10 daq__slider',
+                                min=0,
+                                max=100,
+                                value=14,
+                                handleLabel={
+                                    "showCurrentValue": True, "label": "VALUE"},
+                                step=1,
+                            ),
+                        ]
+                    ),
+                    html.Div(
+                        id='flex-rise-mg-div',
+                        className='cell medium-4 grid-x',
+                        title='rise mg description',
+                        children=[
+                            html.Div(
+                                id='flex-rise-label',
+                                className='cell medium-2',
+                                children='RISE-MG'
+                            ),
+                            daq.Slider(
+                                id='flex-rise-mg-input',
+                                className='cell medium-10 daq__slider',
+                                min=0,
+                                max=100,
+                                value=67,
+                                handleLabel={
+                                    "showCurrentValue": True, "label": "VALUE"},
+                                step=1,
+                            ),
+                        ]
+                    ),
+                    html.Div(
+                        id='flex-rise-shs-div',
+                        className='cell medium-4 grid-x',
+                        title='rise shs description',
+                        children=[
+                            html.Div(
+                                id='flex-rise-shs-label',
+                                className='cell medium-2',
+                                children='RISE-SHS'
+                            ),
+                            daq.Slider(
+                                id='flex-rise-shs-input',
+                                className='cell medium-10 daq__slider',
+                                min=0,
+                                max=100,
+                                value=14,
+                                handleLabel={
+                                    "showCurrentValue": True, "label": "VALUE"},
+                                step=1,
+                            ),
+                        ]
+                    ),
+                ]
+            )
+        ),
+        html.Div(
+            id='flex-rise-sub-div',
+            className='cell',
+            children=html.Div(
+                className='grid-x',
+                children=[
+                    html.Div(
+                        id='flex-rise-sub-grid-div',
+                        className='cell medium-4 grid-x',
+                        title='rise grid description',
+                        children='Sub indicators GRID'
+                    ),
+                    html.Div(
+                        id='flex-rise-sub-mg-div',
+                        className='cell medium-4 grid-x',
+                        title='rise mg description',
+                        children='Sub indicators MG'
+                    ),
+                    html.Div(
+                        id='flex-rise-shs-div',
+                        className='cell medium-4 grid-x',
+                        title='rise shs description',
+                        children='Sub indicators SHS'
+                    ),
+                ]
+            )
         )
     ]
 

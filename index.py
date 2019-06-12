@@ -58,6 +58,7 @@ app.layout = html.Div(
 
 # define the callbacks
 static_layout.callbacks(app)
+flex_layout.callbacks(app)
 
 
 @app.callback(Output('page-content', 'children'),
