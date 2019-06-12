@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import dash_html_components as html
 
 RAW_DATA_LABELS = [
     'region',
@@ -61,36 +62,16 @@ SCENARIOS_DICT = {
 }
 SCENARIOS_DESCRIPTIONS = {
     BAU_SCENARIO:
-        'The Business-as-Usual (BaU) scenario is based on the International Energy Agency''s \
-"New Policies" Scenario. Regional projections of electrification rates and technologies \
-are applied to the country-level to derive country-specific values. It quantifies new \
-electrification until 2030.' + '\n'
-        + 'In this scenario, Sustainable Development Goal 7 is not reached.',
+        [html.H4('What it shows:'), '''The Business-as-Usual (BaU) scenario quantifies the number of new technology-specific electrifications (Grid Extension, Mini-Grids or Solar-Home Systems) until 2030 by projecting current business-as-usual growth rates into the future.''',
+html.H4('How it is obtained:'),  '''Regional projections of electrification rates and technologies are mapped to the country-level and modelled until 2030. The BaU scenario is based on the "New Policies" Scenario of the ''', html.A(children="international Energy Agency’s World Energy Outlook 2018", href='https://www.iea.org/weo2018/scenarios/'), '''. '''],
     SE4ALL_SCENARIO:
-        'The Sustainable-Energy-for-all (Se4all) scenario is based on a geospatial infrastructure \
-analysis (GIS) combined with country-specific frameworks and game-changers currently \
-(between 2014 and 2018) in place. The game-changers are derived from RISE factors, \
-plus the following indicators: Mobile Money Availability, GDP, Corruption Perception \
-Index, Ease of Doing Business Index, Number of power outages in a typical month. \
-The game-changers result in a shift from grid electrification to the other \
-electrification options (MG, SHS).' + '\n'
-        + ' In this scenario, Sustainable Development Goal 7 is reached.',
-    SE4ALL_FLEX_SCENARIO:
-        'The Flexible-Sustainable-Energy-for-all (Se4all-flex) scenario is based on a geospatial \
-infrastructure analysis (GIS) combined with country-specific \
-frameworks and game-changers currently (between 2014 and 2018) in place. The game-changers are \
-derived from RISE factors, plus the following indicators: Mobile Money Availability, GDP, \
-Corruption Perception Index, Ease of Doing Business Index, Number of power outages in a typical \
-month.The indicator values as well as the shift weighting can be adjusted by the user.' + '\n'
-        + 'In this scenario Sustainable Development Goal 7 is reached.' + '\n'
-        + 'In this scenario the indicator values can be changed to see how they affect the \
-final results',
+        [html.H4('What it shows:'), '''The Sustainable-Energy-For-All (SE4ALL) scenario estimates the number of new technology-specific electrifications (Grid Extension, Mini-Grids or Solar-Home Systems) necessary to achieve the universal access goal until 2030. These estimations account for expected population growth rates and current infrastructure and current regulatory frameworks.''',
+html.H4('How it is obtained:'),  '''Existing datasets providing night lights, population densities and transmission grids are combined to estimate the number of people lacking access to electricity. Appropriate electrification options are determined based on the remoteness and density of neglected populations. In this way, the model estimates the share of people that remain to be electrified by either Grid Extension, Mini-Grid deployment or Solar-Home-System adoption until 2030.''',
+html.P('''The GIS based estimates are further refined by accounting for (the lack of) favourable technology-specific frameworks through the integration of ''', html.A(children="ESMAP’s RISE Indicators", href='https://rise.esmap.org/'), ''' into the model’s calculations. ''')],
     PROG_SCENARIO:
-        'The Progressive-Off-Grid (prOG) scenario is based on a geospatial infrastructure \
-analysis (GIS) combined with country-specific frameworks and game-changers currently \
-(between 2014 and 2018) in place. The game-changers are derived from RISE factors, assuming \
-that the frameworks for MG and SHS are 100 (highest possible RISE score).' + '\n'
-        + 'In this scenario, Sustainable Development Goal 7 is reached.'
+         [html.H4('What it shows:'), '''The Progressive-Off-Grid (prOG) scenario estimates the number of new technology-specific electrifications (Grid Extension, Mini-Grids or Solar-Home Systems) necessary to achieve the universal access goal until 2030. These estimations account for expected population growth rates and current infrastructure and progressive regulatory frameworks.''',
+html.H4('How it is obtained:'),  '''Existing datasets providing night lights, population densities and transmission grids are combined to estimate the number of people lacking access to electricity. Appropriate electrification options are determined based on the remoteness and density of neglected populations. For the 2030 horizon, in this way the model estimates the share of neglected people that remain to be electrified by either Grid Extension, Mini-Grid deployment or Solar-Home System adoption.''',
+html.P('''In the prOG scenario, the GIS based estimates are modified to showcase the impact of fully favourable off-grid (Mini-Grid and Solar Home Systems) frameworks through the integration of maximized ''', html.A(children="ESMAP’s RISE Indicators", href='https://rise.esmap.org/'), ''' into the model’s calculations. ''')]
 }
 
 ELECTRIFICATION_DICT = {

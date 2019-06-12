@@ -2,20 +2,64 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 
-from app_main import app, URL_BASEPATH
+from app_main import app, URL_BASEPATH, LOGOS
 from app_layouts import intro_layout, static_layout, flex_layout
 
 server = app.server
 
 # the app and its options are defined in the main_app module
-app.layout = html.Div([
-    dcc.Location(id='url', refresh=False),
-    html.Div(id='page-content')
-])
+app.layout = html.Div(
+    className='grid-x app_style',
+    children=[
+        dcc.Location(id='url', refresh=False),
+        html.Div(
+            id='header-div',
+            className='cell header header_style',
+            children=[
+                html.Div(
+                    id='header-content',
+                    className='grid-x grid-padding-x align-center',
+                    children=[
+                        html.H1(
+                            className='cell',
+                            children='NDC Off-Grid alternatives'
+                        ),
+                        html.H2(
+                            className='cell large-6',
+                            children='Visualization of New Electrification Scenarios by 2030 and the'
+                                     ' Relevance of Off-Grid Components in the NDCs',
+                        ),
+                    ]
+                ),
+            ]
+        ),
+        html.Div(
+            id='page-div',
+            className='cell',
+            children=[
+                html.Div(id='page-content'),
+            ]
+        ),
+        html.Div(
+            id='footer-div',
+            className='cell footer',
+            children=[
+                html.Div(
+                    className='footer-logo',
+                    children=html.Img(
+                        src='data:image/png;base64,{}'.format(logo.decode()),
+                    )
+                )
+                for logo in LOGOS
+            ]
+        ),
+    ]
+)
 
 # define the callbacks
 static_layout.callbacks(app)
 flex_layout.callbacks(app)
+
 
 @app.callback(Output('page-content', 'children'),
               [Input('url', 'pathname')])
