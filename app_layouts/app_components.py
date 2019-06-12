@@ -300,7 +300,7 @@ def controls_div():
                         className='cell medium-2',
                         title='min tier level description',
                         children=dcc.Input(
-                            id='flex-min-shs-tier-input',
+                            id='flex-min-tier-shs-input',
                             value=3,
                             type='number',
                             min=2,

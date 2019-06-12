@@ -288,121 +288,87 @@ layout = html.Div(
     ]
 )
 
+def compare_barplot_callback(app_handle, result_category):
+    """Generate a callback for input components."""
 
-def callbacks(app_handle):
-    @app_handle.callback(
-        Output('flex-country-barplot', 'figure'),
-        [
-            Input('flex-country-input', 'value'),
-            Input('flex-country-barplot-yaxis-input', 'value'),
-            Input('flex-store', 'data')
-        ],
-        [State('flex-country-barplot', 'figure')]
-    )
-    def update_country_barplot(country_sel, y_sel, cur_data, fig):
-        """update the barplot for every scenario"""
-
-        country_iso = country_sel
-        if country_iso is not None:
-            for sce_id, sce in enumerate(SCENARIOS):
-
-                df = pd.read_json(cur_data[sce])
-                # narrow to the country's results
-                df = df.loc[df.country_iso == country_iso]
-                # compute the percentage of population with electricity access
-                basic_results_data = prepare_results_tables(df)
-
-                y = basic_results_data[TABLE_ROWS.index(y_sel)]
-
-                if sce == BAU_SCENARIO and y_sel == TABLE_ROWS[0]:
-                    y = np.append(y, 0)
-                    y[3] = 100 - y.sum()
-                    ELECTRIFICATION_OPTIONS.copy()
-                    fig['data'][sce_id].update(
-                        {'x': ELECTRIFICATION_OPTIONS.copy() + ['No electricity']}
-                    )
-                else:
-                    fig['data'][sce_id].update(
-                        {'x': ELECTRIFICATION_OPTIONS.copy()}
-                    )
-                fig['data'][sce_id].update({'y': y})
-
-        return fig
+    id_name = 'flex-{}-{}'.format(RES_COMPARE, result_category)
 
     @app_handle.callback(
-        Output('flex-compare-barplot', 'figure'),
+        Output('{}-barplot'.format(id_name), 'figure'),
         [
-            Input('flex-country-input', 'value'),
-            Input('flex-compare-input', 'value'),
+            Input('{}-barplot-yaxis-input'.format(id_name), 'value'),
+            Input('flex-store', 'data'),
             Input('flex-scenario-input', 'value'),
-            Input('flex-compare-barplot-yaxis-input', 'value'),
-            Input('flex-store', 'data')
         ],
         [
-            State('flex-compare-barplot', 'figure')
+            State('flex-country-input', 'value'),
+            State('{}-barplot'.format(id_name), 'figure')
         ]
     )
-    def update_compare_barplot(country_sel, comp_sel, scenario, y_sel, cur_data, fig):
-        """update the barplot whenever the country changes"""
-        if country_sel is not None:
-            if comp_sel is not None:
+    def flex_update_barplot(y_sel, cur_data, scenario, country_iso, fig):
 
-                comp_name = comp_sel
-                df = pd.read_json(cur_data[scenario])
-                df_comp = df.copy()
-                df = df.loc[df.country_iso == country_sel]
-                if comp_sel in REGIONS_NDC:
-                    # compare the reference country to a region
-                    if comp_sel != WORLD_ID:
-                        df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[comp_sel]]
-                    df_comp = df_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
-                    comp_name = REGIONS_GPD[comp_sel]
-                else:
-                    # compare the reference country to a country
-                    df_comp = df_comp.loc[df_comp.country_iso == comp_sel]
+        if y_sel is None:
+            idx_y = 0
+        else:
+            idx_y = TABLE_ROWS[result_category].index(y_sel)
 
-                basic_results_data = prepare_results_tables(df)
-                comp_results_data = prepare_results_tables(df_comp)
+        if scenario is not None and country_iso is not None:
 
-                y = basic_results_data[TABLE_ROWS.index(y_sel)]
-                y_comp = comp_results_data[TABLE_ROWS.index(y_sel)]
+            df_flex = pd.read_json(cur_data[SE4ALL_FLEX_SCENARIO])
+            df_comp = pd.read_json(cur_data[scenario])
+            # narrow to the country's results
+            df_flex = df_flex.loc[df_flex.country_iso == country_iso]
+            df_comp = df_comp.loc[df_comp.country_iso == country_iso]
 
-                x_vals = ELECTRIFICATION_OPTIONS.copy()
 
-                if scenario == BAU_SCENARIO and y_sel == TABLE_ROWS[0]:
-                    y = np.append(y, 0)
-                    y_comp = np.append(y_comp, 0)
-                    y[3] = 100 - y.sum()
-                    y_comp[3] = 100 - y_comp.sum()
-                    x_vals = ELECTRIFICATION_OPTIONS.copy() + ['No electricity']
-                fs = 12
+            flex_results_data = prepare_results_tables(
+                df_flex,
+                SE4ALL_FLEX_SCENARIO,
+                result_category
+            )
+            comp_results_data = prepare_results_tables(df_comp, scenario, result_category)
 
-                fig['data'] = [
+            x = ELECTRIFICATION_OPTIONS + [NO_ACCESS]
+            y_flex = flex_results_data[idx_y]
+            y_comp = comp_results_data[idx_y]
+
+            fs = 12
+
+            fig.update(
+                {'data': [
                     go.Bar(
-                        x=x_vals,
-                        y=y,
-                        text=[country_sel for i in range(4)],
+                        x=x,
+                        y=y_flex,
+                        text=[SE4ALL_FLEX_SCENARIO for i in range(4)],
+                        name=SE4ALL_FLEX_SCENARIO,
+                        showlegend=False,
                         insidetextfont={'size': fs},
                         textposition='auto',
                         marker=dict(
-                            color=['#0000ff', '#ffa500', '#008000', 'red']
+                            color=list(BARPLOT_ELECTRIFICATION_COLORS.values())
                         ),
                         hoverinfo='y+text'
                     ),
                     go.Bar(
-                        x=x_vals,
+                        x=x,
                         y=y_comp,
-                        text=[comp_name for i in range(4)],
+                        text=[scenario for i in range(4)],
+                        name=scenario,
+                        showlegend=False,
                         insidetextfont={'size': fs},
                         textposition='auto',
                         marker=dict(
-                            color=['#8080ff', '#ffd280', '#1aff1a', 'red']
+                            color=['#a062d0', '#9ac1e5', '#f3a672', '#cccccc']
                         ),
                         hoverinfo='y+text'
                     ),
                 ]
-
+                }
+            )
         return fig
+
+    flex_update_barplot.__name__ = 'flex_update_%s_barplot' % id_name
+    return flex_update_barplot
 
 
 def toggle_results_div_callback(app_handle, result_category):
@@ -433,6 +399,7 @@ def toggle_results_div_callback(app_handle, result_category):
 def callbacks(app_handle):
 
     for res_cat in [POP_RES, INVEST_RES, GHG_RES]:
+        compare_barplot_callback(app_handle, res_cat)
         toggle_results_div_callback(app_handle, res_cat)
 
     @app_handle.callback(
@@ -934,7 +901,10 @@ def callbacks(app_handle):
             Input('flex-min-tier-mg-input', 'value'),
             Input('flex-min-tier-shs-input', 'value')
         ],
-        [State('flex-store', 'data')]
+        [
+            State('flex-country-input', 'value'),
+            State('flex-store', 'data')
+        ]
     )
     def flex_update_flex_store(
             rise_grid,
@@ -972,7 +942,7 @@ def callbacks(app_handle):
         return flex_data
 
     @app_handle.callback(
-        Output('flex-rise-grig-input', 'value'),
+        Output('flex-rise-grid-input', 'value'),
         [Input('flex-country-input', 'value')],
         [State('flex-store', 'data')]
 
@@ -981,7 +951,7 @@ def callbacks(app_handle):
         answer = None
         if country_iso is not None:
             df = pd.read_json(cur_data[SE4ALL_SCENARIO])
-            answer = df.loc[df.country_iso == country_iso, 'rise_grid']
+            answer = df.loc[df.country_iso == country_iso, 'rise_grid'].values[0]
         return answer
 
     @app_handle.callback(
@@ -994,7 +964,7 @@ def callbacks(app_handle):
         answer = None
         if country_iso is not None:
             df = pd.read_json(cur_data[SE4ALL_SCENARIO])
-            answer = df.loc[df.country_iso == country_iso, 'rise_mg']
+            answer = df.loc[df.country_iso == country_iso, 'rise_mg'].values[0]
         return answer
 
     @app_handle.callback(
@@ -1007,7 +977,7 @@ def callbacks(app_handle):
         answer = None
         if country_iso is not None:
             df = pd.read_json(cur_data[SE4ALL_SCENARIO])
-            answer = df.loc[df.country_iso == country_iso, 'rise_shs']
+            answer = df.loc[df.country_iso == country_iso, 'rise_shs'].values[0]
         return answer
 
 
