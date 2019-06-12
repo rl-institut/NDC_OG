@@ -134,120 +134,15 @@ body {
     padding: 0px 5px 0px;
     //border: solid 2px #E8F0F9;
 }
-.app__controls {
-    //border: solid 2px #E8F0F9;
-    display: flex;
-    flex-direction: column;
-    align-items: left
-}
-
-//.app__input {
-//    //border: solid 2px #E8F0F9;
-//    display: flex;
-//    flex-direction: row;
-//    align-items: center;
-//    justify-content: space evenly;
-//    padding-top: 2px;
-//    padding-bottom: 2px;
-//}
-
-.app__input_num {
-    height: 25px;
-}
-
-.app__input__slider {
-    //border: solid 2px #E8F0F9;
-    width: 33.33%;
-    display: flex;
-    flex-direction: row;
-    padding-top:45px;
-}
 
 .daq__slider {
-    width: 130px;
-}
-
-
-.app__input__radio {
-    display: flex;
-    flex-direction: row;
-}
-
-.app__input__radio input {
-  position: absolute;
-  opacity: 0;
-  cursor: pointer;
-  height: 0;
-  width: 0;
-}
-
-.app__input__radio label {
-    border: solid 1px black;
-    border-radius: 5px;
-    padding: 5px;
-    margin: 4px;
-}
-
-/* On mouse-over, add a background color */
-.app__input__radio label:hover{
-  background-color: #1aff1a;
-}
-
-#min-tier-input-div{
-width: 20%;
-}
-
-
-
-.app__input__tier {
-top: 10%
-width: 100%;
-}
-
-
-
-
-
-.app__input__label{
-    padding-left: 15px;
-    padding-right: 15px;
-    width: auto;
+margin-top: 20px;
+    padding-left: 10px;
+    padding-right: 10px;
 }
 
 .country__results h4,
 .aggregate__results h4,
 .compare__results h4{
     text-align: center;
-}
-
-.country__results__pop__hdr{
-    display: flex;
-    flex-direction: row;
-}
-
-.country__results__pop__line{
-    display: flex;
-    flex-direction: row;
-}
-
-.country__results__cap__hdr{
-    display: flex;
-    flex-direction: row;
-}
-
-.country__results__cap__line{
-
-    display: flex;
-    flex-direction: row;
-}
-
-.country__results{
-    padding-left: 5px;
-}
-
-.country__results p {
-    width: 10%;
-    align-content: center;
-    //border: solid 1px #E8F0F9;
-    padding: 10px
 }

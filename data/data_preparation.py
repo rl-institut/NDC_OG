@@ -301,7 +301,7 @@ def compute_rise_shifts(rise, pop_get, opt, flag=''):
             else:
                 df.iloc[5, i] = np.nan
 
-    if df.iloc[6].sum() > 1e-8:
+    if df.iloc[6].sum() > 1e-6:
 
         print(
             'Error ({}): the sum of the shifts ({}) is not equal to zero!'.format(
