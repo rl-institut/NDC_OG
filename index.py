@@ -1,6 +1,6 @@
 import dash_core_components as dcc
 import dash_html_components as html
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 
 from app_main import app, URL_BASEPATH, LOGOS
 from app_layouts import intro_layout, static_layout, flex_layout
@@ -68,8 +68,10 @@ static_layout.callbacks(app)
 flex_layout.callbacks(app)
 
 
-@app.callback(Output('page-content', 'children'),
-              [Input('url', 'pathname')])
+@app.callback(
+    Output('page-content', 'children'),
+    [Input('url', 'pathname')]
+)
 def display_page(pathname):
     """Manage the url path between the different layouts"""
     if pathname == '/{}'.format(URL_BASEPATH) \
@@ -80,6 +82,27 @@ def display_page(pathname):
         return static_layout.layout
     elif pathname == '/{}/{}'.format(URL_BASEPATH, flex_layout.URL_PATHNAME):
         return flex_layout.layout
+
+
+@app.callback(
+    Output('back-intro-link', 'style'),
+    [Input('url', 'pathname')],
+    [State('back-intro-link', 'style')]
+)
+def display_page(pathname, cur_style):
+    """Manage display of the return to index button between the different layouts"""
+    if cur_style is None:
+        cur_style = {'display': 'none'}
+
+    if pathname == '/{}'.format(URL_BASEPATH) \
+            or pathname == '/{}/'.format(URL_BASEPATH) \
+            or pathname == '/' or pathname is None:
+        cur_style.update({'display': 'none'})
+    elif pathname == '/{}/{}'.format(URL_BASEPATH, static_layout.URL_PATHNAME):
+        cur_style.update({'display': 'block'})
+    elif pathname == '/{}/{}'.format(URL_BASEPATH, flex_layout.URL_PATHNAME):
+        cur_style.update({'display': 'block'})
+    return cur_style
 
 
 if __name__ == '__main__':
