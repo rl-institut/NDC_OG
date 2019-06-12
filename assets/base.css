@@ -41,6 +41,12 @@ body {
     background-color: #EFEFEF;
 }
 
+#back-intro-link{
+  position: absolute;
+  top: 217.8px;
+  right: 5px;
+}
+
 .intro-link-div {
     text-align: center;
 }
