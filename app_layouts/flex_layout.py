@@ -445,6 +445,35 @@ def compare_table_callback(app_handle, result_category):
 
     flex_update_table.__name__ = 'flex_update_%s_table' % id_name
     return flex_update_table
+
+
+def compare_table_columns_title_callback(app_handle, result_category):
+
+    id_name = 'flex-{}-{}'.format(RES_COMPARE, result_category)
+
+    @app_handle.callback(
+        Output('{}-results-table'.format(id_name), 'columns'),
+        [Input('flex-scenario-input', 'value')]
+    )
+    def flex_update_table_columns_title(scenario):
+        columns_ids = []
+        if scenario is not None:
+            flex_sce = SCENARIOS_DICT[SE4ALL_FLEX_SCENARIO]
+            comp_sce = SCENARIOS_DICT[scenario]
+            for col in TABLE_COLUMNS_ID:
+                if col != 'labels':
+                    columns_ids.append(
+                        {'name': [TABLE_COLUMNS_LABEL[col], flex_sce], 'id': col}
+                    )
+                    columns_ids.append(
+                        {'name': [TABLE_COLUMNS_LABEL[col], comp_sce], 'id': 'comp_{}'.format(col)}
+                    )
+                else:
+                    columns_ids.append({'name': TABLE_COLUMNS_LABEL[col], 'id': col})
+        return columns_ids
+
+    flex_update_table_columns_title.__name__ = 'flex_update_%s_table_columns_title' % id_name
+    return flex_update_table_columns_title
 def toggle_results_div_callback(app_handle, result_category):
 
     id_name = 'flex-{}-{}'.format(RES_COMPARE, result_category)
@@ -475,6 +504,7 @@ def callbacks(app_handle):
     for res_cat in [POP_RES, INVEST_RES, GHG_RES]:
         compare_barplot_callback(app_handle, res_cat)
         compare_table_callback(app_handle, res_cat)
+        compare_table_columns_title_callback(app_handle, res_cat)
         toggle_results_div_callback(app_handle, res_cat)
 
     @app_handle.callback(
