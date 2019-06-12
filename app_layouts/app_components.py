@@ -118,14 +118,14 @@ def create_tooltip(cell):
     )
 
 
-def results_div(result_type, result_category):
+def results_div(result_type, result_category, flex_case=''):
     """
     :param result_type: one of country, aggregate, or compare
     :param result_category: one of pop, invest or ghg
     :return: a div with a title, a graph and a table
     """
 
-    id_name = '{}-{}'.format(result_type, result_category)
+    id_name = '{}{}-{}'.format(flex_case, result_type, result_category)
 
     barplot_mode = 'stack'
     if result_type == RES_COMPARE:

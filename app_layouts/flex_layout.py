@@ -18,6 +18,8 @@ from data.data_preparation import (
     PROG_SCENARIO,
     SCENARIOS_DICT,
     ELECTRIFICATION_OPTIONS,
+    NO_ACCESS,
+    RISE_INDICES,
     POP_GET,
     GHG,
     GHG_CAP,
@@ -25,6 +27,8 @@ from data.data_preparation import (
     _find_tier_level,
     compute_ndc_results_from_raw_data,
     prepare_results_tables,
+    prepare_scenario_data,
+    extract_results_scenario,
     POP_RES,
     INVEST_RES,
     GHG_RES,
@@ -159,21 +163,19 @@ layout = go.Layout(
     )
 )
 
-fig_map = go.Figure(data=data, layout=layout)
+# colors for hightlight of comparison
+COLOR_BETTER = '#218380'
+COLOR_WORSE = '#8F2D56'
 
+fig_map = go.Figure(data=data, layout=layout)
 
 layout = html.Div(
     id='flex-main-div',
     children=[
         dcc.Store(
-            id='flex-data-store',
+            id='flex-store',
             storage_type='session',
             data=SCENARIOS_DATA.copy()
-        ),
-        dcc.Store(
-            id='flex-country-store',
-            storage_type='session',
-            data={}
         ),
         dcc.Store(
             id='flex-view-store',
@@ -244,7 +246,7 @@ layout = html.Div(
                                                 className='cell medium-9',
                                                 children=dcc.Dropdown(
                                                     id='flex-country-input',
-                                                    options=[],
+                                                    options=list_countries_dropdown,
                                                     value=None,
                                                     multi=False
                                                 )
@@ -264,6 +266,11 @@ layout = html.Div(
                         children=controls_div(),
                     )
                 ),
+                # html.Div(
+                #     id='flex-results-info-div',
+                #     className='cell medium-10 large-8 country_info_style',
+                #     children='hih'
+                # ),
                 html.Div(
                     id='flex-main-results-div',
                     className='cell',
@@ -271,16 +278,9 @@ layout = html.Div(
                         id='flex-main-results-contents',
                         className='grid-x align-center',
                         children=[
-
-                                     html.Div(
-                                         id='flex-results-info-div',
-                                         className='cell medium-10 large-8 country_info_style',
-                                         children=''
-                                     ),
-                                 ] + [
-                                     results_div(RES_COMPARE, res_category)
-                                     for res_category in [POP_RES, INVEST_RES, GHG_RES]
-                                 ]
+                            results_div(RES_COMPARE, res_category, 'flex-')
+                            for res_category in [POP_RES, INVEST_RES, GHG_RES]
+                        ]
                     ),
                 ),
             ]
@@ -404,6 +404,37 @@ def callbacks(app_handle):
 
         return fig
 
+
+def toggle_results_div_callback(app_handle, result_category):
+
+    id_name = 'flex-{}-{}'.format(RES_COMPARE, result_category)
+
+    @app_handle.callback(
+        Output('{}-div'.format(id_name), 'style'),
+        [Input('flex-view-store', 'data')],
+        [State('{}-div'.format(id_name), 'style')]
+    )
+    def toggle_results_div_display(cur_view, cur_style):
+        """Change the display of results-div between the app's views."""
+        if cur_style is None:
+            cur_style = {'display': 'none'}
+
+        if cur_view['app_view'] in [VIEW_COUNTRY_SELECT]:
+            cur_style.update({'display': 'none'})
+        else:
+            cur_style.update({'display': 'block'})
+        return cur_style
+
+    toggle_results_div_display.__name__ = 'flex-toggle_%s_display' % id_name
+    return toggle_results_div_display
+
+
+
+def callbacks(app_handle):
+
+    for res_cat in [POP_RES, INVEST_RES, GHG_RES]:
+        toggle_results_div_callback(app_handle, res_cat)
+
     @app_handle.callback(
         Output('flex-view-store', 'data'),
         [
@@ -453,40 +484,6 @@ def callbacks(app_handle):
             #         if country_sel:
             #             cur_view.update({'app_view': VIEW_CONTROLS})
         return cur_view
-
-    @app_handle.callback(
-        Output('flex-results-div', 'style'),
-        [Input('flex-view-store', 'data')],
-        [State('flex-results-div', 'style')]
-    )
-    def flex_toggle_results_div_display(cur_view, cur_style):
-        """Change the display of results-div between the app's views."""
-        if cur_style is None:
-            cur_style = {'display': 'none'}
-
-        if cur_view['app_view'] == VIEW_COUNTRY_SELECT:
-            cur_style.update({'display': 'none'})
-        elif cur_view['app_view'] in [VIEW_CONTROLS]:
-            cur_style.update({'display': 'flex'})
-        return cur_style
-
-    @app_handle.callback(
-        Output('flex-options-div', 'style'),
-        [Input('flex-view-store', 'data')],
-        [State('flex-options-div', 'style')]
-    )
-    def flex_toggle_results_info_div_display(cur_view, cur_style):
-        """Change the display of results-info-div between the app's views."""
-        if cur_style is None:
-            cur_style = {'display': 'none'}
-
-        if cur_view['app_view'] == VIEW_COUNTRY_SELECT:
-            cur_style.update({'display': 'none'})
-        elif cur_view['app_view'] == VIEW_CONTROLS:
-            cur_style.update({'display': 'flex'})
-        # elif cur_view['app_view'] == VIEW_COMPARE:
-        #     cur_style.update({'display': 'none'})
-        return cur_style
 
     # @app_handle.callback(
     #     Output('flex-compare-input-div', 'style'),
@@ -929,45 +926,13 @@ def callbacks(app_handle):
         return answer
 
     @app_handle.callback(
-        Output('flex-country-input', 'options'),
-        [Input('flex-region-input', 'value')],
-        [
-            State('flex-scenario-input', 'value'),
-            State('flex-store', 'data')
-        ]
-    )
-    def flex_update_country_selection_options(region_id, scenario, cur_data):
-        """List the countries in a given region in alphabetical order."""
-        countries_in_region = []
-
-        if scenario is not None:
-            # load the data of the scenario
-            df = pd.read_json(cur_data[scenario])
-
-            if region_id != WORLD_ID:
-                # narrow to the region if the scope is not on the whole world
-                df = df.loc[df.region == REGIONS_NDC[region_id]]
-
-            # sort alphabetically by country
-            df = df.sort_values('country')
-            for idx, row in df.iterrows():
-                countries_in_region.append({'label': row['country'], 'value': row['country_iso']})
-
-        return countries_in_region
-
-    # @app_handle.callback(
-    #     Output('flex-general-info-div', 'children'),
-    #     [Input('flex-scenario-input', 'value')]
-    # )
-    # def flex_update_scenario_description(scenario):
-    #     return
-    @app_handle.callback(
         Output('flex-store', 'data'),
         [
             Input('flex-rise-grid-input', 'value'),
             Input('flex-rise-mg-input', 'value'),
             Input('flex-rise-shs-input', 'value'),
-            Input('flex-min-tier-input', 'value')
+            Input('flex-min-tier-mg-input', 'value'),
+            Input('flex-min-tier-shs-input', 'value')
         ],
         [State('flex-store', 'data')]
     )
@@ -975,7 +940,9 @@ def callbacks(app_handle):
             rise_grid,
             rise_mg,
             rise_shs,
-            min_tier_level,
+            min_tier_mg_level,
+            min_tier_shs_level,
+            country_iso,
             flex_data
     ):
 
@@ -985,57 +952,62 @@ def callbacks(app_handle):
             flex_data.update({'rise_mg': rise_mg})
         if rise_shs is not None:
             flex_data.update({'rise_shs': rise_shs})
-        if min_tier_level is not None:
-            flex_data.update({'min_tier_level': min_tier_level})
+        if min_tier_mg_level is not None:
+            flex_data.update({'min_tier_mg_level': min_tier_mg_level})
+        if min_tier_shs_level is not None:
+            flex_data.update({'min_tier_shs_level': min_tier_shs_level})
+
+        if country_iso is not None:
+            min_tier_mg_level = flex_data.get('min_tier_mg_level')
+            # Load data from csv
+            df = pd.read_json(flex_data[SE4ALL_SCENARIO])
+            for opt in RISE_INDICES:
+                if opt in flex_data:
+                    df.loc[df.country_iso == country_iso, opt] = flex_data[opt]
+            # Compute endogenous results for the given scenario
+            df = prepare_scenario_data(df, SE4ALL_SCENARIO, min_tier_mg_level, prepare_endogenous=True)
+            # Compute the exogenous results
+            df = extract_results_scenario(df, SE4ALL_SCENARIO, min_tier_mg_level)
+            flex_data.update({SE4ALL_FLEX_SCENARIO: df.to_json()})
         return flex_data
 
     @app_handle.callback(
-        Output('flex-country-store', 'data'),
+        Output('flex-rise-grig-input', 'value'),
         [Input('flex-country-input', 'value')],
-        [
-            State('flex-data-store', 'data'),
-            State('flex-country-store', 'data')
-        ]
+        [State('flex-store', 'data')]
+
     )
-    def flex_update_flex_store(country_iso, cur_data, country_data):
+    def flex_update_rise_grid(country_iso, cur_data):
+        answer = None
         if country_iso is not None:
             df = pd.read_json(cur_data[SE4ALL_SCENARIO])
-            df = df.loc[df.country_iso == country_iso]
-            country_data.update({'selection': df.to_json()})
-
-        return country_data
-
-    @app_handle.callback(
-        Output('flex-rise-grid-input', 'value'),
-        [Input('flex-country-store', 'data')]
-    )
-    def flex_update_rise_grid(country_data):
-        answer = None
-        if 'selection' in country_data:
-            df = pd.read_json(country_data['selection'])
-            answer = df.rise_grid
+            answer = df.loc[df.country_iso == country_iso, 'rise_grid']
         return answer
 
     @app_handle.callback(
         Output('flex-rise-mg-input', 'value'),
-        [Input('flex-country-store', 'data')]
+        [Input('flex-country-input', 'value')],
+        [State('flex-store', 'data')]
+
     )
-    def flex_update_rise_mg(country_data):
+    def flex_update_rise_mg(country_iso, cur_data):
         answer = None
-        if 'selection' in country_data:
-            df = pd.read_json(country_data['selection'])
-            answer = df.rise_mg
+        if country_iso is not None:
+            df = pd.read_json(cur_data[SE4ALL_SCENARIO])
+            answer = df.loc[df.country_iso == country_iso, 'rise_mg']
         return answer
 
     @app_handle.callback(
         Output('flex-rise-shs-input', 'value'),
-        [Input('flex-country-store', 'data')]
+        [Input('flex-country-input', 'value')],
+        [State('flex-store', 'data')]
+
     )
-    def flex_update_rise_shs(country_data):
+    def flex_update_rise_shs(country_iso, cur_data):
         answer = None
-        if 'selection' in country_data:
-            df = pd.read_json(country_data['selection'])
-            answer = df.rise_shs
+        if country_iso is not None:
+            df = pd.read_json(cur_data[SE4ALL_SCENARIO])
+            answer = df.loc[df.country_iso == country_iso, 'rise_shs']
         return answer
 
 
