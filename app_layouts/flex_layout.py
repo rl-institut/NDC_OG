@@ -463,7 +463,7 @@ def compare_table_columns_title_callback(app_handle, result_category):
     def flex_update_table_columns_title(scenario):
         columns_ids = []
         if scenario is not None:
-            flex_sce = SCENARIOS_DICT[SE4ALL_FLEX_SCENARIO]
+            flex_sce = 'Flex'
             comp_sce = SCENARIOS_DICT[scenario]
             for col in TABLE_COLUMNS_ID:
                 if col != 'labels':
