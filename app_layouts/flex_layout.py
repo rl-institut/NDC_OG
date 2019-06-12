@@ -288,6 +288,45 @@ layout = html.Div(
 )
 
 
+def result_title_callback(app_handle, result_category):
+
+    id_name = 'flex-{}-{}'.format(RES_COMPARE, result_category)
+
+    if result_category == POP_RES:
+        description = 'electrification mix {}'
+    elif result_category == INVEST_RES:
+        description = 'initial investments needed {} (in billion USD)'
+    else:
+        description = 'cumulated GHG emissions (2017-2030) {} (in million tons CO2)'
+
+    @app_handle.callback(
+        Output('{}-results-title'.format(id_name), 'children'),
+        [
+            Input('flex-store', 'data'),
+            Input('flex-scenario-input', 'value')
+        ],
+        [State('flex-country-input', 'value')]
+    )
+    def flex_update_title(cur_data, scenario, country_iso):
+
+        answer = 'Results'
+        if scenario in SCENARIOS and country_iso is not None:
+            country = cur_data.get('country_name')
+            answer = '{}: comparison of {}'.format(
+                country,
+                description.format(
+                    'between {} and {} scenarios'.format(
+                        'Flex',
+                        SCENARIOS_DICT[scenario]
+                    )
+                )
+            )
+        return answer
+
+    flex_update_title.__name__ = 'flex_update_%s_title' % id_name
+    return flex_update_title
+
+
 def compare_barplot_callback(app_handle, result_category):
     """Generate a callback for input components."""
 
@@ -564,10 +603,10 @@ def toggle_results_div_callback(app_handle, result_category):
     return toggle_results_div_display
 
 
-
 def callbacks(app_handle):
 
     for res_cat in [POP_RES, INVEST_RES, GHG_RES]:
+        result_title_callback(app_handle, res_cat)
         compare_barplot_callback(app_handle, res_cat)
         compare_table_callback(app_handle, res_cat)
         compare_table_columns_title_callback(app_handle, res_cat)
