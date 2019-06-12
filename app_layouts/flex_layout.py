@@ -386,6 +386,9 @@ def compare_table_callback(app_handle, result_category):
     def flex_update_table(cur_data, scenario, country_iso):
         """Display information and study's results comparison between countries."""
         answer_table = []
+
+        result_cat = result_category
+
         # extract the data from the selected scenario if a country was selected
         if scenario is not None and country_iso is not None:
 
@@ -395,12 +398,23 @@ def compare_table_callback(app_handle, result_category):
             df_flex = df_flex.loc[df_flex.country_iso == country_iso]
             df_comp = df_comp.loc[df_comp.country_iso == country_iso]
 
+            ghg_er = False
+            if result_cat == GHG_RES:
+                ghg_er = True
+                result_cat = GHG_ER_RES
+
             flex_results_data = prepare_results_tables(
                 df_flex,
                 SE4ALL_FLEX_SCENARIO,
-                result_category
+                result_cat,
+                ghg_er
             )
-            comp_results_data = prepare_results_tables(df_comp, scenario, result_category)
+            comp_results_data = prepare_results_tables(
+                df_comp,
+                scenario,
+                result_cat,
+                ghg_er
+            )
 
             flex_total = np.nansum(flex_results_data, axis=0)
             comp_total = np.nansum(comp_results_data, axis=0)
@@ -408,7 +422,7 @@ def compare_table_callback(app_handle, result_category):
             results_data = np.hstack([flex_results_data, comp_results_data])
 
             comp_ids = ['comp_{}'.format(c) for c in ELECTRIFICATION_OPTIONS] \
-                       + ['comp_{}'.format(NO_ACCESS)]
+                + ['comp_{}'.format(NO_ACCESS)]
             # prepare a DataFrame
             results_data = pd.DataFrame(
                 data=results_data,
@@ -418,7 +432,7 @@ def compare_table_callback(app_handle, result_category):
             results_data['total'] = pd.Series(flex_total)
             results_data['comp_total'] = pd.Series(comp_total)
             # Format the digits
-            if result_category == POP_RES:
+            if result_cat == POP_RES:
                 results_data.iloc[1:, 0:] = results_data.iloc[1:, 0:].applymap(
                     round_digits
                 )
@@ -428,7 +442,7 @@ def compare_table_callback(app_handle, result_category):
             else:
                 results_data = results_data.applymap(round_digits)
             # label of the table rows
-            table_rows = TABLE_ROWS[result_category]
+            table_rows = TABLE_ROWS[result_cat]
             results_data['labels'] = pd.Series(table_rows)
 
             answer_table = results_data[COMPARE_COLUMNS_ID].to_dict('records')
