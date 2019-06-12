@@ -15,23 +15,13 @@ from data.data_preparation import (
     BAU_SCENARIO,
     SE4ALL_SCENARIO,
     SE4ALL_FLEX_SCENARIO,
-    PROG_SCENARIO,
     SCENARIOS_DICT,
     ELECTRIFICATION_OPTIONS,
     NO_ACCESS,
     RISE_INDICES,
     POP_GET,
-    POP_RES,
-    INVEST_RES,
-    GHG,
-    GHG_CAP,
-    GHG_RES,
-    GHG_ER_RES,
-    EXO_RESULTS,
     _find_tier_level,
     compute_ndc_results_from_raw_data,
-    extract_results_scenario,
-    prepare_scenario_data,
     prepare_results_tables,
     prepare_scenario_data,
     extract_results_scenario,
@@ -48,14 +38,11 @@ from .app_components import (
     round_digits,
     TABLES_LABEL_STYLING,
     BARPLOT_ELECTRIFICATION_COLORS,
-    RES_AGGREGATE,
     RES_COMPARE,
-    RES_COUNTRY,
     TABLE_ROWS,
     TABLE_COLUMNS_ID,
     COMPARE_COLUMNS_ID,
     TABLE_COLUMNS_LABEL,
-    BARPLOT_YAXIS_OPT
 )
 
 URL_PATHNAME = 'flex'
@@ -265,11 +252,6 @@ layout = html.Div(
                         children=controls_div(),
                     )
                 ),
-                # html.Div(
-                #     id='flex-results-info-div',
-                #     className='cell medium-10 large-8 country_info_style',
-                #     children='hih'
-                # ),
                 html.Div(
                     id='flex-main-results-div',
                     className='cell',
@@ -653,455 +635,7 @@ def callbacks(app_handle):
                         cur_view.update({'app_view': VIEW_CONTROLS})
                 else:
                     cur_view.update({'app_view': VIEW_COUNTRY_SELECT})
-
-            # # trigger comes from selection a comparison region/country
-            # elif 'compare-input' in prop_id:
-            #     if comp_sel:
-            #         cur_view.update({'app_view': VIEW_COMPARE})
-            #     else:
-            #         if country_sel:
-            #             cur_view.update({'app_view': VIEW_CONTROLS})
         return cur_view
-
-    # @app_handle.callback(
-    #     Output('flex-compare-input-div', 'style'),
-    #     [
-    #         Input('flex-view-store', 'data'),
-    #     ],
-    #     [State('flex-compare-input-div', 'style')]
-    # )
-    # def flex_toggle_compare_input_div_display(cur_view, cur_style):
-    #     """Change the display of compare-input-div between the app's views."""
-    #     if cur_style is None:
-    #         cur_style = {'display': 'none'}
-    #
-    #     if cur_view['app_view'] == VIEW_GENERAL:
-    #         cur_style.update({'display': 'none'})
-    #     elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
-    #         cur_style.update({'display': 'flex'})
-    #     return cur_style
-
-    # @app_handle.callback(
-    #     Output('flex-compare-div', 'style'),
-    #     [
-    #         Input('flex-view-store', 'data'),
-    #     ],
-    #     [State('flex-compare-div', 'style')]
-    # )
-    # def flex_toggle_compare_div_display(cur_view, cur_style):
-    #     """Change the display of compare-input-div between the app's views."""
-    #     if cur_style is None:
-    #         cur_style = {'display': 'none'}
-    #
-    #     if cur_view['app_view'] in [VIEW_GENERAL, VIEW_COUNTRY]:
-    #         cur_style.update({'display': 'none'})
-    #     elif cur_view['app_view'] == VIEW_COMPARE:
-    #         cur_style.update({'display': 'flex'})
-    #     return cur_style
-
-    @app_handle.callback(
-        Output('flex-country-basic-results-table', 'data'),
-        [
-            Input('flex-country-input', 'value'),
-            Input('flex-scenario-input', 'value'),
-            Input('flex-store', 'data')
-        ]
-    )
-    def flex_update_country_basic_results_table(
-            country_sel,
-            scenario,
-            cur_data,
-    ):
-        """Display information and study's results for a country."""
-        answer_table = []
-        country_iso = country_sel
-        # in case of country_iso is a list of one element
-        if np.shape(country_iso) and len(country_iso) == 1:
-            country_iso = country_iso[0]
-
-        # extract the data from the selected scenario if a country was selected
-        if country_iso is not None:
-            if scenario in SCENARIOS:
-
-                df = pd.read_json(cur_data[scenario])
-                df = df.loc[df.country_iso == country_iso]
-
-                basic_results_data = prepare_results_tables(df)
-
-                total = np.nansum(basic_results_data, axis=1)
-
-                # prepare a DataFrame
-                basic_results_data = pd.DataFrame(
-                    data=basic_results_data,
-                    columns=ELECTRIFICATION_OPTIONS
-                )
-                # sums of the rows
-                basic_results_data['total'] = pd.Series(total)
-                # label of the table rows
-                basic_results_data['labels'] = pd.Series(TABLE_ROWS)
-                basic_results_data.iloc[1:, 0:4] = basic_results_data.iloc[1:, 0:4].applymap(
-                    add_comma
-                )
-                basic_results_data.iloc[0, 0:4] = basic_results_data.iloc[0, 0:4].map(
-                    lambda x: '{}%'.format(x)
-                )
-                answer_table = basic_results_data[TABLE_COLUMNS_ID].to_dict('records')
-
-        return answer_table
-
-    @app_handle.callback(
-        Output('flex-country-ghg-results-table', 'data'),
-        [
-            Input('flex-country-input', 'value'),
-            Input('flex-scenario-input', 'value'),
-            Input('flex-store', 'data')
-        ]
-    )
-    def flex_update_country_ghg_results_table(
-            country_sel,
-            scenario,
-            cur_data,
-    ):
-        """Display information and study's results for a country."""
-        answer_table = []
-        df_bau = None
-        country_iso = country_sel
-        # in case of country_iso is a list of one element
-        if np.shape(country_iso) and len(country_iso) == 1:
-            country_iso = country_iso[0]
-
-        # extract the data from the selected scenario if a country was selected
-        if country_iso is not None:
-            if scenario in SCENARIOS:
-
-                df = pd.read_json(cur_data[scenario])
-                df = df.loc[df.country_iso == country_iso]
-
-                if scenario in [SE4ALL_FLEX_SCENARIO, SE4ALL_SCENARIO, PROG_SCENARIO]:
-                    # to compare greenhouse gas emissions with BaU scenario
-                    df_bau = pd.read_json(cur_data[BAU_SCENARIO])
-                    df_bau = df_bau.loc[df_bau.country_iso == country_iso]
-
-                if df_bau is None:
-                    ghg_rows = [
-                        'GHG (Mio tCO2)',
-                        'GHG (TIER + 1) (Mio tCO2)',
-                        # 'GHG CUMUL'
-                    ]
-                else:
-                    ghg_rows = [
-                        'GHG (Mio tCO2)',
-                        'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-                        'GHG (TIER +1) (Mio tCO2)',
-                        'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-                    ]
-
-                # gather the values of the results to display in the table
-                ghg_res = np.squeeze(df[GHG].values).round(0)
-                ghg2_res = np.squeeze(df[GHG_CAP].values).round(0)
-                if df_bau is not None:
-                    ghg_comp_res = ghg_res - np.squeeze(df_bau[GHG].values).round(0)
-                    ghg2_comp_res = ghg2_res - np.squeeze(df_bau[GHG_CAP].values).round(0)
-                    ghg_results_data = np.vstack([ghg_res, ghg_comp_res, ghg2_res, ghg2_comp_res])
-                else:
-                    ghg_results_data = np.vstack([ghg_res, ghg2_res])
-
-                total = np.nansum(ghg_results_data, axis=1)
-
-                # prepare a DataFrame
-                ghg_results_data = pd.DataFrame(data=ghg_results_data,
-                                                columns=ELECTRIFICATION_OPTIONS)
-
-                # sums of the rows
-                ghg_results_data['total'] = pd.Series(total)
-                # label of the table rows
-                ghg_results_data['labels'] = pd.Series(ghg_rows)
-                ghg_results_data.iloc[:, 0:4] = ghg_results_data.iloc[:, 0:4].applymap(add_comma)
-                answer_table = ghg_results_data[BASIC_COLUMNS_ID].to_dict('records')
-
-        return answer_table
-
-    @app_handle.callback(
-        Output('flex-compare-basic-results-table', 'data'),
-        [
-            Input('flex-country-input', 'value'),
-            Input('flex-compare-input', 'value'),
-            Input('flex-scenario-input', 'value'),
-            Input('flex-store', 'data')
-        ]
-    )
-    def flex_update_compare_basic_results_table(country_sel, comp_sel, scenario, cur_data):
-        """Display information and study's results comparison between countries."""
-        answer_table = []
-        country_iso = country_sel
-        # in case of country_iso is a list of one element
-        if np.shape(country_iso) and len(country_iso) == 1:
-            country_iso = country_iso[0]
-
-        # extract the data from the selected scenario if a country was selected
-        if country_iso is not None and comp_sel is not None:
-            if scenario in SCENARIOS:
-                df = pd.read_json(cur_data[scenario])
-                df_comp = df.copy()
-                df = df.loc[df.country_iso == country_sel]
-                if comp_sel in REGIONS_NDC:
-                    # compare the reference country to a region
-                    if comp_sel != WORLD_ID:
-                        df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[comp_sel]]
-                    df_comp = df_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
-                else:
-                    # compare the reference country to a country
-                    df_comp = df_comp.loc[df_comp.country_iso == comp_sel]
-
-                basic_results_data = prepare_results_tables(df)
-                comp_results_data = prepare_results_tables(df_comp)
-
-                total = np.nansum(basic_results_data, axis=1)
-                comp_total = np.nansum(comp_results_data, axis=1)
-
-                basic_results_data = 100 * np.divide(
-                    comp_results_data - basic_results_data,
-                    comp_results_data
-                )
-
-                total = 100 * np.divide(
-                    comp_total - total,
-                    comp_total
-                )
-
-                basic_results_data = np.hstack([comp_results_data, basic_results_data])
-
-                comp_ids = ['comp_{}'.format(c) for c in ELECTRIFICATION_OPTIONS]
-                # prepare a DataFrame
-                basic_results_data = pd.DataFrame(
-                    data=basic_results_data,
-                    columns=ELECTRIFICATION_OPTIONS + comp_ids
-                )
-
-                # sums of the rows
-                basic_results_data['total'] = pd.Series(comp_total)
-                basic_results_data['comp_total'] = pd.Series(total)
-                # label of the table rows
-                basic_results_data['labels'] = pd.Series(TABLE_ROWS)
-                basic_results_data.iloc[:, 0:8] = \
-                    basic_results_data.iloc[:, 0:8].applymap(
-                        add_comma
-                    )
-                basic_results_data.iloc[0, 0:8] = basic_results_data.iloc[0, 0:8].map(
-                    lambda x: '{}%'.format(x)
-                )
-                basic_results_data[comp_ids + ['comp_total']] = \
-                    basic_results_data[comp_ids + ['comp_total']].applymap(
-                        lambda x: '' if x == '' else str(x) if '%' in x else '{}%'.format(x)
-                    )
-                answer_table = basic_results_data[COMPARE_COLUMNS_ID].to_dict('records')
-
-        return answer_table
-
-    @app_handle.callback(
-        Output('flex-compare-ghg-results-table', 'data'),
-        [
-            Input('flex-country-input', 'value'),
-            Input('flex-compare-input', 'value'),
-            Input('flex-scenario-input', 'value'),
-            Input('flex-store', 'data')
-        ]
-    )
-    def flex_update_compare_ghg_results_table(country_sel, comp_sel, scenario, cur_data):
-        """Display information and study's results for a country."""
-        answer_table = []
-        df_bau_ref = None
-        country_iso = country_sel
-        # in case of country_iso is a list of one element
-        if np.shape(country_iso) and len(country_iso) == 1:
-            country_iso = country_iso[0]
-
-        # extract the data from the selected scenario if a country was selected
-        if country_iso is not None and comp_sel is not None:
-            if scenario in SCENARIOS:
-                df = pd.read_json(cur_data[scenario])
-                df_comp = df.copy()
-                df = df.loc[df.country_iso == country_sel]
-                if comp_sel in REGIONS_NDC:
-                    # compare the reference country to a region
-                    if comp_sel != WORLD_ID:
-                        df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[comp_sel]]
-                    df_comp = df_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
-                else:
-                    # compare the reference country to a country
-                    df_comp = df_comp.loc[df_comp.country_iso == comp_sel]
-                df = df.loc[df.country_iso == country_iso]
-
-                if scenario in [SE4ALL_SCENARIO, PROG_SCENARIO]:
-                    # to compare greenhouse gas emissions with BaU scenario
-                    df_bau = pd.read_json(cur_data[BAU_SCENARIO])
-                    df_bau_ref = df_bau.loc[df_bau.country_iso == country_iso]
-
-                    if comp_sel in REGIONS_NDC:
-                        # compare the reference country to a region
-                        df_bau_comp = df_bau.loc[df_bau.region == REGIONS_NDC[comp_sel]]
-                        df_bau_comp = df_bau_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(
-                            axis=0)
-                    else:
-                        # compare the reference country to a country
-                        df_bau_comp = df_bau.loc[df_bau.country_iso == comp_sel]
-
-                if df_bau_ref is None:
-                    ghg_rows = [
-                        'GHG (Mio tCO2)',
-                        'GHG (TIER +1) (Mio tCO2)',
-                        # 'GHG CUMUL'
-                    ]
-                else:
-                    ghg_rows = [
-                        'GHG (Mio tCO2)',
-                        'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-                        'GHG (TIER +1) (Mio tCO2)',
-                        'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]),
-                    ]
-
-                # gather the values of the results to display in the table
-                ghg_res = np.squeeze(df[GHG].values).round(0)
-                ghg2_res = np.squeeze(df[GHG_CAP].values).round(0)
-
-                comp_res = np.squeeze(df_comp[GHG].values).round(0)
-                comp2_res = np.squeeze(df_comp[GHG_CAP].values).round(0)
-
-                if df_bau_ref is not None:
-                    ghg_diff_res = ghg_res - np.squeeze(df_bau_ref[GHG].values).round(0)
-                    ghg2_diff_res = ghg2_res - np.squeeze(df_bau_ref[GHG_CAP].values).round(0)
-                    ghg_results_data = np.vstack([ghg_res, ghg_diff_res, ghg2_res, ghg2_diff_res])
-                else:
-                    ghg_results_data = np.vstack([ghg_res, ghg2_res])
-
-                if df_bau_ref is not None:
-                    ghg_diff_res = comp_res - np.squeeze(df_bau_comp[GHG].values).round(0)
-                    ghg2_diff_res = comp2_res - np.squeeze(df_bau_comp[GHG_CAP].values).round(0)
-                    ghg_comp_data = np.vstack([comp_res, ghg_diff_res, comp2_res, ghg2_diff_res])
-                else:
-                    ghg_comp_data = np.vstack([comp_res, comp2_res])
-
-                total = np.nansum(ghg_results_data, axis=1)
-                comp_total = np.nansum(ghg_comp_data, axis=1)
-
-                ghg_results_data = 100 * np.divide(
-                    ghg_comp_data - ghg_results_data,
-                    ghg_comp_data
-                )
-
-                total = 100 * np.divide(
-                    comp_total - total,
-                    comp_total
-                )
-
-                ghg_results_data = np.hstack([ghg_comp_data, ghg_results_data])
-
-                comp_ids = ['comp_{}'.format(c) for c in ELECTRIFICATION_OPTIONS]
-                # prepare a DataFrame
-                ghg_results_data = pd.DataFrame(
-                    data=ghg_results_data,
-                    columns=ELECTRIFICATION_OPTIONS + comp_ids
-                )
-                print(ghg_results_data)
-                # sums of the rows
-                ghg_results_data['total'] = pd.Series(comp_total)
-                ghg_results_data['comp_total'] = pd.Series(total)
-                # label of the table rows
-                ghg_results_data['labels'] = pd.Series(ghg_rows)
-                ghg_results_data.iloc[:, 0:8] = \
-                    ghg_results_data.iloc[:, 0:8].applymap(
-                        add_comma
-                    )
-                ghg_results_data[comp_ids + ['comp_total']] = \
-                    ghg_results_data[comp_ids + ['comp_total']].applymap(
-                        lambda x: '' if x == '' else '{}%'.format(x)
-                    )
-                answer_table = ghg_results_data[COMPARE_COLUMNS_ID].to_dict('records')
-
-        return answer_table
-
-    @app_handle.callback(
-        Output('flex-country-info-div', 'children'),
-        [
-            Input('flex-scenario-input', 'value'),
-            Input('flex-country-input', 'value'),
-            Input('flex-store', 'data')
-        ]
-    )
-    def flex_update_country_info_div(scenario, country_iso, cur_data):
-
-        divs = []
-        if scenario in SCENARIOS and country_iso is not None:
-            df = pd.read_json(cur_data[scenario])
-            pop_2017 = df.loc[df.country_iso == country_iso].pop_2017.values[0]
-            name = df.loc[df.country_iso == country_iso].country.values[0]
-            image_filename = 'icons/{}.png'.format(country_iso)
-            encoded_image = base64.b64encode(open(image_filename, 'rb').read())
-
-            divs = [
-                html.Div(
-                    id='flex-results-info-header-div',
-                    children=[
-                        html.Div(name),
-                        html.Img(
-                            src='data:image/png;base64,{}'.format(encoded_image.decode()),
-                            className='country__info__flag',
-                            style={'width': '30%'}
-                        )
-                    ],
-                ),
-                html.P(
-                    'Population (2017) : {} or whatever information we think '
-                    'pertinent to add information information information information information'
-                    'information information information information information information '
-                    'information information information information information information '
-                    'information information information information information information '
-                    'information information information information information information '
-                    'information information information'.format(pop_2017)),
-            ]
-
-        return divs
-
-    @app_handle.callback(
-        Output('flex-country-basic-results-title', 'children'),
-        [Input('flex-country-input', 'value')],
-        [
-            State('flex-scenario-input', 'value'),
-            State('flex-store', 'data')]
-    )
-    def flex_country_basic_results_title(country_iso, scenario, cur_data):
-
-        answer = 'Results'
-        if scenario in SCENARIOS and country_iso is not None:
-            df = pd.read_json(cur_data[scenario])
-            answer = 'Results for {}: electrification options'.format(
-                df.loc[df.country_iso == country_iso].country.values[0])
-        return answer
-
-    @app_handle.callback(
-        Output('flex-compare-basic-results-title', 'children'),
-        [
-            Input('flex-country-input', 'value'),
-            Input('flex-compare-input', 'value')
-        ],
-        [
-            State('flex-scenario-input', 'value'),
-            State('flex-store', 'data')]
-    )
-    def flex_compare_basic_results_title(country_iso, comp_sel, scenario, cur_data):
-
-        answer = 'Results'
-        if scenario in SCENARIOS and comp_sel is not None:
-            df = pd.read_json(cur_data[scenario])
-            if comp_sel in REGIONS_NDC:
-                comp_name = REGIONS_GPD[comp_sel]
-            else:
-                comp_name = df.loc[df.country_iso == comp_sel].country.values[0]
-            answer = 'Results for {} and relative difference with {}'.format(
-                comp_name,
-                df.loc[df.country_iso == country_iso].country.values[0]
-            )
-        return answer
 
     @app_handle.callback(
         Output('flex-store', 'data'),
@@ -1126,7 +660,6 @@ def callbacks(app_handle):
             country_iso,
             flex_data
     ):
-
         if rise_grid is not None:
             flex_data.update({'rise_grid': rise_grid})
         if rise_mg is not None:
@@ -1165,7 +698,6 @@ def callbacks(app_handle):
         Output('flex-rise-grid-input', 'value'),
         [Input('flex-country-input', 'value')],
         [State('flex-store', 'data')]
-
     )
     def flex_update_rise_grid(country_iso, cur_data):
         answer = None
@@ -1178,7 +710,6 @@ def callbacks(app_handle):
         Output('flex-rise-mg-input', 'value'),
         [Input('flex-country-input', 'value')],
         [State('flex-store', 'data')]
-
     )
     def flex_update_rise_mg(country_iso, cur_data):
         answer = None
@@ -1201,26 +732,6 @@ def callbacks(app_handle):
         return answer
 
 
-    @app_handle.callback(
-        Output('flex-tier-value', 'children'),
-        [Input('flex-country-input', 'value')],
-        [
-            State('flex-scenario-input', 'value'),
-            State('flex-data-store', 'data')]
-    )
-    def flex_update_tier_value_div(country_iso, scenario, cur_data):
-        """Find the actual tier level of the country based on its yearly electricity consumption"""
-        answer = ''
-        if scenario in SCENARIOS and country_iso is not None:
-            df = pd.read_json(cur_data[scenario])
-            answer = '{}'.format(
-                _find_tier_level(
-                    df.loc[df.country_iso == country_iso]
-                        .hh_yearly_electricity_consumption.values[0],
-                    1
-                )
-            )
-        return answer
 
 
 if __name__ == '__main__':

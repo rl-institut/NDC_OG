@@ -145,8 +145,6 @@ def format_percent(val):
     return answer
 
 
-
-
 def create_tooltip(cell):
     """Create tooltips for tables"""
     return textwrap.dedent(
@@ -155,10 +153,12 @@ def create_tooltip(cell):
         '''.format(value=cell)
     )
 
+
 def results_div(result_type, result_category, flex_case=''):
     """
     :param result_type: one of country, aggregate, or compare
     :param result_category: one of pop, invest or ghg
+    :param flex_case: string to distinguish the components' ids
     :return: a div with a title, a graph and a table
     """
 
