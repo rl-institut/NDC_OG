@@ -69,15 +69,6 @@ def extract_centroids(reg):
     return centroids.loc[centroids.region.isin(reg)].copy()
 
 
-def add_comma(val):
-    if np.isnan(val):
-        answer = ''
-    else:
-        answer = "{:,}".format(np.round(val, 0))
-        answer = answer.split('.')[0]
-    return answer
-
-
 WORLD_ID = 'WD'
 REGIONS_GPD = dict(WD='World', SA='South America', AF='Africa', AS='Asia')
 
@@ -474,6 +465,67 @@ def compare_table_columns_title_callback(app_handle, result_category):
 
     flex_update_table_columns_title.__name__ = 'flex_update_%s_table_columns_title' % id_name
     return flex_update_table_columns_title
+
+
+def compare_table_styling_callback(app_handle, result_category):
+
+    id_name = 'flex-{}-{}'.format(RES_COMPARE, result_category)
+
+    @app_handle.callback(
+        Output('{}-results-table'.format(id_name), 'style_data_conditional'),
+        [Input('{}-results-table'.format(id_name), 'data')],
+        [
+            State('{}-results-table'.format(id_name), 'style_data_conditional'),
+            State('flex-country-input', 'value')
+        ]
+    )
+    def flex_update_table_styling(cur_data, cur_style, country_iso):
+        if country_iso is not None:
+            table_data = pd.DataFrame.from_dict(cur_data)
+
+            col_ref = TABLE_COLUMNS_ID[1:]
+            col_comp = ['comp_{}'.format(col) for col in col_ref]
+            table_data = table_data[col_ref + col_comp].applymap(
+                lambda x: 0 if x == '' else float(x.replace(',', '').replace('%', '')))
+            ref = table_data[col_ref]
+            comp = table_data[col_comp]
+
+            compare_results_styling = []
+            for j, col in enumerate(col_ref):
+                for i in range(len(ref.index)):
+                    apply_condition = True
+                    if ref.iloc[i, j] > comp.iloc[i, j]:
+                        color = COLOR_BETTER
+                        font = 'bold'
+                        if result_category == GHG_RES:
+                            if np.mod(i, 2) == 0:
+                                color = COLOR_WORSE
+                                font = 'normal'
+                    elif ref.iloc[i, j] < comp.iloc[i, j]:
+                        color = COLOR_WORSE
+                        font = 'normal'
+                        if result_category == GHG_RES:
+                            if np.mod(i, 2) == 0:
+                                color = COLOR_BETTER
+                                font = 'bold'
+                    else:
+                        apply_condition = False
+
+                    if apply_condition:
+                        compare_results_styling.append(
+                            {
+                                "if": {"column_id": col, "row_index": i},
+                                'color': color,
+                                'fontWeight': font
+                            }
+                        )
+            cur_style = TABLES_LABEL_STYLING + compare_results_styling
+        return cur_style
+
+    flex_update_table_styling.__name__ = 'flex_update_%s_table_styling' % id_name
+    return flex_update_table_styling
+
+
 def toggle_results_div_callback(app_handle, result_category):
 
     id_name = 'flex-{}-{}'.format(RES_COMPARE, result_category)
@@ -505,6 +557,7 @@ def callbacks(app_handle):
         compare_barplot_callback(app_handle, res_cat)
         compare_table_callback(app_handle, res_cat)
         compare_table_columns_title_callback(app_handle, res_cat)
+        compare_table_styling_callback(app_handle, res_cat)
         toggle_results_div_callback(app_handle, res_cat)
 
     @app_handle.callback(
