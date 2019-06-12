@@ -164,6 +164,11 @@ def results_div(result_type, result_category, flex_case=''):
 
     id_name = '{}{}-{}'.format(flex_case, result_type, result_category)
 
+    if flex_case == 'flex-':
+        class_name = 'cell small-12 medium-11 large-9 results_style'
+    else:
+        class_name = 'cell small-11 medium-10 large-8 results_style'
+
     barplot_mode = 'stack'
     if result_type == RES_COMPARE:
         barplot_mode = 'group'
@@ -283,7 +288,7 @@ def results_div(result_type, result_category, flex_case=''):
 
     return html.Div(
         id='{}-div'.format(id_name),
-        className='cell medium-10 large-8 results_style',
+        className=class_name,
         style={'display': 'none'},
         children=results_div_content
     )
