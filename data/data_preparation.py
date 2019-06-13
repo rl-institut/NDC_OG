@@ -1,3 +1,4 @@
+import logging
 import numpy as np
 import pandas as pd
 import dash_html_components as html
@@ -202,17 +203,17 @@ def compute_rise_shifts(rise, pop_get, opt, flag=''):
 
         for j in range(3):
             df.iloc[4, j] = df.iloc[1].sum() * df.iloc[3, j]
-            if df.iloc[1, j] != 0 :
+            if df.iloc[1, j] != 0:
                 df.iloc[5, j] = df.iloc[4, j] / df.iloc[1, j]
             else:
                 df.iloc[5, j] = np.nan
 
-            df.iloc[6, j] = df.iloc[1, j] + df.iloc[4, j]
-
+        df.iloc[6] = df.iloc[1] + df.iloc[4]
         diff = df.iloc[6].values
+        # logging.debug(diff)
         diff = diff[diff < 0]
         if len(diff) == 2:
-            # print('There are two differences smaller than 0')
+            logging.debug('There are two differences smaller than 0')
             diff = df.iloc[6].values
             diff = diff[diff > 0]
             idx = df.iloc[6].to_list().index(diff[0])
@@ -225,7 +226,7 @@ def compute_rise_shifts(rise, pop_get, opt, flag=''):
             df.iloc[6, idx] = eps
 
         elif len(diff) == 1:
-            # print('one difference is smaller than 0')
+            logging.debug('one difference is smaller than 0')
             idx = df.iloc[6].to_list().index(diff[0])
             norm = 0
             idx2 = None
@@ -234,76 +235,101 @@ def compute_rise_shifts(rise, pop_get, opt, flag=''):
                 if i != idx:
                     if df.iloc[3, i] < 0:
                         idx2 = i
-                    norm = norm + df.iloc[0, i]
+                    norm = norm + df.iloc[3, i]
 
             if idx2 is None:
-                # print('the difference will be fully split between the two other case')
-                eps = df.iloc[1, idx]
+                logging.debug('the difference will be fully split between the two other case')
+                # we take N_i Delta_i away from N_i and split it amongst the remaining
+                # options
+                eps = df.iloc[1, idx] * df.iloc[3, idx]
                 for i in range(3):
                     if i == idx:
-                        df.iloc[6, i] = -eps
+                        df.iloc[6, i] = eps
                     else:
-                        df.iloc[6, i] = np.abs(eps) * df.iloc[0, i] / norm
+                        # weight Delta_i / sum(Delta_j, with j !=idx)
+                        df.iloc[6, i] = np.abs(eps) * df.iloc[3, i] / norm
             else:
-                # print('one of the remaining should have a penalty')
-                # this one cannot be larger that its population
-                df.iloc[6, idx] = - df.iloc[1, idx]
-                # this one becomes a part of the population from above, which compensates
-                # a bit the penalty
-                df.iloc[6, idx2] = df.iloc[4, idx2] + np.abs(df.iloc[6, idx]) * df.iloc[
-                    0, idx2] / norm
-                # the highest score receives the penalty
-                for i in range(3):
-                    if i != idx and i != idx2:
-                        df.iloc[6, i] = np.abs(df.iloc[4, idx2]) + np.abs(df.iloc[6, idx]) * \
-                                        df.iloc[0, i] / norm
+                logging.debug('one of the remaining should have a penalty')
 
+                over_penalty = []
+                for j in range(3):
+                    if df.iloc[4, j] <= df.iloc[1, j] * df.iloc[3, j]:
+                        over_penalty.append(j)
+                        df.iloc[6, j] = df.iloc[1, j] * df.iloc[3, j]
+                idx_not_penalised = list(set(range(3)) - set(over_penalty))[0]
+
+                df.iloc[6, idx_not_penalised] = np.abs(df.iloc[6, over_penalty].sum())
+
+                # eps = df.iloc[1, idx] * df.iloc[3, idx]
+
+                # # this one cannot be larger that its population
+                # df.iloc[6, idx] = eps
+                # # this one becomes a part of the population from above, which compensates
+                # # a bit the penalty
+                # df.iloc[6, idx2] = df.iloc[4, idx2] + np.abs(eps) * df.iloc[
+                #    0, idx2] / norm
+                # # the highest score receives the penalty
+                # for i in range(3):
+                #    if i != idx and i != idx2:
+                #        #logging.debug(i)
+                #        df.iloc[6, i] = np.abs(df.iloc[4, idx2]) + np.abs(eps) * \
+                #                        df.iloc[0, i] / norm
         elif len(df) == 3:
-            print('error, all differences are negative')
+            logging.debug('error, all differences are negative')
         else:
-            # print('no difference is smaller than 0')
+            logging.debug('no difference is smaller than 0')
 
             # check if any Delta_i < 0
             diff = df.iloc[3].values
             diff = diff[diff < 0]
             if len(diff) == 1:
-                # print('Only one should be penalized')
-                # print('The difference will be fully split between the two other case')
+                logging.debug('Only one should be penalized')
+                logging.debug('The difference will be fully split between the two other case')
                 idx = df.iloc[3].to_list().index(diff[0])
                 norm = 0
                 for i in range(3):
                     if i != idx:
-                        norm = norm + df.iloc[0, i]
+                        # the sum of the Delta_i of each non-penalized
+                        norm = norm + df.iloc[3, i]
 
-                eps = df.iloc[4, idx]
+                eps = df.iloc[1, idx] * df.iloc[3, idx]
                 for i in range(3):
                     if i == idx:
                         df.iloc[6, i] = eps
                     else:
-                        df.iloc[6, i] = np.abs(eps) * df.iloc[0, i] / norm
+                        # weight Delta_i / sum(Delta_j, with j !=idx)
+                        df.iloc[6, i] = np.abs(eps) * df.iloc[3, i] / norm
 
                         # ----
             elif len(diff) == 2:
-                df.iloc[6] = df.iloc[4]
-                # print('Two should be penalized')
+                over_penalty = []
+                for j in range(3):
+                    if df.iloc[4, j] <= df.iloc[1, j] * df.iloc[3, j]:
+                        over_penalty.append(j)
+                        df.iloc[6, j] = df.iloc[1, j] * df.iloc[3, j]
+                idx_not_penalised = list(set(range(3)) - set(over_penalty))[0]
+
+                df.iloc[6, idx_not_penalised] = np.abs(df.iloc[6, over_penalty].sum())
+
+                # logging.debug(over_penalty)
+                logging.debug('Two should be penalized')
             elif len(diff) == 3:
-                print('error, all deltas are negative')
+                logging.debug('error, all deltas are negative')
             else:
                 # case when all RISE are equal
-                print('error, all deltas are positive or zero')
+                logging.debug('error, all deltas are positive or zero')
                 df.iloc[6] = df.iloc[4]
                 please_print = True
 
         df.iloc[7] = df.iloc[6] + df.iloc[1]
         for i in range(3):
-            if df.iloc[1, i] != 0 :
+            if df.iloc[1, i] != 0:
                 df.iloc[5, i] = df.iloc[6, i] / df.iloc[1, i]
             else:
                 df.iloc[5, i] = np.nan
 
     if df.iloc[6].sum() > 1e-6:
-
-        print(
+        logging.debug(
             'Error ({}): the sum of the shifts ({}) is not equal to zero!'.format(
                 flag,
                 df.iloc[6].sum(),
@@ -312,15 +338,14 @@ def compute_rise_shifts(rise, pop_get, opt, flag=''):
         please_print = True
 
     if please_print:
-        print(flag)
+        logging.debug(flag)
         df['sum'] = df.sum(axis=1)
 
         df['labels'] = ['R_i', 'N_i', 'n_i', 'Delta_i', 'Delta N_i', 'Delta N_i / N_i (case 2)',
                         'Delta N_i (case 2)', 'Delta N_i + N_i (case 2)']
-
-        print(df)
-        print()
-        print()
+        # logging.debug(df)
+        # logging.debug()
+        # logging.debug()
     return df.iloc[6, ELECTRIFICATION_OPTIONS.index(opt)]
 
 
