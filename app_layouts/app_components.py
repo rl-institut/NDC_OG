@@ -294,6 +294,36 @@ def results_div(result_type, result_category, flex_case=''):
     )
 
 
+def rise_slider(id_name, display_name):
+
+    return html.Div(
+        id='flex-rise-{}-div'.format(id_name),
+        className='cell medium-4 grid-x',
+        title='rise mg description',
+        children=[
+            html.Button(
+                id='flex-rise-{}-label'.format(id_name),
+                className='cell medium-2 daq__slider__label',
+                children=display_name
+            ),
+            dcc.Slider(
+                id='flex-rise-{}-input'.format(id_name),
+                className='cell medium-8 daq__slider',
+                min=0,
+                max=100,
+                value=67,
+                step=1,
+                updatemode='drag'
+            ),
+            html.Div(
+                id='flex-rise-{}-value'.format(id_name),
+                className='cell medium-2 daq__slider__value',
+                children=''
+            ),
+        ]
+    )
+
+
 def controls_div():
     """Return controls for scenario dependent variables."""
 
