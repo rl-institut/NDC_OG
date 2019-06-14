@@ -451,32 +451,33 @@ def controls_div():
             children=html.Div(
                 className='grid-x align-center',
                 children=[
-                    rise_slider('grid', 'Grid'),
-                    rise_slider('mg', 'MG'),
-                    rise_slider('shs', 'SHS'),
+                    rise_slider('grid', 'RISE Grid'),
+                    rise_slider('mg', 'RISE MG'),
+                    rise_slider('shs', 'RISE SHS'),
                     html.Div(
                         id='flex-rise-sub-indicators-div',
                         className='cell medium-9',
+                        style={'display': 'none'},
                         children=[
                             html.Div(
                                 id='flex-rise-sub-grid-div',
                                 className='cell medium-8 grid-x align-center',
-                                style={'display': 'none'},
-                                title='rise grid description',
+                                title='Click on the name left to the slider to display '
+                                      'the sub-indicators',
                                 children=sub_indicator_table('grid')
                             ),
                             html.Div(
                                 id='flex-rise-sub-mg-div',
                                 className='cell medium-4 grid-x align-center',
-                                style={'display': 'none'},
-                                title='rise mg description',
+                                title='Click on the name left to the slider to display '
+                                      'the sub-indicators',
                                 children=sub_indicator_table('mg')
                             ),
                             html.Div(
                                 id='flex-rise-sub-shs-div',
                                 className='cell medium-8 grid-x align-center',
-                                style={'display': 'none'},
-                                title='rise shs description',
+                                title='Click on the name left to the slider to display '
+                                      'the sub-indicators',
                                 children=sub_indicator_table('shs')
                             ),
                         ]
