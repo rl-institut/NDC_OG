@@ -130,6 +130,9 @@ MEDIAN_INVESTMENT_COST = {1: 742, 2: 1273, 3: 2516, 4: 5277, 5: 5492}
 
 RISE_INDICES = ['rise_%s' % opt for opt in ELECTRIFICATION_OPTIONS]
 
+RISE_SUB_INDICATORS = pd.read_csv('data/RISE_indicators.csv').set_index('indicator')
+
+
 POP_RES = 'pop'
 INVEST_RES = 'invest'
 GHG_RES = 'ghg'
@@ -222,8 +225,6 @@ def compute_rise_shifts(rise, pop_get, opt, flag=''):
     df.iloc[4, m] = df.iloc[4, m] + DeltaN_pm
 
     df.iloc[7] = df.iloc[4] + df.iloc[1]
-    for i in range(3):
-        df.iloc[5, i] = df.iloc[4, i] / df.iloc[1, i]
 
     if df.iloc[4].sum() > 1e-6:
         logging.error(
