@@ -64,15 +64,15 @@ SCENARIOS_DICT = {
 SCENARIOS_DESCRIPTIONS = {
     BAU_SCENARIO:
         [html.H4('What it shows:'), '''The Business-as-Usual (BaU) scenario quantifies the number of new technology-specific electrifications (Grid Extension, Mini-Grids or Solar-Home Systems) until 2030 by projecting current business-as-usual growth rates into the future.''',
-html.H4('How it is obtained:'),  '''Regional projections of electrification rates and technologies are mapped to the country-level and modelled until 2030. The BaU scenario is based on the "New Policies" Scenario of the ''', html.A(children="international Energy Agency’s World Energy Outlook 2018", href='https://www.iea.org/weo2018/scenarios/'), '''. '''],
+         html.H4('How it is obtained:'),  '''Regional projections of electrification rates and technologies are mapped to the country-level and modelled until 2030. The BaU scenario is based on the "New Policies" Scenario of the ''', html.A(children="international Energy Agency’s World Energy Outlook 2018", href='https://www.iea.org/weo2018/scenarios/'), '''. '''],
     SE4ALL_SCENARIO:
         [html.H4('What it shows:'), '''The Sustainable-Energy-For-All (SE4ALL) scenario estimates the number of new technology-specific electrifications (Grid Extension, Mini-Grids or Solar-Home Systems) necessary to achieve the universal access goal until 2030. These estimations account for expected population growth rates and current infrastructure and current regulatory frameworks.''',
-html.H4('How it is obtained:'),  '''Existing datasets providing night lights, population densities and transmission grids are combined to estimate the number of people lacking access to electricity. Appropriate electrification options are determined based on the remoteness and density of neglected populations. In this way, the model estimates the share of people that remain to be electrified by either Grid Extension, Mini-Grid deployment or Solar-Home-System adoption until 2030.''',
-html.P('''The GIS based estimates are further refined by accounting for (the lack of) favourable technology-specific frameworks through the integration of ''', html.A(children="ESMAP’s RISE Indicators", href='https://rise.esmap.org/'), ''' into the model’s calculations. ''')],
+         html.H4('How it is obtained:'),  '''Existing datasets providing night lights, population densities and transmission grids are combined to estimate the number of people lacking access to electricity. Appropriate electrification options are determined based on the remoteness and density of neglected populations. In this way, the model estimates the share of people that remain to be electrified by either Grid Extension, Mini-Grid deployment or Solar-Home-System adoption until 2030.''',
+         html.P('''The GIS based estimates are further refined by accounting for (the lack of) favourable technology-specific frameworks through the integration of ''', html.A(children="ESMAP’s RISE Indicators", href='https://rise.esmap.org/'), ''' into the model’s calculations. ''')],
     PROG_SCENARIO:
-         [html.H4('What it shows:'), '''The Progressive-Off-Grid (prOG) scenario estimates the number of new technology-specific electrifications (Grid Extension, Mini-Grids or Solar-Home Systems) necessary to achieve the universal access goal until 2030. These estimations account for expected population growth rates and current infrastructure and progressive regulatory frameworks.''',
-html.H4('How it is obtained:'),  '''Existing datasets providing night lights, population densities and transmission grids are combined to estimate the number of people lacking access to electricity. Appropriate electrification options are determined based on the remoteness and density of neglected populations. For the 2030 horizon, in this way the model estimates the share of neglected people that remain to be electrified by either Grid Extension, Mini-Grid deployment or Solar-Home System adoption.''',
-html.P('''In the prOG scenario, the GIS based estimates are modified to showcase the impact of fully favourable off-grid (Mini-Grid and Solar Home Systems) frameworks through the integration of maximized ''', html.A(children="ESMAP’s RISE Indicators", href='https://rise.esmap.org/'), ''' into the model’s calculations. ''')]
+        [html.H4('What it shows:'), '''The Progressive-Off-Grid (prOG) scenario estimates the number of new technology-specific electrifications (Grid Extension, Mini-Grids or Solar-Home Systems) necessary to achieve the universal access goal until 2030. These estimations account for expected population growth rates and current infrastructure and progressive regulatory frameworks.''',
+         html.H4('How it is obtained:'),  '''Existing datasets providing night lights, population densities and transmission grids are combined to estimate the number of people lacking access to electricity. Appropriate electrification options are determined based on the remoteness and density of neglected populations. For the 2030 horizon, in this way the model estimates the share of neglected people that remain to be electrified by either Grid Extension, Mini-Grid deployment or Solar-Home System adoption.''',
+         html.P('''In the prOG scenario, the GIS based estimates are modified to showcase the impact of fully favourable off-grid (Mini-Grid and Solar Home Systems) frameworks through the integration of maximized ''', html.A(children="ESMAP’s RISE Indicators", href='https://rise.esmap.org/'), ''' into the model’s calculations. ''')]
 }
 
 ELECTRIFICATION_DICT = {
@@ -109,8 +109,8 @@ GHG_CAP_ER = ['tier_capped_ghg_%s_ER_cumul' % opt for opt in ELECTRIFICATION_OPT
 GHG_ALL = GHG + GHG_ER + GHG_CAP + GHG_CAP_ER \
           + ['ghg_tot_cumul', 'tier_capped_ghg_tot_cumul'] \
           + ['ghg_tot_ER_cumul', 'tier_capped_ghg_tot_ER_cumul'] \
-    + ['ghg_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS] \
-    + ['tier_capped_ghg_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS]
+          + ['ghg_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS] \
+          + ['tier_capped_ghg_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS]
 EXO_RESULTS = POP_GET + HH_GET + HH_CAP + HH_SCN2 + INVEST + INVEST_CAP + GHG_ALL
 
 # source http://www.worldbank.org/content/dam/Worldbank/Topics/Energy%20and%20Extract/
@@ -185,168 +185,60 @@ def prepare_results_tables(df, sce=BAU_SCENARIO, result_category=POP_RES, ghg_er
 
 
 def compute_rise_shifts(rise, pop_get, opt, flag=''):
+
     df = pd.DataFrame(
         data=[rise, pop_get, [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
         columns=ELECTRIFICATION_OPTIONS)
 
-    please_print = False
+    n = ELECTRIFICATION_OPTIONS.index(df.iloc[0].idxmin())
+    R_n = df.iloc[0].min()
 
-    if df.iloc[0].sum() == 0:
-        df.iloc[6] = df.iloc[0]
-    else:
-        df.iloc[2] = df.iloc[1] / df.iloc[1].sum()
-        df.iloc[3, 0] = (df.iloc[0].grid - df.iloc[0].mg) + (df.iloc[0].grid - df.iloc[0].shs)
-        df.iloc[3, 1] = (df.iloc[0].mg - df.iloc[0].grid) + (df.iloc[0].mg - df.iloc[0].shs)
-        df.iloc[3, 2] = (df.iloc[0].shs - df.iloc[0].mg) + (df.iloc[0].shs - df.iloc[0].grid)
+    m = ELECTRIFICATION_OPTIONS.index(df.iloc[0].idxmax())
+    R_m = df.iloc[0].max()
 
-        df.iloc[3] = df.iloc[3] / df.iloc[0].sum()
+    p = list(set(range(3)) - set([m, n]))[0]
+    R_p = df.iloc[0, p]
 
-        for j in range(3):
-            df.iloc[4, j] = df.iloc[1].sum() * df.iloc[3, j]
-            if df.iloc[1, j] != 0:
-                df.iloc[5, j] = df.iloc[4, j] / df.iloc[1, j]
-            else:
-                df.iloc[5, j] = np.nan
+    # calulate n_i
+    df.iloc[2] = df.iloc[1] / df.iloc[1].sum()
 
-        df.iloc[6] = df.iloc[1] + df.iloc[4]
-        diff = df.iloc[6].values
-        # logging.debug(diff)
-        diff = diff[diff < 0]
-        if len(diff) == 2:
-            logging.debug('There are two differences smaller than 0')
-            diff = df.iloc[6].values
-            diff = diff[diff > 0]
-            idx = df.iloc[6].to_list().index(diff[0])
+    Delta_n = (R_m - R_n) / 100
 
-            eps = 0
-            for i in range(3):
-                if i != idx:
-                    df.iloc[6, i] = df.iloc[1, i] * df.iloc[3, i]
-                    eps = eps + np.abs(df.iloc[6, i])
-            df.iloc[6, idx] = eps
+    df.iloc[4, n] = - df.iloc[1, n] * Delta_n
 
-        elif len(diff) == 1:
-            logging.debug('one difference is smaller than 0')
-            idx = df.iloc[6].to_list().index(diff[0])
-            norm = 0
-            idx2 = None
-            # find out if there is another penalized case
-            for i in range(3):
-                if i != idx:
-                    if df.iloc[3, i] < 0:
-                        idx2 = i
-                    norm = norm + df.iloc[3, i]
+    norm = 0
+    for j in [m, p]:
+        delta_jn = (df.iloc[0, j] - df.iloc[0, n])
+        norm = norm + delta_jn
+        df.iloc[4, j] = np.abs(df.iloc[4, n]) * delta_jn
 
-            if idx2 is None:
-                logging.debug('the difference will be fully split between the two other case')
-                # we take N_i Delta_i away from N_i and split it amongst the remaining
-                # options
-                eps = df.iloc[1, idx] * df.iloc[3, idx]
-                for i in range(3):
-                    if i == idx:
-                        df.iloc[6, i] = eps
-                    else:
-                        # weight Delta_i / sum(Delta_j, with j !=idx)
-                        df.iloc[6, i] = np.abs(eps) * df.iloc[3, i] / norm
-            else:
-                logging.debug('one of the remaining should have a penalty')
+    df.iloc[4, [m, p]] = df.iloc[4, [m, p]] / norm
 
-                over_penalty = []
-                for j in range(3):
-                    if df.iloc[4, j] <= df.iloc[1, j] * df.iloc[3, j]:
-                        over_penalty.append(j)
-                        df.iloc[6, j] = df.iloc[1, j] * df.iloc[3, j]
-                idx_not_penalised = list(set(range(3)) - set(over_penalty))[0]
+    # --------------------------------------------------------
 
-                df.iloc[6, idx_not_penalised] = np.abs(df.iloc[6, over_penalty].sum())
+    DeltaN_pm = df.iloc[1, p] * (R_m - R_p) / 100
 
-                # eps = df.iloc[1, idx] * df.iloc[3, idx]
+    df.iloc[4, p] = df.iloc[4, p] - DeltaN_pm
+    df.iloc[4, m] = df.iloc[4, m] + DeltaN_pm
 
-                # # this one cannot be larger that its population
-                # df.iloc[6, idx] = eps
-                # # this one becomes a part of the population from above, which compensates
-                # # a bit the penalty
-                # df.iloc[6, idx2] = df.iloc[4, idx2] + np.abs(eps) * df.iloc[
-                #    0, idx2] / norm
-                # # the highest score receives the penalty
-                # for i in range(3):
-                #    if i != idx and i != idx2:
-                #        #logging.debug(i)
-                #        df.iloc[6, i] = np.abs(df.iloc[4, idx2]) + np.abs(eps) * \
-                #                        df.iloc[0, i] / norm
-        elif len(df) == 3:
-            logging.debug('error, all differences are negative')
-        else:
-            logging.debug('no difference is smaller than 0')
+    df.iloc[7] = df.iloc[4] + df.iloc[1]
+    for i in range(3):
+        df.iloc[5, i] = df.iloc[4, i] / df.iloc[1, i]
 
-            # check if any Delta_i < 0
-            diff = df.iloc[3].values
-            diff = diff[diff < 0]
-            if len(diff) == 1:
-                logging.debug('Only one should be penalized')
-                logging.debug('The difference will be fully split between the two other case')
-                idx = df.iloc[3].to_list().index(diff[0])
-                norm = 0
-                for i in range(3):
-                    if i != idx:
-                        # the sum of the Delta_i of each non-penalized
-                        norm = norm + df.iloc[3, i]
-
-                eps = df.iloc[1, idx] * df.iloc[3, idx]
-                for i in range(3):
-                    if i == idx:
-                        df.iloc[6, i] = eps
-                    else:
-                        # weight Delta_i / sum(Delta_j, with j !=idx)
-                        df.iloc[6, i] = np.abs(eps) * df.iloc[3, i] / norm
-
-                        # ----
-            elif len(diff) == 2:
-                over_penalty = []
-                for j in range(3):
-                    if df.iloc[4, j] <= df.iloc[1, j] * df.iloc[3, j]:
-                        over_penalty.append(j)
-                        df.iloc[6, j] = df.iloc[1, j] * df.iloc[3, j]
-                idx_not_penalised = list(set(range(3)) - set(over_penalty))[0]
-
-                df.iloc[6, idx_not_penalised] = np.abs(df.iloc[6, over_penalty].sum())
-
-                # logging.debug(over_penalty)
-                logging.debug('Two should be penalized')
-            elif len(diff) == 3:
-                logging.debug('error, all deltas are negative')
-            else:
-                # case when all RISE are equal
-                logging.debug('error, all deltas are positive or zero')
-                df.iloc[6] = df.iloc[4]
-                please_print = True
-
-        df.iloc[7] = df.iloc[6] + df.iloc[1]
-        for i in range(3):
-            if df.iloc[1, i] != 0:
-                df.iloc[5, i] = df.iloc[6, i] / df.iloc[1, i]
-            else:
-                df.iloc[5, i] = np.nan
-
-    if df.iloc[6].sum() > 1e-6:
-        logging.debug(
+    if df.iloc[4].sum() > 1e-6:
+        logging.error(
             'Error ({}): the sum of the shifts ({}) is not equal to zero!'.format(
                 flag,
-                df.iloc[6].sum(),
+                df.iloc[4].sum(),
             )
         )
-        please_print = True
 
-    if please_print:
-        logging.debug(flag)
-        df['sum'] = df.sum(axis=1)
+    df['sum'] = df.sum(axis=1)
 
-        df['labels'] = ['R_i', 'N_i', 'n_i', 'Delta_i', 'Delta N_i', 'Delta N_i / N_i (case 2)',
-                        'Delta N_i (case 2)', 'Delta N_i + N_i (case 2)']
-        # logging.debug(df)
-        # logging.debug()
-        # logging.debug()
-    return df.iloc[6, ELECTRIFICATION_OPTIONS.index(opt)]
+    df['labels'] = ['R_i', 'N_i', 'n_i', '', 'Delta N_i', 'Delta N_i / N_i',
+                    '', 'Delta N_i + N_i']
+
+    return df.iloc[4, ELECTRIFICATION_OPTIONS.index(opt)]
 
 
 def _slope_capacity_vs_yearly_consumption(tier_level):
@@ -764,9 +656,9 @@ def _compute_ghg_emissions(df, min_tier_level, bau_df=None):
     else:
         # integral is the sum of the surfaces of a triangle and a square
         df['ghg_no_access_cumul'] = (
-                df.ghg_no_access_2030
-                + (df.ghg_no_access_2017 - df.ghg_no_access_2030) / 2
-        ) * (2030 - 2017)
+                                            df.ghg_no_access_2030
+                                            + (df.ghg_no_access_2017 - df.ghg_no_access_2030) / 2
+                                    ) * (2030 - 2017)
 
     df['ghg_tot_cumul'] = \
         df.ghg_grid_cumul \
@@ -786,14 +678,14 @@ def _compute_ghg_emissions(df, min_tier_level, bau_df=None):
         np.vectorize(map_capped_tier_yearly_consumption)(
             df.hh_grid_tier_yearly_electricity_consumption,
             min_tier_level=min_tier_level,
-    )
+        )
 
     df['hh_mg_tier_cap_yearly_electricity_consumption'] = \
         df.hh_grid_tier_cap_yearly_electricity_consumption * 0.8
 
     df['tier_capped_ghg_grid_2030'] = \
         (df.pop_get_grid_2030 / df.hh_av_size) \
-        * df.hh_grid_tier_cap_yearly_electricity_consumption\
+        * df.hh_grid_tier_cap_yearly_electricity_consumption \
         * (df.grid_emission_factor / 1000)
     # integral is the surface of a triangle
     df['tier_capped_ghg_grid_cumul'] = 0.5 * df.tier_capped_ghg_grid_2030 * (2030 - 2017)
@@ -832,8 +724,8 @@ def _compute_ghg_emissions(df, min_tier_level, bau_df=None):
     else:
         # integral is the sum of the surfaces of a triangle and a square
         df['tier_capped_ghg_no_access_cumul'] = (
-                df.ghg_no_access_2030
-                + (df.ghg_no_access_2017 - df.ghg_no_access_2030) / 2
+            df.ghg_no_access_2030
+            + (df.ghg_no_access_2017 - df.ghg_no_access_2030) / 2
         ) * (2030 - 2017)
 
     df['tier_capped_ghg_tot_cumul'] = \
