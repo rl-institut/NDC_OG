@@ -585,6 +585,24 @@ def toggle_results_div_callback(app_handle, result_category):
     return toggle_results_div_display
 
 
+def rise_slider_callback(app_handle, id_name):
+
+    @app_handle.callback(
+        Output('flex-rise-{}-value'.format(id_name), 'children'),
+        [Input('flex-rise-{}-input'.format(id_name), 'value')]
+    )
+    def display_slider_value(slider_val):
+        """Change the display of results-div between the app's views."""
+
+        answer = '0'
+        if slider_val is not None:
+            answer = str(slider_val)
+
+        return answer
+
+    display_slider_value.__name__ = 'display_slider_%s_value' % id_name
+    return display_slider_value
+
 def callbacks(app_handle):
 
     for res_cat in [POP_RES, INVEST_RES, GHG_RES]:
