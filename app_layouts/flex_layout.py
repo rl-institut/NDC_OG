@@ -166,7 +166,11 @@ layout = html.Div(
         dcc.Store(
             id='flex-view-store',
             storage_type='session',
-            data={'app_view': VIEW_COUNTRY_SELECT}
+            data={
+                'app_view': VIEW_COUNTRY_SELECT,
+                'sub_indicators_view': '',
+                'sub_indicators_change': True
+            }
         ),
         html.Div(
             id='flex-main-content',
@@ -186,7 +190,8 @@ layout = html.Div(
                                     html.Div(
                                         id='flex-general-info-div',
                                         className='scenario__info',
-                                        children=''
+                                        children='Click on the text next to the RISE controls '
+                                                 'to look at the RISE sub-indicators'
                                     ),
                                 ]
                             ),
@@ -268,7 +273,6 @@ layout = html.Div(
         ),
     ]
 )
-
 
 def result_title_callback(app_handle, result_category):
 
@@ -603,6 +607,34 @@ def rise_slider_callback(app_handle, id_name):
     display_slider_value.__name__ = 'display_slider_%s_value' % id_name
     return display_slider_value
 
+
+def rise_sub_indicator_display_callback(app_handle, id_name):
+
+    @app_handle.callback(
+        Output('flex-rise-sub-{}-div'.format(id_name), 'style'),
+        [Input('flex-view-store', 'data')],
+        [State('flex-rise-sub-{}-div'.format(id_name), 'style')]
+    )
+    def toggle_rise_sub_indicator_display(cur_view, cur_style):
+        """Change the display of results-div between the app's views."""
+        if cur_style is None:
+            cur_style = {'display': 'none'}
+        if cur_view['sub_indicators_view'] == id_name:
+            if cur_view['sub_indicators_change']:
+                cur_style.update({'display': 'block'})
+            else:
+                if cur_style['display'] == 'none':
+                    cur_style.update({'display': 'block'})
+                else:
+                    cur_style.update({'display': 'none'})
+        else:
+            cur_style.update({'display': 'none'})
+        return cur_style
+
+    toggle_rise_sub_indicator_display.__name__ = 'toggle_rise_%s_sub_indicator_display' % id_name
+    return toggle_rise_sub_indicator_display
+
+
 def callbacks(app_handle):
 
     for res_cat in [POP_RES, INVEST_RES, GHG_RES]:
@@ -613,14 +645,20 @@ def callbacks(app_handle):
         compare_table_styling_callback(app_handle, res_cat)
         toggle_results_div_callback(app_handle, res_cat)
 
+    for opt in ELECTRIFICATION_OPTIONS:
+        rise_slider_callback(app_handle, opt)
+        rise_sub_indicator_display_callback(app_handle, opt)
     @app_handle.callback(
         Output('flex-view-store', 'data'),
         [
             Input('flex-country-input', 'value'),
+            Input('flex-rise-grid-label', 'n_clicks'),
+            Input('flex-rise-mg-label', 'n_clicks'),
+            Input('flex-rise-shs-label', 'n_clicks'),
         ],
         [State('flex-view-store', 'data')]
     )
-    def flex_update_view(country_sel, cur_view):
+    def flex_update_view(country_sel, grid_sub, mg_sub, shs_sub, cur_view):
         """Toggle between the different views of the app.
 
         There are currently two views:
@@ -640,7 +678,6 @@ def callbacks(app_handle):
         """
 
         comp_sel = False  # for the moment
-
         ctx = dash.callback_context
         if ctx.triggered:
             prop_id = ctx.triggered[0]['prop_id']
@@ -653,7 +690,35 @@ def callbacks(app_handle):
                         cur_view.update({'app_view': VIEW_CONTROLS})
                 else:
                     cur_view.update({'app_view': VIEW_COUNTRY_SELECT})
+
+            if 'flex-rise' in prop_id:
+                id_name = prop_id.split('-')[2]
+                if id_name == cur_view['sub_indicators_view']:
+                    indicator_change = False
+                    id_name = ''
+                else:
+                    indicator_change = True
+
+                cur_view.update({'sub_indicators_view': id_name})
+                cur_view.update({'sub_indicators_change': indicator_change})
         return cur_view
+
+    @app_handle.callback(
+        Output('flex-rise-sub-indicators-div', 'style'),
+        [Input('flex-view-store', 'data')],
+        [State('flex-rise-sub-indicators-div', 'style')]
+    )
+    def toggle_rise_sub_indicator_div_display(cur_view, cur_style):
+        """Change the display of results-div between the app's views."""
+        if cur_style is None:
+            cur_style = {'display': 'none'}
+        if cur_view['sub_indicators_view'] in ELECTRIFICATION_OPTIONS:
+            cur_style.update({'display': 'block'})
+        else:
+            cur_style.update({'display': 'none'})
+        return cur_style
+
+
 
     @app_handle.callback(
         Output('flex-store', 'data'),
