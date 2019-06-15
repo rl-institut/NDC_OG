@@ -641,6 +641,27 @@ def rise_sub_indicator_display_callback(app_handle, id_name):
     return toggle_rise_sub_indicator_display
 
 
+def rise_sub_indicator_button_style_callback(app_handle, id_name):
+
+    @app_handle.callback(
+        Output('flex-rise-{}-label'.format(id_name), 'style'),
+        [Input('flex-view-store', 'data')],
+        [State('flex-rise-{}-label'.format(id_name), 'style')]
+    )
+    def rise_update_button_style(cur_view, cur_style):
+        """Change the display of results-div between the app's views."""
+        if cur_style is None:
+            cur_style = {'fontWeight': 'normal'}
+        if cur_view['sub_indicators_view'] == id_name:
+            cur_style.update({'fontWeight': 'bold'})
+        else:
+            cur_style.update({'fontWeight': 'normal'})
+        return cur_style
+
+    rise_update_button_style.__name__ = 'rise_%s_update_button_style' % id_name
+    return rise_update_button_style
+
+
 def rise_update_scores(app_handle, id_name):
 
     @app_handle.callback(
@@ -695,6 +716,7 @@ def callbacks(app_handle):
         rise_slider_callback(app_handle, opt)
         rise_sub_indicator_display_callback(app_handle, opt)
         rise_update_scores(app_handle, opt)
+        rise_sub_indicator_button_style_callback(app_handle, opt)
 
     @app_handle.callback(
         Output('flex-view-store', 'data'),
