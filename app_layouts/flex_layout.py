@@ -690,8 +690,6 @@ def rise_update_scores(app_handle, id_name):
                     ].values[0]
             if 'rise-store' in prop_id:
                 if id_name == cur_view['sub_indicators_view']:
-                    print("Triggered")
-                    print(cur_rise_data)
                     answer = cur_rise_data.get(id_name)
 
         if answer is None:
@@ -881,8 +879,8 @@ def callbacks(app_handle):
 
             rise_score = 0
             idx = 0
-            n_sub_groups = len(RISE_SUB_INDICATOR_STRUCTURE[opt])
-            for j, n in enumerate(RISE_SUB_INDICATOR_STRUCTURE[opt]):
+            n_sub_groups = len(RISE_SUB_INDICATOR_STRUCTURE[id_name])
+            for j, n in enumerate(RISE_SUB_INDICATOR_STRUCTURE[id_name]):
                 sub_indicator_value = 0
                 for i in range(n):
                     sub_indicator_value = sub_indicator_value + sub_indicator_values[idx]
