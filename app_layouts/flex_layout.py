@@ -1,4 +1,3 @@
-import base64
 import numpy as np
 import pandas as pd
 import dash
@@ -28,7 +27,8 @@ from data.data_preparation import (
     POP_RES,
     INVEST_RES,
     GHG_RES,
-    GHG_ER_RES
+    GHG_ER_RES,
+    RISE_SUB_INDICATOR_STRUCTURE
 )
 
 from .app_components import (
@@ -172,6 +172,11 @@ layout = html.Div(
                 'sub_indicators_change': True
             }
         ),
+        dcc.Store(
+            id='flex-rise-store',
+            storage_type='session',
+            data={}
+        ),
         html.Div(
             id='flex-main-content',
             className='grid-x',
@@ -273,6 +278,7 @@ layout = html.Div(
         ),
     ]
 )
+
 
 def result_title_callback(app_handle, result_category):
 
@@ -600,7 +606,7 @@ def rise_slider_callback(app_handle, id_name):
 
         answer = '0'
         if slider_val is not None:
-            answer = str(slider_val)
+            answer = '{:.2f}'.format(slider_val)
 
         return answer
 
@@ -635,6 +641,46 @@ def rise_sub_indicator_display_callback(app_handle, id_name):
     return toggle_rise_sub_indicator_display
 
 
+def rise_update_scores(app_handle, id_name):
+
+    @app_handle.callback(
+        Output('flex-rise-{}-input'.format(id_name), 'value'),
+        [
+            Input('flex-country-input', 'value'),
+            Input('flex-rise-store', 'data')
+        ],
+        [
+            State('flex-store', 'data'),
+            State('flex-view-store', 'data'),
+            State('flex-rise-{}-input'.format(id_name), 'value')
+        ]
+    )
+    def flex_update_rise_value(country_iso, cur_rise_data, cur_data, cur_view, cur_val):
+        ctx = dash.callback_context
+        answer = cur_val
+        if ctx.triggered:
+            prop_id = ctx.triggered[0]['prop_id']
+            # trigger comes from selecting a country
+            if 'country-input' in prop_id:
+                if country_iso is not None:
+                    df = pd.read_json(cur_data[SE4ALL_SCENARIO])
+                    answer = df.loc[
+                        df.country_iso == country_iso, 'rise_{}'.format(id_name)
+                    ].values[0]
+            if 'rise-store' in prop_id:
+                if id_name == cur_view['sub_indicators_view']:
+                    print("Triggered")
+                    print(cur_rise_data)
+                    answer = cur_rise_data.get(id_name)
+
+        if answer is None:
+            answer = cur_val
+        return answer
+
+    flex_update_rise_value.__name__ = 'flex_update_rise_%s_value' % id_name
+    return flex_update_rise_value
+
+
 def callbacks(app_handle):
 
     for res_cat in [POP_RES, INVEST_RES, GHG_RES]:
@@ -648,6 +694,8 @@ def callbacks(app_handle):
     for opt in ELECTRIFICATION_OPTIONS:
         rise_slider_callback(app_handle, opt)
         rise_sub_indicator_display_callback(app_handle, opt)
+        rise_update_scores(app_handle, opt)
+
     @app_handle.callback(
         Output('flex-view-store', 'data'),
         [
@@ -718,8 +766,6 @@ def callbacks(app_handle):
             cur_style.update({'display': 'none'})
         return cur_style
 
-
-
     @app_handle.callback(
         Output('flex-store', 'data'),
         [
@@ -777,44 +823,56 @@ def callbacks(app_handle):
 
         return flex_data
 
-    @app_handle.callback(
-        Output('flex-rise-grid-input', 'value'),
-        [Input('flex-country-input', 'value')],
-        [State('flex-store', 'data')]
-    )
-    def flex_update_rise_grid(country_iso, cur_data):
-        answer = None
-        if country_iso is not None:
-            df = pd.read_json(cur_data[SE4ALL_SCENARIO])
-            answer = df.loc[df.country_iso == country_iso, 'rise_grid'].values[0]
-        return answer
+    # prepare the inputs of the RISE sub indicators
+    sub_indicators_inputs = []
+    sub_indicators_num = {}
+    num = 0
+    for opt in ELECTRIFICATION_OPTIONS:
+        sub_indicators_num[opt] = [num]
+        for p, m in enumerate(RISE_SUB_INDICATOR_STRUCTURE[opt]):
+            for q in range(m):
+                sub_indicators_inputs.append(
+                    Input('flex-rise-{}-sub-group{}-{}-toggle'.format(opt, p, q), 'value')
+                )
+                num = num + 1
+        sub_indicators_num[opt].append(num)
 
     @app_handle.callback(
-        Output('flex-rise-mg-input', 'value'),
-        [Input('flex-country-input', 'value')],
-        [State('flex-store', 'data')]
+        Output('flex-rise-store', 'data'),
+        sub_indicators_inputs,
+        [
+            State('flex-view-store', 'data')
+         ]
     )
-    def flex_update_rise_mg(country_iso, cur_data):
-        answer = None
-        if country_iso is not None:
-            df = pd.read_json(cur_data[SE4ALL_SCENARIO])
-            answer = df.loc[df.country_iso == country_iso, 'rise_mg'].values[0]
-        return answer
+    def flex_update_rise_sub_indicators(*args):
+        """Change the display of results-div between the app's views."""
+        cur_view = args[-1]
+        id_name = cur_view.get('sub_indicators_view')
 
-    @app_handle.callback(
-        Output('flex-rise-shs-input', 'value'),
-        [Input('flex-country-input', 'value')],
-        [State('flex-store', 'data')]
+        cur_rise_data = {}
 
-    )
-    def flex_update_rise_shs(country_iso, cur_data):
-        answer = None
-        if country_iso is not None:
-            df = pd.read_json(cur_data[SE4ALL_SCENARIO])
-            answer = df.loc[df.country_iso == country_iso, 'rise_shs'].values[0]
-        return answer
+        if id_name is not None and id_name in ELECTRIFICATION_OPTIONS:
 
+            # find the position of the sub-indicators values in the arguments' list
+            idx_start, idx_end = sub_indicators_num[id_name]
+            sub_indicator_values = args[idx_start:idx_end]
 
+            rise_score = 0
+            idx = 0
+            n_sub_groups = len(RISE_SUB_INDICATOR_STRUCTURE[opt])
+            for j, n in enumerate(RISE_SUB_INDICATOR_STRUCTURE[opt]):
+                sub_indicator_value = 0
+                for i in range(n):
+                    sub_indicator_value = sub_indicator_value + sub_indicator_values[idx]
+                    idx = idx + 1
+                rise_score = rise_score + sub_indicator_value / n_sub_groups
+            rise_score = (100 * rise_score)
+
+            # round the total score to 100 if it was 99.999999 due to floating point error
+            if 100 - rise_score < 1e-5:
+                rise_score = 100
+            cur_rise_data[id_name] = rise_score
+        return cur_rise_data
 
 
 if __name__ == '__main__':
