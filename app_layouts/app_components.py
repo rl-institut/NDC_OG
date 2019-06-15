@@ -338,9 +338,9 @@ def sub_indicator_line(id_name, text, score, sub_group_idx, sub_idx):
             html.Div(
                 className='cell medium-2 rise_sub__dropdown',
                 children=dcc.Dropdown(
-                    id='flex-rise-{}-sub-group{}{}-toggle'.format(id_name, sub_group_idx, sub_idx),
+                    id='flex-rise-{}-sub-group{}-{}-toggle'.format(id_name, sub_group_idx, sub_idx),
 
-                    options=[{'label': 'Yes', 'value': score}, {'label': 'No', 'value': 0}],
+                    options=[{'label': 'Yes', 'value': 1./score}, {'label': 'No', 'value': 0}],
                     value=0,
                     clearable=False
                 )
