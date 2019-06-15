@@ -300,28 +300,29 @@ def rise_slider(id_name, display_name):
 
     return html.Div(
         id='flex-rise-{}-div'.format(id_name),
-        className='cell medium-4 grid-x',
+        className='cell medium-4 grid-x grid-margin-x',
         title='rise mg description',
         children=[
             html.Button(
                 id='flex-rise-{}-label'.format(id_name),
-                className='cell medium-2 daq__slider__label',
+                className='cell medium-4 medium-offset-3 daq__slider__label',
                 children=display_name
+            ),
+            html.Div(
+                id='flex-rise-{}-value'.format(id_name),
+                className='cell medium-3 daq__slider__value',
+                children=''
             ),
             dcc.Slider(
                 id='flex-rise-{}-input'.format(id_name),
-                className='cell medium-8 daq__slider',
+                className='cell medium-10 medium-offset-1 daq__slider',
                 min=0,
                 max=100,
                 value=67,
                 step=1,
                 updatemode='drag'
             ),
-            html.Div(
-                id='flex-rise-{}-value'.format(id_name),
-                className='cell medium-2 daq__slider__value',
-                children=''
-            ),
+
         ]
     )
 
@@ -344,11 +345,6 @@ def sub_indicator_line(id_name, text, score, sub_group_idx, sub_idx):
                     value=0,
                     clearable=False
                 )
-            ),
-            html.Div(
-                id='flex-rise-{}-sub-group{}{}-value'.format(id_name, sub_group_idx, sub_idx),
-                className='cell',
-                children=str(score)
             )
         ]
     )
