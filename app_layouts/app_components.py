@@ -368,7 +368,8 @@ def sub_indicator_table(id_name, sub_df=RISE_SUB_INDICATORS):
         divs.append(
             html.H4(className='cell', children=sub_group)
         )
-        sub_group_df = sub_df.loc[sub_df.sub_indicator_group == sub_group]
+        sub_group_df = RISE_SUB_INDICATORS.loc['rise_{}'.format(id_name)]
+        sub_group_df = sub_group_df.loc[sub_group_df.sub_indicator_group == sub_group]
         texts = sub_group_df.sub_indicator_text.values
         values = sub_group_df.score_count_yes.values
         for i in range(len(sub_group_df.index)):
