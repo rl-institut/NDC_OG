@@ -132,6 +132,14 @@ RISE_INDICES = ['rise_%s' % opt for opt in ELECTRIFICATION_OPTIONS]
 
 RISE_SUB_INDICATORS = pd.read_csv('data/RISE_indicators.csv').set_index('indicator')
 
+RISE_SUB_INDICATOR_STRUCTURE = {}
+for opt in ELECTRIFICATION_OPTIONS:
+    RISE_SUB_INDICATOR_STRUCTURE[opt] = []
+    sub_groups = RISE_SUB_INDICATORS.loc['rise_{}'.format(opt)].sub_indicator_group.unique()
+    for j, sub_group in enumerate(sub_groups):
+        sub_group_df = RISE_SUB_INDICATORS.loc['rise_{}'.format(opt)]
+        sub_group_df = sub_group_df.loc[sub_group_df.sub_indicator_group == sub_group]
+        RISE_SUB_INDICATOR_STRUCTURE[opt].append(len(sub_group_df.index))
 
 POP_RES = 'pop'
 INVEST_RES = 'invest'
