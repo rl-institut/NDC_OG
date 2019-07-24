@@ -22,6 +22,7 @@ from data.data_preparation import (
     INVEST_RES,
     GHG_RES,
     GHG_ER_RES,
+    RISE_SUB_INDICATORS,
 )
 
 RES_COUNTRY = 'country'
@@ -108,6 +109,7 @@ BARPLOT_ELECTRIFICATION_COLORS = {
 }
 
 BARPLOT_YAXIS_OPT = ELECTRIFICATION_OPTIONS.copy() + [NO_ACCESS]
+
 
 def round_digits(val):
     """Formats number by rounding to 2 digits and add commas for thousands"""
@@ -294,6 +296,84 @@ def results_div(result_type, result_category, flex_case=''):
     )
 
 
+def rise_slider(id_name, display_name):
+
+    return html.Div(
+        id='flex-rise-{}-div'.format(id_name),
+        className='cell medium-4 grid-x grid-margin-x',
+        title='rise mg description',
+        children=[
+            html.Button(
+                id='flex-rise-{}-label'.format(id_name),
+                className='cell medium-4 medium-offset-3 daq__slider__label',
+                children=display_name
+            ),
+            html.Div(
+                id='flex-rise-{}-value'.format(id_name),
+                className='cell medium-3 daq__slider__value',
+                children=''
+            ),
+            dcc.Slider(
+                id='flex-rise-{}-input'.format(id_name),
+                className='cell medium-10 medium-offset-1 daq__slider',
+                min=0,
+                max=100,
+                value=67,
+                step=1,
+                updatemode='drag'
+            ),
+
+        ]
+    )
+
+
+def sub_indicator_line(id_name, text, score, sub_group_idx, sub_idx):
+
+    return html.Div(
+        className='cell grid-x',
+        children=[
+            html.P(
+                className='cell medium-10',
+                children=text,
+            ),
+            html.Div(
+                className='cell medium-2 rise_sub__dropdown',
+                children=dcc.Dropdown(
+                    id='flex-rise-{}-sub-group{}-{}-toggle'.format(id_name, sub_group_idx, sub_idx),
+
+                    options=[{'label': 'Yes', 'value': 1./score}, {'label': 'No', 'value': 0}],
+                    value=0,
+                    clearable=False
+                )
+            )
+        ]
+    )
+
+
+def sub_indicator_table(id_name, sub_df=RISE_SUB_INDICATORS):
+    """Fills the RISE sub indicators table."""
+    sub_groups = sub_df.loc['rise_{}'.format(id_name)].sub_indicator_group.unique()
+    divs = []
+    divs.append(html.H3(className='cell', children='RISE {} sub-indicators'.format(id_name)))
+    divs.append(
+        html.Div(
+            'Explain indicators here and instruct the user'
+        )
+    )
+    for j, sub_group in enumerate(sub_groups):
+        divs.append(
+            html.H4(className='cell', children=sub_group)
+        )
+        sub_group_df = RISE_SUB_INDICATORS.loc['rise_{}'.format(id_name)]
+        sub_group_df = sub_group_df.loc[sub_group_df.sub_indicator_group == sub_group]
+        texts = sub_group_df.sub_indicator_text.values
+        values = sub_group_df.score_count_yes.values
+        for i in range(len(sub_group_df.index)):
+            divs.append(sub_indicator_line(id_name, texts[i], values[i], j, i))
+
+    return divs
+
+
 def controls_div():
     """Return controls for scenario dependent variables."""
 
@@ -366,104 +446,42 @@ def controls_div():
             id='flex-rise-div',
             className='cell',
             children=html.Div(
-                className='grid-x',
+                className='grid-x align-center',
                 children=[
+                    rise_slider('grid', 'RISE Grid'),
+                    rise_slider('mg', 'RISE MG'),
+                    rise_slider('shs', 'RISE SHS'),
                     html.Div(
-                        id='flex-rise-grid-div',
-                        className='cell medium-4 grid-x',
-                        title='rise grid description',
+                        id='flex-rise-sub-indicators-div',
+                        className='cell medium-9',
+                        style={'display': 'none'},
                         children=[
                             html.Div(
-                                id='flex-rise-grid-label',
-                                className='cell medium-2',
-                                children='RISE-GRID'
+                                id='flex-rise-sub-grid-div',
+                                className='cell medium-8 grid-x align-center',
+                                title='Click on the name left to the slider to display '
+                                      'the sub-indicators',
+                                children=sub_indicator_table('grid')
                             ),
-                            daq.Slider(
-                                id='flex-rise-grid-input',
-                                className='cell medium-10 daq__slider',
-                                min=0,
-                                max=100,
-                                value=14,
-                                handleLabel={
-                                    "showCurrentValue": True, "label": "VALUE"},
-                                step=1,
-                            ),
-                        ]
-                    ),
-                    html.Div(
-                        id='flex-rise-mg-div',
-                        className='cell medium-4 grid-x',
-                        title='rise mg description',
-                        children=[
                             html.Div(
-                                id='flex-rise-label',
-                                className='cell medium-2',
-                                children='RISE-MG'
+                                id='flex-rise-sub-mg-div',
+                                className='cell medium-4 grid-x align-center',
+                                title='Click on the name left to the slider to display '
+                                      'the sub-indicators',
+                                children=sub_indicator_table('mg')
                             ),
-                            daq.Slider(
-                                id='flex-rise-mg-input',
-                                className='cell medium-10 daq__slider',
-                                min=0,
-                                max=100,
-                                value=67,
-                                handleLabel={
-                                    "showCurrentValue": True, "label": "VALUE"},
-                                step=1,
-                            ),
-                        ]
-                    ),
-                    html.Div(
-                        id='flex-rise-shs-div',
-                        className='cell medium-4 grid-x',
-                        title='rise shs description',
-                        children=[
                             html.Div(
-                                id='flex-rise-shs-label',
-                                className='cell medium-2',
-                                children='RISE-SHS'
-                            ),
-                            daq.Slider(
-                                id='flex-rise-shs-input',
-                                className='cell medium-10 daq__slider',
-                                min=0,
-                                max=100,
-                                value=14,
-                                handleLabel={
-                                    "showCurrentValue": True, "label": "VALUE"},
-                                step=1,
+                                id='flex-rise-sub-shs-div',
+                                className='cell medium-8 grid-x align-center',
+                                title='Click on the name left to the slider to display '
+                                      'the sub-indicators',
+                                children=sub_indicator_table('shs')
                             ),
                         ]
-                    ),
+                    )
                 ]
             )
         ),
-        html.Div(
-            id='flex-rise-sub-div',
-            className='cell',
-            children=html.Div(
-                className='grid-x',
-                children=[
-                    html.Div(
-                        id='flex-rise-sub-grid-div',
-                        className='cell medium-4 grid-x',
-                        title='rise grid description',
-                        children='Sub indicators GRID'
-                    ),
-                    html.Div(
-                        id='flex-rise-sub-mg-div',
-                        className='cell medium-4 grid-x',
-                        title='rise mg description',
-                        children='Sub indicators MG'
-                    ),
-                    html.Div(
-                        id='flex-rise-shs-div',
-                        className='cell medium-4 grid-x',
-                        title='rise shs description',
-                        children='Sub indicators SHS'
-                    ),
-                ]
-            )
-        )
     ]
 
     return divs
