@@ -1257,12 +1257,28 @@ def callbacks(app_handle):
     def update_results_info_div(scenario, country_iso, cur_data):
 
         divs = []
+        nigeria_desc = ''
+        nigeria_info = []
         if scenario in SCENARIOS and country_iso is not None:
             df = pd.read_json(cur_data[scenario])
-            pop_2017 = df.loc[df.country_iso == country_iso].pop_2017.values[0]
-            name = df.loc[df.country_iso == country_iso].country.values[0]
+            df = df.loc[df.country_iso == country_iso]
+            pop_2017 = np.round(df.pop_2017.values[0] * 1e-6, 2)
+            name = df.country.values[0]
             image_filename = 'icons/{}.png'.format(country_iso)
             encoded_image = base64.b64encode(open(image_filename, 'rb').read())
+
+            if country_iso == 'NGA':
+                nigeria_desc = 'Nigeria is a lower-middle income country located in West-Africa. Its current population is approximately 190 million people and for 2030 it is expected to grow to 264 million people. We estimated a current electrification rate of  63 % which leads to almost 100 people to be newly electrified until 2030.'
+
+                nigeria_info = [
+                    html.P(
+                        'Capital : Abuja'
+                    ),
+                    html.P(
+                        'Currency : Naira'
+                    )
+                ]
+
 
             divs = [
                 html.Div(
@@ -1276,17 +1292,21 @@ def callbacks(app_handle):
                         )
                     ],
                 ),
+                html.Div(children=nigeria_desc),
+                html.H4('Key indicators:'),
                 html.P(
-                    'Population (2017) : {} or whatever information we think '
-                    'pertinent to add information information information information information'
-                    'information information information information information information '
-                    'information information information information information information '
-                    'information information information information information information '
-                    'information information information information information information '
-                    'information information information'.format(pop_2017)),
+                    'Population (2017) : {} million people'.format(pop_2017)
+                ),
+                html.P(
+                    'Electrification rate (2017) : {}'.format(df.electrification_rate.values[0])
+                ),
+                html.P(
+                    'GDP (2017) : {} Billion USD'.format(df.gdp_per_capita.values[0])
+                ),
+
             ]
 
-        return divs
+        return divs + nigeria_info
 
     @app_handle.callback(
         Output('aggregate-info-div', 'children'),
