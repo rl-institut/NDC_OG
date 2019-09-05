@@ -196,7 +196,31 @@ def prepare_results_tables(df, sce=BAU_SCENARIO, result_category=POP_RES, ghg_er
 
 
 def compute_rise_shifts(rise, pop_get, opt, flag=''):
+    """Model to compute the shifts due to RISE indicators
+        Given:
 
+        $i \in $ (grid, mg, shs)
+
+        $N_i$ : predicted population getting option $i$ in 2030
+
+        $R_i$ : RISE score for the option $i$
+
+        Definitions:
+
+        $\delta_{ij} = R_i - R_j$
+
+        $\Delta N_i$ : what gets added or removed from $N_i$
+
+        $\Delta N_{ij}$ : what is taken from $N_i$ and is transferred to $N_j$
+
+        Constraint is that $\sum_j \Delta N_j$
+    :param rise: array/list of RISE score for grid, mg, shs, resp.
+    :param pop_get: array/list of endogenous population getting grid, mg, shs, resp.
+    :param opt: 0->grid, 1->mg, 2->shs
+    :param flag: if there is an error, this will be displayed in the error message (could be the
+    name of a country, of a specific value linked to a country for example)
+    :return: the shift in the endo population due to the rise indicator for the given opt
+    """
     df = pd.DataFrame(
         data=[rise, pop_get, [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
         columns=ELECTRIFICATION_OPTIONS)
@@ -210,27 +234,35 @@ def compute_rise_shifts(rise, pop_get, opt, flag=''):
     p = list(set(range(3)) - set([m, n]))[0]
     R_p = df.iloc[0, p]
 
-    # calulate n_i
-    df.iloc[2] = df.iloc[1] / df.iloc[1].sum()
+    if R_n == R_p and R_p == R_m:
+        # all RISE scores are equal
+        df.iloc[4] = 0
+    else:
 
-    Delta_n = (R_m - R_n) / 100
+        # calculate the shifts
+        df.iloc[2] = df.iloc[1] / df.iloc[1].sum()
 
-    df.iloc[4, n] = - df.iloc[1, n] * Delta_n
+        Delta_n = (R_m - R_n) / 100
 
-    norm = 0
-    for j in [m, p]:
-        delta_jn = (df.iloc[0, j] - df.iloc[0, n])
-        norm = norm + delta_jn
-        df.iloc[4, j] = np.abs(df.iloc[4, n]) * delta_jn
+        df.iloc[4, n] = - df.iloc[1, n] * Delta_n
 
-    df.iloc[4, [m, p]] = df.iloc[4, [m, p]] / norm
+        norm = 0
+        for j in [m, p]:
+            delta_jn = (df.iloc[0, j] - df.iloc[0, n])
+            norm = norm + delta_jn
+            df.iloc[4, j] = np.abs(df.iloc[4, n]) * delta_jn
 
-    # --------------------------------------------------------
+        df.iloc[4, [m, p]] = df.iloc[4, [m, p]] / norm
 
-    DeltaN_pm = df.iloc[1, p] * (R_m - R_p) / 100
+        # --------------------------------------------------------
 
-    df.iloc[4, p] = df.iloc[4, p] - DeltaN_pm
-    df.iloc[4, m] = df.iloc[4, m] + DeltaN_pm
+        # $\Delta N_{pm} =  N_p \frac{\delta_{mp}}{100}$
+        DeltaN_pm = df.iloc[1, p] * (R_m - R_p) / 100
+
+        # $\Delta N_{p} = \Delta N_{np} - \Delta N_{pm}$
+        df.iloc[4, p] = df.iloc[4, p] - DeltaN_pm
+        # $\Delta N_{m} = \Delta N_{nm} + \Delta N_{pm}$
+        df.iloc[4, m] = df.iloc[4, m] + DeltaN_pm
 
     df.iloc[7] = df.iloc[4] + df.iloc[1]
 
