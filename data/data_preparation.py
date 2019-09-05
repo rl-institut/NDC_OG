@@ -58,7 +58,7 @@ SCENARIOS = [BAU_SCENARIO, SE4ALL_SCENARIO, PROG_SCENARIO]
 # Names for display
 SCENARIOS_DICT = {
     BAU_SCENARIO: 'BaU',
-    SE4ALL_SCENARIO: 'SE4All',
+    SE4ALL_SCENARIO: 'uEA',
     PROG_SCENARIO: 'prOG',
 }
 SCENARIOS_DESCRIPTIONS = {
@@ -66,7 +66,7 @@ SCENARIOS_DESCRIPTIONS = {
         [html.H4('What it shows:'), '''The Business-as-Usual (BaU) scenario quantifies the number of new technology-specific electrifications (Grid Extension, Mini-Grids or Solar-Home Systems) until 2030 by projecting current business-as-usual growth rates into the future.''',
          html.H4('How it is obtained:'),  '''Regional projections of electrification rates and technologies are mapped to the country-level and modelled until 2030. The BaU scenario is based on the "New Policies" Scenario of the ''', html.A(children="international Energy Agency’s World Energy Outlook 2018", href='https://www.iea.org/weo2018/scenarios/'), '''. '''],
     SE4ALL_SCENARIO:
-        [html.H4('What it shows:'), '''The Sustainable-Energy-For-All (SE4ALL) scenario estimates the number of new technology-specific electrifications (Grid Extension, Mini-Grids or Solar-Home Systems) necessary to achieve the universal access goal until 2030. These estimations account for expected population growth rates and current infrastructure and current regulatory frameworks.''',
+        [html.H4('What it shows:'), '''The Universal-Energy-Access (uEA) scenario estimates the number of new technology-specific electrifications (Grid Extension, Mini-Grids or Solar-Home Systems) necessary to achieve the universal access goal until 2030. These estimations account for expected population growth rates and current infrastructure and current regulatory frameworks.''',
          html.H4('How it is obtained:'),  '''Existing datasets providing night lights, population densities and transmission grids are combined to estimate the number of people lacking access to electricity. Appropriate electrification options are determined based on the remoteness and density of neglected populations. In this way, the model estimates the share of people that remain to be electrified by either Grid Extension, Mini-Grid deployment or Solar-Home-System adoption until 2030.''',
          '''The GIS based estimates are further refined by accounting for (the lack of) favourable technology-specific frameworks through the integration of ''', html.A(children="ESMAP’s RISE Indicators", href='https://rise.esmap.org/'), ''' into the model’s calculations. '''],
     PROG_SCENARIO:
