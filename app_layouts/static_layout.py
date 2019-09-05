@@ -148,6 +148,7 @@ layout = go.Layout(
         lakecolor='rgb(255, 255, 255)',
         projection=dict(type='orthographic'),
     ),
+    # south america
     geo2=go.layout.Geo(
         bgcolor=APP_BG_COLOR,
         scope='world',
@@ -157,6 +158,18 @@ layout = go.Layout(
         projection=dict(type='equirectangular'),
         lonaxis=dict(range=[-95, -30.0]),
         lataxis=dict(range=[-60, 30]),
+        framewidth=0,
+    ),
+    # asia
+    geo3=go.layout.Geo(
+        bgcolor=APP_BG_COLOR,
+        scope='world',
+        showlakes=True,
+        showcountries=True,
+        lakecolor='rgb(255, 255, 255)',
+        projection=dict(type='equirectangular'),
+        lonaxis=dict(range=[25, -170]),
+        lataxis=dict(range=[-15, 90]),
         framewidth=0,
     )
 )
@@ -1042,6 +1055,9 @@ def callbacks(app_handle):
         if region_id == 'SA':
             region_name = REGIONS_GPD[WORLD_ID]
             geo = 'geo2'
+        elif region_id == 'AS':
+            region_name = REGIONS_GPD[region_id]
+            geo = 'geo3'
         else:
             region_name = REGIONS_GPD[region_id]
             geo = 'geo'
