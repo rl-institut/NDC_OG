@@ -196,7 +196,31 @@ def prepare_results_tables(df, sce=BAU_SCENARIO, result_category=POP_RES, ghg_er
 
 
 def compute_rise_shifts(rise, pop_get, opt, flag=''):
+    """Model to compute the shifts due to RISE indicators
+        Given:
 
+        $i \in $ (grid, mg, shs)
+
+        $N_i$ : predicted population getting option $i$ in 2030
+
+        $R_i$ : RISE score for the option $i$
+
+        Definitions:
+
+        $\delta_{ij} = R_i - R_j$
+
+        $\Delta N_i$ : what gets added or removed from $N_i$
+
+        $\Delta N_{ij}$ : what is taken from $N_i$ and is transferred to $N_j$
+
+        Constraint is that $\sum_j \Delta N_j$
+    :param rise: array/list of RISE score for grid, mg, shs, resp.
+    :param pop_get: array/list of endogenous population getting grid, mg, shs, resp.
+    :param opt: 0->grid, 1->mg, 2->shs
+    :param flag: if there is an error, this will be displayed in the error message (could be the
+    name of a country, of a specific value linked to a country for example)
+    :return: the shift in the endo population due to the rise indicator for the given opt
+    """
     df = pd.DataFrame(
         data=[rise, pop_get, [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
         columns=ELECTRIFICATION_OPTIONS)
