@@ -20,10 +20,13 @@ Here is a template for new release sections
 
 ### Added
 
-- Specific description for Nigeria
+- Specific description for Nigeria (#63)
+- Link for Greenwerk (#64)
  
 ### Changed
 
+- Display electrification rate in % (#64)
+- Instruction in README (#64)
 
 ## [1.0.0] 2019-09-05
 
