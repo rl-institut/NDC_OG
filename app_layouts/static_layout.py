@@ -148,6 +148,7 @@ layout = go.Layout(
         lakecolor='rgb(255, 255, 255)',
         projection=dict(type='orthographic'),
     ),
+    # south america
     geo2=go.layout.Geo(
         bgcolor=APP_BG_COLOR,
         scope='world',
@@ -157,6 +158,18 @@ layout = go.Layout(
         projection=dict(type='equirectangular'),
         lonaxis=dict(range=[-95, -30.0]),
         lataxis=dict(range=[-60, 30]),
+        framewidth=0,
+    ),
+    # asia
+    geo3=go.layout.Geo(
+        bgcolor=APP_BG_COLOR,
+        scope='world',
+        showlakes=True,
+        showcountries=True,
+        lakecolor='rgb(255, 255, 255)',
+        projection=dict(type='equirectangular'),
+        lonaxis=dict(range=[25, -170]),
+        lataxis=dict(range=[-15, 90]),
         framewidth=0,
     )
 )
@@ -1042,6 +1055,9 @@ def callbacks(app_handle):
         if region_id == 'SA':
             region_name = REGIONS_GPD[WORLD_ID]
             geo = 'geo2'
+        elif region_id == 'AS':
+            region_name = REGIONS_GPD[region_id]
+            geo = 'geo3'
         else:
             region_name = REGIONS_GPD[region_id]
             geo = 'geo'
@@ -1060,32 +1076,39 @@ def callbacks(app_handle):
         if scenario == BAU_SCENARIO:
             z = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
             z[NO_ACCESS] = 1 - z.sum(axis=1)
+            options = ELECTRIFICATION_OPTIONS + [NO_ACCESS]
 
         else:
             z = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
             z[NO_ACCESS] = 0
+            options = ELECTRIFICATION_OPTIONS
         n = 4
         colors = BARPLOT_ELECTRIFICATION_COLORS
         show_legend = True
-        for idx, c in centroid.iterrows():
 
-            for j, opt in enumerate(ELECTRIFICATION_OPTIONS + [NO_ACCESS]):
-                points.append(
-                    go.Scattergeo(
-                        lon=[c['Longitude']],
-                        lat=[c['Latitude']],
-                        hoverinfo='skip',
-                        marker=go.scattergeo.Marker(
-                            size=z.iloc[i, j:n].sum() * 25,
-                            color=colors[opt],
-                            line=go.scattergeo.marker.Line(width=0)
-                        ),
-                        showlegend=show_legend,
-                        legendgroup='group{}'.format(j),
-                        name=ELECTRIFICATION_DICT[opt],
-                        geo=geo
+        # Populate the map with bar plots mapped onto circles
+        for idx, c in centroid.iterrows():
+            for j, opt in enumerate(options):
+                if j == n-1 and z.iloc[i, j] == 0:
+                    # Otherwise points with radius of 0 are displayed with non zero radius
+                    pass
+                else:
+                    points.append(
+                        go.Scattergeo(
+                            lon=[c['Longitude']],
+                            lat=[c['Latitude']],
+                            hoverinfo='skip',
+                            marker=go.scattergeo.Marker(
+                                size=z.iloc[i, j:n].sum() * 25,
+                                color=colors[opt],
+                                line=go.scattergeo.marker.Line(width=0)
+                            ),
+                            showlegend=show_legend,
+                            legendgroup='group{}'.format(j),
+                            name=ELECTRIFICATION_DICT[opt],
+                            geo=geo
+                        )
                     )
-                )
             show_legend = False
             i = i + 1
 
