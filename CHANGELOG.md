@@ -27,6 +27,7 @@ Here is a template for new release sections
 
 - Display electrification rate in % (#64)
 - Instruction in README (#64)
+- SE4ALL to uEA (#65)
 
 ## [1.0.0] 2019-09-05
 
