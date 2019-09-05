@@ -22,6 +22,8 @@ Here is a template for new release sections
 
 - Specific description for Nigeria (#63)
 - Link for Greenwerk (#64)
+- Avoid plotting points which have 0% no electricity access (#67)
+- Scope for Asia (#67)
  
 ### Changed
 
