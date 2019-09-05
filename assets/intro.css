@@ -1,0 +1,16 @@
+#intro-div{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.framed {
+    border: solid 1px black;
+}
+
+.intro__link{
+    align-content: center;
+    border: solid 1px black;
+    border-radius: 5px;
+    padding: 5px
+}

@@ -1,44 +1,189 @@
-.app {
-    font-family: 'Open Sans', sans-serif;
-    padding: 5px;
-    height: calc(100vh - 65px);
-    display: flex;
+body {
+    background-color: #FFF;
 }
 
-.app__container {
-    width: 50%;
-    padding: 5px;
-    border: solid 1px #E8F0F9;
-    border-radius:4px;
-    display: flex;
-    flex-direction: column;
+#header-content {
+    text-align: center;
 }
 
-.app__input {
+#header-content h1 {
+    font-size: 1.25rem;
+    margin-bottom: 0;
+}
+
+#header-content h2 {
+    font-size: 2rem;
+    font-weight: 300;
+    margin-top: .5rem;
+    margin-bottom: 2rem;
+}
+
+#intro-text-div {
+    padding-top: 3rem;
+    padding-bottom: 2rem;
+}
+
+#intro-description-content,
+#intro-about-content {
+    padding: .75rem 1.5rem 1.5rem;
+}
+
+
+
+#intro-disclaimer-wrap {
+    background-color: #EFEFEF;
+    padding-top: 3rem;
+    padding-bottom: 2rem;
+}
+
+#intro-disclaimer-div {
+    text-align: center;
+    font-size: .875rem;
+    padding-top: 1rem;
+    background-color: #EFEFEF;
+}
+
+#back-intro-link{
+  position: absolute;
+  top: 217.8px;
+  right: 5px;
+}
+
+.intro-link-div {
+    text-align: center;
+}
+
+.intro-link-div a {
+    width: 12rem;
+}
+
+#footer-div {
+    padding-top: 2rem;
+    text-align: center;
+}
+
+.footer-logo {
+    display: inline-block;
+    width: 9rem;
+    padding-left: 2rem;
+}
+
+#right-header-div {
+    padding-top: 1.5rem;
+}
+
+#flex-right-header-div {
+    padding-top: 1.5rem;
+}
+
+#map {
+    padding-top: 3rem;
+}
+
+._dash-undo-redo {
+  display: none;
+}
+
+.app_style {
+    font-family: inherit;
+    //padding: 5px;
+    //height: calc(100vh - 65px);
+    //display: flex;
+    //justify-content: space-evenly;
+    background: #FFFFFF;
+}
+
+.header_style {
+    background: #333333;
+    color: #FFFFFF;
+}
+
+.country_info_style {
+    margin-top: 40px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    border: solid 2px #333333;
+    padding: 40px;
+}
+
+
+.results_style {
+    margin-top: 40px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    border: solid 2px #333333;
+    padding: 40px;
+}
+
+.results_style h3 {
+    text-align: center;
+}
+
+
+#flex-rise-sub-indicators-div{
+    margin-top: 40px;
+    justify-content: center;
+    border-radius: 10px;
+    border: solid 2px #333333;
+    padding: 40px;
+}
+
+.rise_sub__dropdown{
+    width: 80%;
+    justify-content: center;
+//background-color: green;
+}
+
+.scenario__info {
+    border-radius: 10px;
+    padding: 40px;
+    margin-left: 20px;
+    margin-right: 20px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    text-align: justify;
+    background: #333333;
+    //background: #002E4F;
+    color: #FFFFFF;
+}
+
+
+.app__checkbox {
+    padding: 0px 5px 0px;
     //border: solid 2px #E8F0F9;
-    display: flex;
-    flex-direction: row;
-    align-items: center
 }
 
-.app__input__slider {
-    //border: solid 2px #E8F0F9;
-    display: flex;
-    flex-direction: row;
-    padding-top:45px;
+.daq__slider{
+    vertical-align: center;
+    border: solid 2px red;
+    width: 100%;
+    padding-left: 2%;
+    padding-right: 2%;
+    margin-top: 30px;
+//height: 100%;
+//    padding-top: 20%;
+//    padding-bottom: 20%;
+
+
 }
 
-.app__input__label{
-    padding-left: 15px;
-    width: 100px;
+.daq__slider__label{
+    padding: 20px;
+    //padding-right: 20px;
+    border-radius: 5px;
+    border: solid 1px #333333;
+    text-align: center;
 }
 
-#senario-input {
-    width: 150px;
+.daq__slider__value{
+    padding: 20px;
+    border-radius: 5px;
+    border: solid 1px #333333;
+    text-align: center;
 }
 
-
-#piechart-div{
-    height: 25%;
-    border: solid 1px #E8F0F9;
+.country__results h4,
+.aggregate__results h4,
+.compare__results h4{
+    text-align: center;
 }
