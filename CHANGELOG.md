@@ -24,7 +24,8 @@ Here is a template for new release sections
 - Link for Greenwerk (#64)
 - Avoid plotting points which have 0% no electricity access (#67)
 - Scope for Asia (#67)
- 
+- Citation in intro (#72)
+
 ### Changed
 
 - Display electrification rate in % (#64)

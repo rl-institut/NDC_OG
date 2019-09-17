@@ -871,9 +871,7 @@ def ghg_dropdown_options_callback(app_handle, result_type):
     def update_barplot(scenario):
         answer = []
         if scenario in SCENARIOS:
-            table_rows = TABLE_ROWS[GHG_ER_RES]
-            if scenario == BAU_SCENARIO:
-                table_rows = TABLE_ROWS[GHG_RES]
+            table_rows = TABLE_ROWS[GHG_RES]
             answer = [{'label': r, 'value': r} for r in table_rows]
         return answer
 

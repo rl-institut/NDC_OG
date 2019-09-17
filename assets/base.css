@@ -24,7 +24,8 @@ body {
 }
 
 #intro-description-content,
-#intro-about-content {
+#intro-about-content,
+#intro-citation-content {
     padding: .75rem 1.5rem 1.5rem;
 }
 

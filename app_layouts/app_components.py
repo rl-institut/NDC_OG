@@ -50,8 +50,8 @@ POP_ROWS = [
 ]
 
 INVEST_ROWS = [
-    'Lower TIER cost',
-    'Higher TIER cost',
+    'Lower TIER case',
+    'Higher TIER case',
 ]
 
 GHG_ROWS = [
@@ -79,9 +79,9 @@ TABLE_ROWS_TOOLTIPS = {
     'HH demand (MW)': 'Expected household electricity demand by 2030, in MW',
     'HH demand (TIER + 1) (MW)':
         'Expected household electricity demand by 2030 for one TIER level up, in MW',
-    'Lower TIER cost':
+    'Lower TIER case':
         'Needed initial investments to supply expected demand by 2030, in million USD',
-    'Higher TIER cost':
+    'Higher TIER case':
         'Needed initial investments to supply expected demand by 2030 for one TIER level up, '
         'in million USD',
     'Lower TIER': '1',

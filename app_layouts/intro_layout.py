@@ -23,6 +23,11 @@ about_content = [
     html.P('UNDERSTAND how (the lack of) favourable technology-specific frameworks can alter electrification scenarios.'),
 ]
 
+citation_content = [
+    html.H3('Citation'),
+    html.P('Here goes the instruction for citation'),
+]
+
 layout = html.Div(
     id='intro-div',
     className='grid-x',
@@ -42,10 +47,19 @@ layout = html.Div(
                             children=description_content,
                         ),
                         html.Div(
-                            id='intro-about-content',
                             className='cell medium-10 large-5',
-                            children=about_content
-                        ),
+                            children=[
+                                html.Div(
+                                    id='intro-about-content',
+                                    children=about_content
+                                ),
+                                html.Div(
+                                    id='intro-citation-content',
+                                    children=citation_content
+                                ),
+                            ],
+                        )
+
                     ]
                 )
             ]
@@ -63,7 +77,7 @@ layout = html.Div(
                                 dcc.Link(
                                     id='intro-link-static',
                                     className='btn btn-cta',
-                                    children='Start tour',
+                                    children='Static results',
                                     href='/{}/{}'.format(URL_BASEPATH, static_layout.URL_PATHNAME)
                                 )
                             ]
@@ -74,7 +88,7 @@ layout = html.Div(
                                 dcc.Link(
                                     id='intro-link-flex',
                                     className='btn btn--hollow',
-                                    children='Advanced',
+                                    children='Create your own scenario',
                                     href='/{}/{}'.format(URL_BASEPATH, flex_layout.URL_PATHNAME)
                                 )
                             ]
