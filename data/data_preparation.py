@@ -132,6 +132,9 @@ RISE_INDICES = ['rise_%s' % opt for opt in ELECTRIFICATION_OPTIONS]
 
 RISE_SUB_INDICATORS = pd.read_csv('data/RISE_indicators.csv').set_index('indicator')
 
+# take inverse fraction instead of percent
+RISE_SUB_INDICATORS.score_count_yes = round(100 / RISE_SUB_INDICATORS.score_count_yes)
+
 RISE_SUB_INDICATOR_STRUCTURE = {}
 for opt in ELECTRIFICATION_OPTIONS:
     RISE_SUB_INDICATOR_STRUCTURE[opt] = []

@@ -25,6 +25,7 @@ Here is a template for new release sections
 - Avoid plotting points which have 0% no electricity access (#67)
 - Scope for Asia (#67)
 - Citation in intro (#72)
+- RISE sub indicators (#73)
 
 ### Changed
 
@@ -33,6 +34,8 @@ Here is a template for new release sections
 - SE4ALL to uEA (#65)
 - Fixed the case where all RISE score are equal to return no shift from baseline (#66)
 
+### Removed
+- TIER controls (#73)
 ## [1.0.0] 2019-09-05
 
 First release
