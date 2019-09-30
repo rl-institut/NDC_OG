@@ -254,6 +254,10 @@ def results_div(result_type, result_category, flex_case=''):
             value=table_rows[0],
         ),
         barplot,
+        html.H3(
+            id='{}-results-table-title'.format(id_name),
+            children='Detailed results for scenario'
+        ),
         dash_table.DataTable(
             id='{}-results-table'.format(id_name),
             columns=columns_ids,

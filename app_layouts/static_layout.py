@@ -963,6 +963,38 @@ def compare_title_callback(app_handle, result_category):
     return update_title
 
 
+def table_title_callback(app_handle, result_type, result_category):
+
+    id_name = '{}-{}'.format(result_type, result_category)
+
+    if result_type == RES_COUNTRY:
+        inputs = [Input('country-input', 'value')]
+    elif result_type == RES_AGGREGATE:
+        inputs = [Input('region-input', 'value')]
+    elif result_type == RES_COMPARE:
+        inputs = [Input('compare-input', 'value')]
+
+    inputs.append(Input('scenario-input', 'value'))
+
+    @app_handle.callback(
+        Output('{}-results-table-title'.format(id_name), 'children'),
+        inputs,
+    )
+    def update_title(input_trigger, scenario):
+
+        answer='Detailed results'
+        if scenario in SCENARIOS and input_trigger is not None:
+            answer = 'Detailed Results for {} ({}) Scenario'.format(
+                SCENARIOS_NAMES[scenario],
+                SCENARIOS_DICT[scenario]
+            )
+
+        return answer
+
+    update_title.__name__ = 'update_%s_title' % id_name
+    return update_title
+
+
 def toggle_results_div_callback(app_handle, result_type, result_category):
 
     id_name = '{}-{}'.format(result_type, result_category)
@@ -1001,6 +1033,7 @@ def toggle_results_div_callback(app_handle, result_type, result_category):
 
 def callbacks(app_handle):
 
+    # build callbacks automatically for various categories
     for res_cat in [POP_RES, INVEST_RES, GHG_RES]:
 
         country_barplot_callback(app_handle, res_cat)
@@ -1020,6 +1053,7 @@ def callbacks(app_handle):
 
         for res_type in [RES_COUNTRY, RES_AGGREGATE, RES_COMPARE]:
             toggle_results_div_callback(app_handle, res_type, res_cat)
+            table_title_callback(app_handle, res_type, res_cat)
 
     for res_type in [RES_COUNTRY, RES_AGGREGATE, RES_COMPARE]:
         ghg_dropdown_options_callback(app_handle, res_type)
