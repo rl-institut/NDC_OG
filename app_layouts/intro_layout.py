@@ -77,9 +77,10 @@ layout = html.Div(
                                 dcc.Link(
                                     id='intro-link-static',
                                     className='btn btn-cta',
-                                    children='Static results',
+                                    children='Explore Scenarios',
                                     href='/{}/{}'.format(URL_BASEPATH, static_layout.URL_PATHNAME)
-                                )
+                                ),
+                                html.P('Compare the results for different scenarios')
                             ]
                         ),
                         html.Div(
@@ -88,9 +89,10 @@ layout = html.Div(
                                 dcc.Link(
                                     id='intro-link-flex',
                                     className='btn btn--hollow',
-                                    children='Create your own scenario',
+                                    children='Create Scenarios',
                                     href='/{}/{}'.format(URL_BASEPATH, flex_layout.URL_PATHNAME)
-                                )
+                                ),
+                                html.P('Vary model parameters to create your own scenario')
                             ]
                         ),
                         html.Div(
