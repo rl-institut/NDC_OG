@@ -653,7 +653,7 @@ def compare_barplot_callback(app_handle, result_category):
             ref_results_data = prepare_results_tables(df_ref, scenario, result_category)
             comp_results_data = prepare_results_tables(df_comp, scenario, result_category)
 
-            x = ELECTRIFICATION_OPTIONS + [NO_ACCESS]
+            x = [opt.upper() for opt in ELECTRIFICATION_OPTIONS] + [NO_ACCESS]
             y_ref = ref_results_data[idx_y]
             y_comp = comp_results_data[idx_y]
 

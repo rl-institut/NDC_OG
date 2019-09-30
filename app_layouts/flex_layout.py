@@ -292,11 +292,11 @@ def result_title_callback(app_handle, result_category):
     id_name = 'flex-{}-{}'.format(RES_COMPARE, result_category)
 
     if result_category == POP_RES:
-        description = 'electrification mix {}'
+        description = 'Electrification Mix {}'
     elif result_category == INVEST_RES:
-        description = 'initial investments needed {} (in billion USD)'
+        description = 'Initial Investments Needed {} (in billion USD)'
     else:
-        description = 'cumulated GHG emissions (2017-2030) {} (in million tons CO2)'
+        description = 'Cumulated GHG Emissions (2017-2030) {} (in million tons CO2)'
 
     @app_handle.callback(
         Output('{}-results-title'.format(id_name), 'children'),
@@ -311,7 +311,7 @@ def result_title_callback(app_handle, result_category):
         answer = 'Results'
         if scenario in SCENARIOS and country_iso is not None:
             country = cur_data.get('country_name')
-            answer = '{}: comparison of {}'.format(
+            answer = '{}: Comparison of {}'.format(
                 country,
                 description.format(
                     'between {} and {} scenarios'.format(
@@ -365,7 +365,7 @@ def compare_barplot_callback(app_handle, result_category):
             )
             comp_results_data = prepare_results_tables(df_comp, scenario, result_category)
 
-            x = ELECTRIFICATION_OPTIONS + [NO_ACCESS]
+            x = [opt.upper() for opt in ELECTRIFICATION_OPTIONS] + [NO_ACCESS]
             y_flex = flex_results_data[idx_y]
             y_comp = comp_results_data[idx_y]
 
@@ -376,7 +376,7 @@ def compare_barplot_callback(app_handle, result_category):
                     go.Bar(
                         x=x,
                         y=y_flex,
-                        text=[SE4ALL_FLEX_SCENARIO for i in range(4)],
+                        text=[FLEX_SCENARIO_NAME for i in range(4)],
                         name=SE4ALL_FLEX_SCENARIO,
                         showlegend=False,
                         insidetextfont={'size': fs},
@@ -389,7 +389,7 @@ def compare_barplot_callback(app_handle, result_category):
                     go.Bar(
                         x=x,
                         y=y_comp,
-                        text=[scenario for i in range(4)],
+                        text=[SCENARIOS_DICT[scenario] for i in range(4)],
                         name=scenario,
                         showlegend=False,
                         insidetextfont={'size': fs},
