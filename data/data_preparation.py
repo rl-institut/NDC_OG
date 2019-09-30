@@ -55,11 +55,18 @@ SE4ALL_FLEX_SCENARIO = 'uEA_flex'
 PROG_SCENARIO = 'prog'
 SCENARIOS = [BAU_SCENARIO, SE4ALL_SCENARIO, PROG_SCENARIO]
 
-# Names for display
+# Names for short display
 SCENARIOS_DICT = {
     BAU_SCENARIO: 'BaU',
     SE4ALL_SCENARIO: 'uEA',
     PROG_SCENARIO: 'prOG',
+}
+
+# Names for long display
+SCENARIOS_NAMES = {
+    BAU_SCENARIO: 'Business-as-Usual',
+    SE4ALL_SCENARIO: 'Universal-Energy-Access',
+    PROG_SCENARIO: 'Progressive-Off-Grid',
 }
 SCENARIOS_DESCRIPTIONS = {
     BAU_SCENARIO:

@@ -15,6 +15,7 @@ from data.data_preparation import (
     SE4ALL_SCENARIO,
     SE4ALL_FLEX_SCENARIO,
     SCENARIOS_DICT,
+    SCENARIOS_NAMES,
     ELECTRIFICATION_OPTIONS,
     NO_ACCESS,
     RISE_INDICES,
@@ -219,8 +220,14 @@ layout = html.Div(
                                                 children=dcc.Dropdown(
                                                     id='flex-scenario-input',
                                                     options=[
-                                                        {'label': v, 'value': k}
-                                                        for k, v in SCENARIOS_DICT.items()
+                                                        {
+                                                            'label': '{} ({})'.format(
+                                                                SCENARIOS_NAMES[k],
+                                                                SCENARIOS_DICT[k]
+                                                            ),
+                                                            'value': k
+                                                        }
+                                                        for k in SCENARIOS
                                                     ],
                                                     value=BAU_SCENARIO,
                                                 )
