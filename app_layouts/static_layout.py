@@ -891,11 +891,11 @@ def country_aggregate_title_callback(app_handle, result_type, result_category):
     inputs.append(Input('scenario-input', 'value'))
 
     if result_category == POP_RES:
-        description = 'electrification mix - scenario {}'
+        description = 'Electrification Mix'
     elif result_category == INVEST_RES:
-        description = 'initial investments needed (in billion USD) - scenario {}'
+        description = 'Initial Investments Needed (in billion USD)'
     else:
-        description = 'cumulated GHG emissions (2017-2030) (in million tons CO2) - scenario {}'
+        description = 'Cumulated GHG Emissions (2017-2030) (in million tons CO2)'
 
     @app_handle.callback(
         Output('{}-results-title'.format(id_name), 'children'),
@@ -910,7 +910,7 @@ def country_aggregate_title_callback(app_handle, result_type, result_category):
                 df = pd.read_json(cur_data[scenario])
                 answer = '{}: '.format(df.loc[df.country_iso == input_trigger].country.values[0])
             elif result_type == RES_AGGREGATE:
-                answer = '{}: aggregated '.format(
+                answer = '{}: Aggregated '.format(
                     REGIONS_GPD[input_trigger]
                 )
         return '{}{}'.format(answer, description.format(SCENARIOS_DICT[scenario]))
@@ -924,11 +924,11 @@ def compare_title_callback(app_handle, result_category):
     id_name = '{}-{}'.format(RES_COMPARE, result_category)
 
     if result_category == POP_RES:
-        description = 'electrification mix {} - scenario {}'
+        description = 'Electrification Mix {}'
     elif result_category == INVEST_RES:
-        description = 'initial investments needed {} (in billion USD) - scenario {}'
+        description = 'Initial Investments needed {} (in billion USD)'
     else:
-        description = 'cumulated GHG emissions (2017-2030) {} (in million tons CO2) - scenario {}'
+        description = 'Cumulated GHG Emissions (2017-2030) {} (in million tons CO2)'
 
     @app_handle.callback(
         Output('{}-results-title'.format(id_name), 'children'),

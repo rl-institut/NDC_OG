@@ -44,9 +44,9 @@ TABLES_HEADER_STYLING = {
 }
 
 POP_ROWS = [
-    'People share',
+    'Share of People',
     'People (Mio)',
-    'HH (Mio)',
+    'Household (Mio)',
 ]
 
 INVEST_ROWS = [
@@ -73,9 +73,9 @@ TABLE_ROWS = {
 }
 
 TABLE_ROWS_TOOLTIPS = {
-    'People share': 'Percentage of people getting electricity access by 2030',
+    'Share of People': 'Percentage of people getting electricity access by 2030',
     'People (Mio)': 'Number of people getting electricity access by 2030',
-    'HH (Mio)': 'Number of households getting electricity access by 2030',
+    'Household (Mio)': 'Number of households getting electricity access by 2030',
     'HH demand (MW)': 'Expected household electricity demand by 2030, in MW',
     'HH demand (TIER + 1) (MW)':
         'Expected household electricity demand by 2030 for one TIER level up, in MW',
@@ -186,10 +186,10 @@ def results_div(result_type, result_category, flex_case=''):
                 go.Bar(
                     x=x_vals,
                     y=[0, 0, 0],
-                    name=y_opt,
-                    text=y_opt,
-                    insidetextfont={'size': fs},
-                    textposition='auto',
+                    name=y_opt.upper(),
+                    text=y_opt.upper(),
+                    insidetextfont={'size': fs, 'color': 'white'},
+                    textposition='inside',
                     marker=dict(
                         color=BARPLOT_ELECTRIFICATION_COLORS[y_opt],
                     ),

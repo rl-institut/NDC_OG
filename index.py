@@ -29,12 +29,12 @@ app.layout = html.Div(
                     children=[
                         html.H1(
                             className='cell',
-                            children='NDC Off-Grid alternatives'
+                            children='NDC Off-Grid Alternatives'
                         ),
                         html.H2(
                             className='cell large-6',
-                            children='Visualization of New Electrification Scenarios by 2030 and '
-                                     'the Relevance of Off-Grid Components in the NDCs',
+                            children='The Off-Grid Renewable Energy Tool: Visualization of '
+                                     'Electrification Scenarios until 2030',
                         ),
                     ]
                 ),
