@@ -266,7 +266,7 @@ layout = html.Div(
                                                         {'label': v, 'value': k}
                                                         for k, v in REGIONS_GPD.items()
                                                     ],
-                                                    value=None
+                                                    value=WORLD_ID
                                                 )
                                             ),
                                         ]
