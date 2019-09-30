@@ -913,7 +913,7 @@ def country_aggregate_title_callback(app_handle, result_type, result_category):
                 answer = '{}: Aggregated '.format(
                     REGIONS_GPD[input_trigger]
                 )
-        return '{}{}'.format(answer, description.format(SCENARIOS_DICT[scenario]))
+        return '{}{}'.format(answer, description)
 
     update_title.__name__ = 'update_%s_title' % id_name
     return update_title
@@ -953,8 +953,7 @@ def compare_title_callback(app_handle, result_category):
                     'between {} and {}'.format(
                         df.loc[df.country_iso == country_iso].country.values[0],
                         comp_name
-                    ),
-                    SCENARIOS_DICT[scenario]
+                    )
                 )
             )
         return answer
