@@ -14,6 +14,7 @@ from data.data_preparation import (
     BAU_SCENARIO,
     SE4ALL_SCENARIO,
     SE4ALL_FLEX_SCENARIO,
+    FLEX_SCENARIO_NAME,
     SCENARIOS_DICT,
     SCENARIOS_NAMES,
     ELECTRIFICATION_OPTIONS,
@@ -65,6 +66,7 @@ REGIONS_NDC = dict(WD=['LA', 'SSA', 'DA'], SA='LA', AF='SSA', AS='DA')
 VIEW_COUNTRY_SELECT = 'country'
 VIEW_CONTROLS = 'general'
 VIEW_COMPARE = 'compare'
+
 
 # A dict with the data for each scenario in json format
 SCENARIOS_DATA = {
@@ -315,7 +317,7 @@ def result_title_callback(app_handle, result_category):
                 country,
                 description.format(
                     'between {} and {} scenarios'.format(
-                        'Flex',
+                        FLEX_SCENARIO_NAME,
                         SCENARIOS_DICT[scenario]
                     )
                 )
@@ -324,6 +326,26 @@ def result_title_callback(app_handle, result_category):
 
     flex_update_title.__name__ = 'flex_update_%s_title' % id_name
     return flex_update_title
+
+
+def table_title_callback(app_handle, result_category):
+
+    id_name = 'flex-{}-{}'.format(RES_COMPARE, result_category)
+
+    @app_handle.callback(
+        Output('{}-results-table-title'.format(id_name), 'children'),
+        [Input('flex-scenario-input', 'value')],
+    )
+    def update_title(scenario):
+
+        answer = 'Detailed results'
+        if scenario in SCENARIOS:
+            answer = 'Detailed Results'
+
+        return answer
+
+    update_title.__name__ = 'update_%s_title' % id_name
+    return update_title
 
 
 def compare_barplot_callback(app_handle, result_category):
@@ -501,7 +523,7 @@ def compare_table_columns_title_callback(app_handle, result_category):
     def flex_update_table_columns_title(scenario):
         columns_ids = []
         if scenario is not None:
-            flex_sce = 'Flex'
+            flex_sce = FLEX_SCENARIO_NAME
             comp_sce = SCENARIOS_DICT[scenario]
             for col in TABLE_COLUMNS_ID:
                 if col != 'labels':
@@ -716,6 +738,7 @@ def callbacks(app_handle):
         compare_table_columns_title_callback(app_handle, res_cat)
         compare_table_styling_callback(app_handle, res_cat)
         toggle_results_div_callback(app_handle, res_cat)
+        table_title_callback(app_handle, res_cat)
 
     for opt in ELECTRIFICATION_OPTIONS:
         rise_slider_callback(app_handle, opt)
