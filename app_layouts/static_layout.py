@@ -662,6 +662,13 @@ def compare_barplot_callback(app_handle, result_category):
 
             comp_txt = [comp_iso for i in range(4)]
 
+            if result_cat == INVEST_RES:
+                x = x[:-1]
+                y_ref = y_ref[:-1]
+                y_comp = y_comp[:-1]
+                country_txt = country_txt[:-1]
+                comp_txt = comp_txt[:-1]
+
             fs = 12
 
             fig.update(
