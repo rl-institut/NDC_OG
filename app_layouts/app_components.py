@@ -257,9 +257,20 @@ def results_div(result_type, result_category, flex_case=''):
         print('error in the result type in results_div()')
 
     results_div_content = [
-        html.H3(
-            id='{}-results-title'.format(id_name),
-            children='Results'
+        html.Div(
+            className='grid-x',
+            children =[
+                html.H3(
+                    id='{}-results-title'.format(id_name),
+                    children='Results',
+                    className='cell medium-6'
+                ),
+                html.I(
+                    children='? Icon',
+                    title='Hover text',
+                    className='cell medium-2'
+                )
+            ]
         ),
         dcc.Dropdown(
             id='{}-barplot-yaxis-input'.format(id_name),
@@ -267,9 +278,22 @@ def results_div(result_type, result_category, flex_case=''):
             value=table_rows[0],
         ),
         barplot,
-        html.H3(
-            id='{}-results-table-title'.format(id_name),
-            children='Detailed results for scenario'
+        html.Div(
+            className='grid-x',
+            children=[
+                html.H3(
+                    id='{}-results-table-title'.format(id_name),
+                    children='Detailed results for scenario',
+                    className='cell medium-6'
+
+                ),
+                html.I(
+                    children='? Icon',
+                    title='Hover text',
+                    className='cell medium-2'
+
+                )
+            ]
         ),
         dash_table.DataTable(
             id='{}-results-table'.format(id_name),
