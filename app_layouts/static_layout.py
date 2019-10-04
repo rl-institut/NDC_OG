@@ -1362,8 +1362,9 @@ def callbacks(app_handle):
                     'Population (2017) : {} million people'.format(pop_2017)
                 ),
                 html.P(
-                    'Electrification rate (2017) : {}%'.format(df.electrification_rate.values[
-                                                                   0]*100)
+                    'Electrification rate (2017) : {}'.format(
+                        format_percent(df.electrification_rate.values[0] * 100)
+                    )
                 ),
                 html.P(
                     'GDP (2017) : {} Billion USD'.format(df.gdp_per_capita.values[0])
