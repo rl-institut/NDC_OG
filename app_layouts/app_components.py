@@ -117,7 +117,12 @@ BARPLOT_ELECTRIFICATION_COLORS = {
     NO_ACCESS: '#a6a6a6'
 }
 
-BARPLOT_YAXIS_OPT = ELECTRIFICATION_OPTIONS.copy() + [NO_ACCESS]
+BARPLOT_YAXIS_OPT = {
+    POP_RES: ELECTRIFICATION_OPTIONS.copy() + [NO_ACCESS],
+    INVEST_RES: ELECTRIFICATION_OPTIONS.copy(),
+    GHG_RES: ELECTRIFICATION_OPTIONS.copy() + [NO_ACCESS],
+    GHG_ER_RES: ELECTRIFICATION_OPTIONS.copy() + [NO_ACCESS],
+}
 
 
 def round_digits(val):
@@ -190,6 +195,8 @@ def results_div(result_type, result_category, flex_case=''):
     x_vals = [SCENARIOS_DICT[sce] for sce in SCENARIOS]
     fs = 15
 
+    barplot_yaxis_opt = BARPLOT_YAXIS_OPT[result_category]
+
     # add a barplot above the tables with the results
     barplot = dcc.Graph(
         id='{}-barplot'.format(id_name),
@@ -207,7 +214,7 @@ def results_div(result_type, result_category, flex_case=''):
                     ),
                     hoverinfo='y+text'
                 )
-                for y_opt in BARPLOT_YAXIS_OPT
+                for y_opt in barplot_yaxis_opt
             ],
             layout=go.Layout(
                 title='',

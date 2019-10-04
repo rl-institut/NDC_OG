@@ -374,6 +374,8 @@ def country_barplot_callback(app_handle, result_category):
 
     id_name = '{}-{}'.format('country', result_category)
 
+    result_cat = result_category
+
     @app_handle.callback(
         Output('{}-barplot'.format(id_name), 'figure'),
         [
@@ -408,9 +410,9 @@ def country_barplot_callback(app_handle, result_category):
 
             y_vals = np.vstack(y_vals)
 
-            for j, opt in enumerate(BARPLOT_YAXIS_OPT):
-                fig['data'][j].update({'x': x_vals})
-                fig['data'][j].update({'y': y_vals[:, j]})
+            for j, opt in enumerate(BARPLOT_YAXIS_OPT[result_cat]):
+                    fig['data'][j].update({'x': x_vals})
+                    fig['data'][j].update({'y': y_vals[:, j]})
 
         return fig
 
@@ -490,6 +492,8 @@ def aggregate_barplot_callback(app_handle, result_category):
 
     id_name = '{}-{}'.format(RES_AGGREGATE, result_category)
 
+    result_cat = result_category
+
     @app_handle.callback(
         Output('{}-barplot'.format(id_name), 'figure'),
         [
@@ -528,7 +532,7 @@ def aggregate_barplot_callback(app_handle, result_category):
 
             y_vals = np.vstack(y_vals)
 
-            for j, opt in enumerate(BARPLOT_YAXIS_OPT):
+            for j, opt in enumerate(BARPLOT_YAXIS_OPT[result_cat]):
                 fig['data'][j].update({'x': x_vals})
                 fig['data'][j].update({'y': y_vals[:, j]})
         return fig
