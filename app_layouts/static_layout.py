@@ -57,9 +57,6 @@ def extract_centroids(reg):
     return centroids.loc[centroids.region.isin(reg)].copy()
 
 
-
-
-
 WORLD_ID = 'WD'
 REGIONS_GPD = dict(WD='World', SA='South America', AF='Africa', AS='Asia')
 
@@ -1308,7 +1305,7 @@ def callbacks(app_handle):
         return country_iso
 
     @app_handle.callback(
-            Output('results-info-div', 'children'),
+        Output('results-info-div', 'children'),
         [
             Input('scenario-input', 'value'),
             Input('country-input', 'value')
@@ -1355,6 +1352,28 @@ def callbacks(app_handle):
                             children=name
                         ),
                     ],
+                ),
+                html.Table(
+                    [
+                        html.Tr(
+                            [
+                                html.Td('Population (2017)'),
+                                html.Td('Electrification rate (2017)'),
+                                html.Td('GDP (2017)'),
+                                html.Td('Capital'),
+                                html.Td('Currency'),
+                            ]
+                        ),
+                        html.Tr(
+                            [
+                                html.Td('16.67'),
+                                html.Td('0.45'),
+                                html.Td('1'),
+                                html.Td('-'),
+                                html.Td('EUR'),
+                            ]
+                        )
+                    ]
                 ),
                 html.Div(children=nigeria_desc),
                 html.H4('Key indicators:'),
