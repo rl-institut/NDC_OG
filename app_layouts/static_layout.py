@@ -612,6 +612,8 @@ def compare_barplot_callback(app_handle, result_category):
 
     id_name = '{}-{}'.format(RES_COMPARE, result_category)
 
+    result_cat = result_category
+
     @app_handle.callback(
         Output('{}-barplot'.format(id_name), 'figure'),
         [
@@ -642,10 +644,12 @@ def compare_barplot_callback(app_handle, result_category):
                     df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[comp_sel]]
                 df_comp = df_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
                 comp_name = REGIONS_GPD[comp_sel]
+                comp_iso = comp_name
             else:
                 # compare the reference country to a country
                 df_comp = df_comp.loc[df_comp.country_iso == comp_sel]
                 comp_name = df_comp.country.values[0]
+                comp_iso = df_comp.country_iso.values[0]
 
             ref_results_data = prepare_results_tables(df_ref, scenario, result_category)
             comp_results_data = prepare_results_tables(df_comp, scenario, result_category)
@@ -654,6 +658,10 @@ def compare_barplot_callback(app_handle, result_category):
             y_ref = ref_results_data[idx_y]
             y_comp = comp_results_data[idx_y]
 
+            country_txt = [country_sel for i in range(4)]
+
+            comp_txt = [comp_iso for i in range(4)]
+
             fs = 12
 
             fig.update(
@@ -661,8 +669,7 @@ def compare_barplot_callback(app_handle, result_category):
                     go.Bar(
                         x=x,
                         y=y_ref,
-                        text=[country_sel for i in range(4)],
-                        name=df_ref.country.values[0],
+                        text=country_txt,
                         insidetextfont={'size': fs},
                         textposition='auto',
                         marker=dict(
@@ -673,8 +680,7 @@ def compare_barplot_callback(app_handle, result_category):
                     go.Bar(
                         x=x,
                         y=y_comp,
-                        text=[comp_name for i in range(4)],
-                        name=comp_name,
+                        text=comp_txt,
                         insidetextfont={'size': fs},
                         textposition='auto',
                         marker=dict(
