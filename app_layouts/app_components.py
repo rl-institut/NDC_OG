@@ -183,6 +183,9 @@ def results_div(result_type, result_category, flex_case=''):
     barplot_mode = 'stack'
     if result_type == RES_COMPARE:
         barplot_mode = 'group'
+        show_legends = False
+    else:
+        show_legends = True
 
     x_vals = [SCENARIOS_DICT[sce] for sce in SCENARIOS]
     fs = 15
@@ -211,7 +214,7 @@ def results_div(result_type, result_category, flex_case=''):
                 barmode=barplot_mode,
                 paper_bgcolor=APP_BG_COLOR,
                 plot_bgcolor=APP_BG_COLOR,
-                showlegend=True,
+                showlegend=show_legends,
                 autosize=True,
                 margin=dict(
                     l=55,
