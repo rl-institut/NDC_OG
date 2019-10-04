@@ -95,6 +95,15 @@ TABLE_COLUMNS_LABEL['labels'] = ''
 TABLE_COLUMNS_LABEL[NO_ACCESS] = NO_ACCESS
 TABLE_COLUMNS_LABEL['total'] = 'Total'
 TABLE_COLUMNS_ID = ['labels'] + ELECTRIFICATION_OPTIONS + [NO_ACCESS] + ['total']
+
+TABLE_COLUMNS_ID = {
+    POP_RES: ['labels'] + ELECTRIFICATION_OPTIONS + [NO_ACCESS] + ['total'],
+    INVEST_RES: ['labels'] + ELECTRIFICATION_OPTIONS + ['total'],
+    GHG_RES: ['labels'] + ELECTRIFICATION_OPTIONS + [NO_ACCESS] + ['total'],
+    GHG_ER_RES: ['labels'] + ELECTRIFICATION_OPTIONS + [NO_ACCESS] + ['total']
+}
+
+
 COMPARE_COLUMNS_ID = ['labels']
 for opt in ELECTRIFICATION_OPTIONS + [NO_ACCESS] + ['total']:
     COMPARE_COLUMNS_ID.append(opt)
@@ -224,14 +233,15 @@ def results_div(result_type, result_category, flex_case=''):
 
     columns_ids = []
     table_rows = TABLE_ROWS[result_category]
+    table_columns = TABLE_COLUMNS_ID[result_category]
 
     if result_type in [RES_COUNTRY, RES_AGGREGATE]:
         duplicate_headers = False
-        columns_ids = [{'name': TABLE_COLUMNS_LABEL[col], 'id': col} for col in TABLE_COLUMNS_ID]
+        columns_ids = [{'name': TABLE_COLUMNS_LABEL[col], 'id': col} for col in table_columns]
 
     elif result_type == RES_COMPARE:
         duplicate_headers = True
-        for col in TABLE_COLUMNS_ID:
+        for col in table_columns:
             if col != 'labels':
                 columns_ids.append({'name': [TABLE_COLUMNS_LABEL[col], 'value'], 'id': col})
                 columns_ids.append(
