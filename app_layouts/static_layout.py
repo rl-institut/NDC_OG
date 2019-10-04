@@ -1308,7 +1308,7 @@ def callbacks(app_handle):
         return country_iso
 
     @app_handle.callback(
-        Output('results-info-div', 'children'),
+            Output('results-info-div', 'children'),
         [
             Input('scenario-input', 'value'),
             Input('country-input', 'value')
@@ -1340,17 +1340,20 @@ def callbacks(app_handle):
                     )
                 ]
 
-
             divs = [
                 html.Div(
                     id='results-info-header-div',
+                    className='grid-x',
                     children=[
-                        html.Div(name),
                         html.Img(
                             src='data:image/png;base64,{}'.format(encoded_image.decode()),
-                            className='country__info__flag',
+                            className='country__info__flag cell medium-6',
                             style={'width': '30%'}
-                        )
+                        ),
+                        html.H1(
+                            className='cell medium-6',
+                            children=name
+                        ),
                     ],
                 ),
                 html.Div(children=nigeria_desc),

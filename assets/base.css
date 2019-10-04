@@ -190,3 +190,10 @@ body {
 .compare__results h4{
     text-align: center;
 }
+
+.country__info__flag{
+    padding: 10px;
+    border: solid 1px black;
+    // border-radius: 5px;
+
+}
