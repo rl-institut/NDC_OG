@@ -478,7 +478,7 @@ def country_table_callback(app_handle, result_category):
                 table_rows = TABLE_ROWS[result_cat]
                 results_data['labels'] = pd.Series(table_rows)
 
-                answer_table = results_data[TABLE_COLUMNS_ID].to_dict('records')
+                answer_table = results_data[TABLE_COLUMNS_ID[result_cat]].to_dict('records')
         return answer_table
 
     update_table.__name__ = 'update_%s_table' % id_name
@@ -600,7 +600,7 @@ def aggregate_table_callback(app_handle, result_category):
                 table_rows = TABLE_ROWS[result_cat]
                 results_data['labels'] = pd.Series(table_rows)
 
-                answer_table = results_data[TABLE_COLUMNS_ID].to_dict('records')
+                answer_table = results_data[TABLE_COLUMNS_ID[result_cat]].to_dict('records')
         return answer_table
 
     update_table.__name__ = 'update_%s_table' % id_name
@@ -774,6 +774,8 @@ def compare_table_columns_title_callback(app_handle, result_category):
 
     id_name = '{}-{}'.format(RES_COMPARE, result_category)
 
+    result_cat = result_category
+
     @app_handle.callback(
         Output('{}-results-table'.format(id_name), 'columns'),
         [
@@ -785,7 +787,7 @@ def compare_table_columns_title_callback(app_handle, result_category):
 
         columns_ids = []
         if country_sel is not None and comp_sel is not None:
-            for col in TABLE_COLUMNS_ID:
+            for col in TABLE_COLUMNS_ID[result_cat]:
                 if col != 'labels':
                     columns_ids.append(
                         {'name': [TABLE_COLUMNS_LABEL[col], country_sel], 'id': col}
@@ -805,6 +807,8 @@ def compare_table_styling_callback(app_handle, result_category):
 
     id_name = '{}-{}'.format(RES_COMPARE, result_category)
 
+    result_cat = result_category
+
     @app_handle.callback(
         Output('{}-results-table'.format(id_name), 'style_data_conditional'),
         [Input('{}-results-table'.format(id_name), 'data')],
@@ -820,8 +824,8 @@ def compare_table_styling_callback(app_handle, result_category):
         if comp_sel is not None and country_iso is not None:
             data = pd.DataFrame.from_dict(cur_data)
 
-            col_ref = TABLE_COLUMNS_ID[1:]
-            col_comp = ['comp_{}'.format(col) for col in TABLE_COLUMNS_ID[1:]]
+            col_ref = TABLE_COLUMNS_ID[result_cat][1:]
+            col_comp = ['comp_{}'.format(col) for col in TABLE_COLUMNS_ID[result_cat][1:]]
             data = data[col_ref + col_comp].applymap(
                 lambda x: 0 if x == '' else float(x.replace(',', '').replace('%', '')))
             ref = data[col_ref]
