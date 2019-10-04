@@ -124,6 +124,9 @@ BARPLOT_YAXIS_OPT = {
     GHG_ER_RES: ELECTRIFICATION_OPTIONS.copy() + [NO_ACCESS],
 }
 
+BARPLOT_INVEST_YLABEL = 'Initial Investments (in billion USD)'
+BARPLOT_GHG_YLABEL = 'GHG Emissions (in million tons CO2)'
+
 
 def round_digits(val):
     """Formats number by rounding to 2 digits and add commas for thousands"""
@@ -224,7 +227,7 @@ def results_div(result_type, result_category, flex_case=''):
                 showlegend=show_legends,
                 autosize=True,
                 margin=dict(
-                    l=55,
+                    l=65,
                     r=0,
                     b=30,
                     t=30

@@ -43,7 +43,9 @@ from .app_components import (
     TABLE_COLUMNS_ID,
     COMPARE_COLUMNS_ID,
     TABLE_COLUMNS_LABEL,
-    BARPLOT_YAXIS_OPT
+    BARPLOT_YAXIS_OPT,
+    BARPLOT_INVEST_YLABEL,
+    BARPLOT_GHG_YLABEL,
 )
 
 URL_PATHNAME = 'static'
@@ -411,8 +413,25 @@ def country_barplot_callback(app_handle, result_category):
             y_vals = np.vstack(y_vals)
 
             for j, opt in enumerate(BARPLOT_YAXIS_OPT[result_cat]):
-                    fig['data'][j].update({'x': x_vals})
-                    fig['data'][j].update({'y': y_vals[:, j]})
+                fig['data'][j].update({'x': x_vals})
+                fig['data'][j].update({'y': y_vals[:, j]})
+
+            if result_cat == INVEST_RES:
+                yaxis_label = BARPLOT_INVEST_YLABEL
+            elif result_cat == GHG_RES:
+                yaxis_label = BARPLOT_GHG_YLABEL
+            else:
+                yaxis_label = y_sel
+
+            fig['layout'].update(
+                {
+                    'yaxis': go.layout.YAxis(
+                        title=go.layout.yaxis.Title(
+                            text=yaxis_label,
+                        )
+                    )
+                }
+            )
 
         return fig
 
@@ -535,6 +554,24 @@ def aggregate_barplot_callback(app_handle, result_category):
             for j, opt in enumerate(BARPLOT_YAXIS_OPT[result_cat]):
                 fig['data'][j].update({'x': x_vals})
                 fig['data'][j].update({'y': y_vals[:, j]})
+
+            if result_cat == INVEST_RES:
+                yaxis_label = BARPLOT_INVEST_YLABEL
+            elif result_cat == GHG_RES:
+                yaxis_label = BARPLOT_GHG_YLABEL
+            else:
+                yaxis_label = y_sel
+
+            fig['layout'].update(
+                {
+                    'yaxis': go.layout.YAxis(
+                        title=go.layout.yaxis.Title(
+                            text=yaxis_label,
+                        )
+                    )
+                }
+            )
+
         return fig
 
     update_barplot.__name__ = 'update_%s_barplot' % id_name
@@ -676,32 +713,51 @@ def compare_barplot_callback(app_handle, result_category):
             fs = 12
 
             fig.update(
-                {'data': [
-                    go.Bar(
-                        x=x,
-                        y=y_ref,
-                        text=country_txt,
-                        insidetextfont={'size': fs},
-                        textposition='auto',
-                        marker=dict(
-                            color=list(BARPLOT_ELECTRIFICATION_COLORS.values())
+                {
+                    'data': [
+                        go.Bar(
+                            x=x,
+                            y=y_ref,
+                            text=country_txt,
+                            insidetextfont={'size': fs},
+                            textposition='auto',
+                            marker=dict(
+                                color=list(BARPLOT_ELECTRIFICATION_COLORS.values())
+                            ),
+                            hoverinfo='y+text'
                         ),
-                        hoverinfo='y+text'
-                    ),
-                    go.Bar(
-                        x=x,
-                        y=y_comp,
-                        text=comp_txt,
-                        insidetextfont={'size': fs},
-                        textposition='auto',
-                        marker=dict(
-                            color=['#a062d0', '#9ac1e5', '#f3a672', '#cccccc']
+                        go.Bar(
+                            x=x,
+                            y=y_comp,
+                            text=comp_txt,
+                            insidetextfont={'size': fs},
+                            textposition='auto',
+                            marker=dict(
+                                color=['#a062d0', '#9ac1e5', '#f3a672', '#cccccc']
+                            ),
+                            hoverinfo='y+text'
                         ),
-                        hoverinfo='y+text'
-                    ),
-                ]
+                    ],
                 }
             )
+
+            if result_cat == INVEST_RES:
+                yaxis_label = BARPLOT_INVEST_YLABEL
+            elif result_cat == GHG_RES:
+                yaxis_label = BARPLOT_GHG_YLABEL
+            else:
+                yaxis_label = y_sel
+
+            fig['layout'].update(
+                {
+                    'yaxis': go.layout.YAxis(
+                        title=go.layout.yaxis.Title(
+                            text=yaxis_label,
+                        )
+                    )
+                }
+            )
+
         return fig
 
     update_barplot.__name__ = 'update_%s_barplot' % id_name
