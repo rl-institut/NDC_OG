@@ -969,11 +969,17 @@ def compare_title_callback(app_handle, result_category):
                 comp_name = REGIONS_GPD[comp_sel]
             else:
                 comp_name = df.loc[df.country_iso == comp_sel].country.values[0]
+                comp_iso = df.loc[df.country_iso == comp_sel].country_iso.values[0]
+                comp_name = '{} ({})'.format(comp_name, comp_iso)
+
+            country_name = df.loc[df.country_iso == country_iso].country.values[0]
+
             answer = 'Comparison of {}'.format(
                 description.format(
-                    'between {} and {}'.format(
-                        df.loc[df.country_iso == country_iso].country.values[0],
-                        comp_name
+                    'between {} ({}) and {}'.format(
+                        country_name,
+                        country_iso,
+                        comp_name,
                     )
                 )
             )
