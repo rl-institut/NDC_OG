@@ -16,6 +16,7 @@ from data.data_preparation import (
     BAU_SCENARIO,
     SCENARIOS_DESCRIPTIONS,
     SCENARIOS_DICT,
+    SCENARIOS_NAMES,
     ELECTRIFICATION_OPTIONS,
     ELECTRIFICATION_DICT,
     NO_ACCESS,
@@ -232,8 +233,14 @@ layout = html.Div(
                                                 children=dcc.Dropdown(
                                                     id='scenario-input',
                                                     options=[
-                                                        {'label': v, 'value': k}
-                                                        for k, v in SCENARIOS_DICT.items()
+                                                        {
+                                                            'label': '{} ({})'.format(
+                                                                SCENARIOS_NAMES[k],
+                                                                SCENARIOS_DICT[k]
+                                                            ),
+                                                            'value': k
+                                                        }
+                                                        for k in SCENARIOS
                                                     ],
                                                     value=BAU_SCENARIO,
                                                 )
@@ -259,7 +266,7 @@ layout = html.Div(
                                                         {'label': v, 'value': k}
                                                         for k, v in REGIONS_GPD.items()
                                                     ],
-                                                    value=None
+                                                    value=WORLD_ID
                                                 )
                                             ),
                                         ]
@@ -646,7 +653,7 @@ def compare_barplot_callback(app_handle, result_category):
             ref_results_data = prepare_results_tables(df_ref, scenario, result_category)
             comp_results_data = prepare_results_tables(df_comp, scenario, result_category)
 
-            x = ELECTRIFICATION_OPTIONS + [NO_ACCESS]
+            x = [opt.upper() for opt in ELECTRIFICATION_OPTIONS] + [NO_ACCESS]
             y_ref = ref_results_data[idx_y]
             y_comp = comp_results_data[idx_y]
 
@@ -891,11 +898,11 @@ def country_aggregate_title_callback(app_handle, result_type, result_category):
     inputs.append(Input('scenario-input', 'value'))
 
     if result_category == POP_RES:
-        description = 'electrification mix - scenario {}'
+        description = 'Electrification Mix'
     elif result_category == INVEST_RES:
-        description = 'initial investments needed (in billion USD) - scenario {}'
+        description = 'Initial Investments Needed (in billion USD)'
     else:
-        description = 'cumulated GHG emissions (2017-2030) (in million tons CO2) - scenario {}'
+        description = 'Cumulated GHG Emissions (2017-2030) (in million tons CO2)'
 
     @app_handle.callback(
         Output('{}-results-title'.format(id_name), 'children'),
@@ -910,10 +917,10 @@ def country_aggregate_title_callback(app_handle, result_type, result_category):
                 df = pd.read_json(cur_data[scenario])
                 answer = '{}: '.format(df.loc[df.country_iso == input_trigger].country.values[0])
             elif result_type == RES_AGGREGATE:
-                answer = '{}: aggregated '.format(
+                answer = '{}: Aggregated '.format(
                     REGIONS_GPD[input_trigger]
                 )
-        return '{}{}'.format(answer, description.format(SCENARIOS_DICT[scenario]))
+        return '{}{}'.format(answer, description)
 
     update_title.__name__ = 'update_%s_title' % id_name
     return update_title
@@ -924,11 +931,11 @@ def compare_title_callback(app_handle, result_category):
     id_name = '{}-{}'.format(RES_COMPARE, result_category)
 
     if result_category == POP_RES:
-        description = 'electrification mix {} - scenario {}'
+        description = 'Electrification Mix {}'
     elif result_category == INVEST_RES:
-        description = 'initial investments needed {} (in billion USD) - scenario {}'
+        description = 'Initial Investments needed {} (in billion USD)'
     else:
-        description = 'cumulated GHG emissions (2017-2030) {} (in million tons CO2) - scenario {}'
+        description = 'Cumulated GHG Emissions (2017-2030) {} (in million tons CO2)'
 
     @app_handle.callback(
         Output('{}-results-title'.format(id_name), 'children'),
@@ -953,10 +960,41 @@ def compare_title_callback(app_handle, result_category):
                     'between {} and {}'.format(
                         df.loc[df.country_iso == country_iso].country.values[0],
                         comp_name
-                    ),
-                    SCENARIOS_DICT[scenario]
+                    )
                 )
             )
+        return answer
+
+    update_title.__name__ = 'update_%s_title' % id_name
+    return update_title
+
+
+def table_title_callback(app_handle, result_type, result_category):
+
+    id_name = '{}-{}'.format(result_type, result_category)
+
+    if result_type == RES_COUNTRY:
+        inputs = [Input('country-input', 'value')]
+    elif result_type == RES_AGGREGATE:
+        inputs = [Input('region-input', 'value')]
+    elif result_type == RES_COMPARE:
+        inputs = [Input('compare-input', 'value')]
+
+    inputs.append(Input('scenario-input', 'value'))
+
+    @app_handle.callback(
+        Output('{}-results-table-title'.format(id_name), 'children'),
+        inputs,
+    )
+    def update_title(input_trigger, scenario):
+
+        answer='Detailed results'
+        if scenario in SCENARIOS and input_trigger is not None:
+            answer = 'Detailed Results for {} ({}) Scenario'.format(
+                SCENARIOS_NAMES[scenario],
+                SCENARIOS_DICT[scenario]
+            )
+
         return answer
 
     update_title.__name__ = 'update_%s_title' % id_name
@@ -1001,6 +1039,7 @@ def toggle_results_div_callback(app_handle, result_type, result_category):
 
 def callbacks(app_handle):
 
+    # build callbacks automatically for various categories
     for res_cat in [POP_RES, INVEST_RES, GHG_RES]:
 
         country_barplot_callback(app_handle, res_cat)
@@ -1020,6 +1059,7 @@ def callbacks(app_handle):
 
         for res_type in [RES_COUNTRY, RES_AGGREGATE, RES_COMPARE]:
             toggle_results_div_callback(app_handle, res_type, res_cat)
+            table_title_callback(app_handle, res_type, res_cat)
 
     for res_type in [RES_COUNTRY, RES_AGGREGATE, RES_COMPARE]:
         ghg_dropdown_options_callback(app_handle, res_type)

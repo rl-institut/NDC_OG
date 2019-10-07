@@ -55,12 +55,22 @@ SE4ALL_FLEX_SCENARIO = 'uEA_flex'
 PROG_SCENARIO = 'prog'
 SCENARIOS = [BAU_SCENARIO, SE4ALL_SCENARIO, PROG_SCENARIO]
 
-# Names for display
+# Names for short display
 SCENARIOS_DICT = {
     BAU_SCENARIO: 'BaU',
     SE4ALL_SCENARIO: 'uEA',
     PROG_SCENARIO: 'prOG',
 }
+
+# Names for long display
+SCENARIOS_NAMES = {
+    BAU_SCENARIO: 'Business-as-Usual',
+    SE4ALL_SCENARIO: 'Universal-Energy-Access',
+    PROG_SCENARIO: 'Progressive-Off-Grid',
+}
+
+FLEX_SCENARIO_NAME = 'Custom'
+
 SCENARIOS_DESCRIPTIONS = {
     BAU_SCENARIO:
         [html.H4('What it shows:'), '''The Business-as-Usual (BaU) scenario quantifies the number of new technology-specific electrifications (Grid Extension, Mini-Grids or Solar-Home Systems) until 2030 by projecting current business-as-usual growth rates into the future.''',

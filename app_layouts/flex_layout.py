@@ -14,7 +14,9 @@ from data.data_preparation import (
     BAU_SCENARIO,
     SE4ALL_SCENARIO,
     SE4ALL_FLEX_SCENARIO,
+    FLEX_SCENARIO_NAME,
     SCENARIOS_DICT,
+    SCENARIOS_NAMES,
     ELECTRIFICATION_OPTIONS,
     NO_ACCESS,
     RISE_INDICES,
@@ -64,6 +66,7 @@ REGIONS_NDC = dict(WD=['LA', 'SSA', 'DA'], SA='LA', AF='SSA', AS='DA')
 VIEW_COUNTRY_SELECT = 'country'
 VIEW_CONTROLS = 'general'
 VIEW_COMPARE = 'compare'
+
 
 # A dict with the data for each scenario in json format
 SCENARIOS_DATA = {
@@ -219,8 +222,14 @@ layout = html.Div(
                                                 children=dcc.Dropdown(
                                                     id='flex-scenario-input',
                                                     options=[
-                                                        {'label': v, 'value': k}
-                                                        for k, v in SCENARIOS_DICT.items()
+                                                        {
+                                                            'label': '{} ({})'.format(
+                                                                SCENARIOS_NAMES[k],
+                                                                SCENARIOS_DICT[k]
+                                                            ),
+                                                            'value': k
+                                                        }
+                                                        for k in SCENARIOS
                                                     ],
                                                     value=BAU_SCENARIO,
                                                 )
@@ -285,11 +294,11 @@ def result_title_callback(app_handle, result_category):
     id_name = 'flex-{}-{}'.format(RES_COMPARE, result_category)
 
     if result_category == POP_RES:
-        description = 'electrification mix {}'
+        description = 'Electrification Mix {}'
     elif result_category == INVEST_RES:
-        description = 'initial investments needed {} (in billion USD)'
+        description = 'Initial Investments Needed {} (in billion USD)'
     else:
-        description = 'cumulated GHG emissions (2017-2030) {} (in million tons CO2)'
+        description = 'Cumulated GHG Emissions (2017-2030) {} (in million tons CO2)'
 
     @app_handle.callback(
         Output('{}-results-title'.format(id_name), 'children'),
@@ -304,11 +313,11 @@ def result_title_callback(app_handle, result_category):
         answer = 'Results'
         if scenario in SCENARIOS and country_iso is not None:
             country = cur_data.get('country_name')
-            answer = '{}: comparison of {}'.format(
+            answer = '{}: Comparison of {}'.format(
                 country,
                 description.format(
                     'between {} and {} scenarios'.format(
-                        'Flex',
+                        FLEX_SCENARIO_NAME,
                         SCENARIOS_DICT[scenario]
                     )
                 )
@@ -317,6 +326,26 @@ def result_title_callback(app_handle, result_category):
 
     flex_update_title.__name__ = 'flex_update_%s_title' % id_name
     return flex_update_title
+
+
+def table_title_callback(app_handle, result_category):
+
+    id_name = 'flex-{}-{}'.format(RES_COMPARE, result_category)
+
+    @app_handle.callback(
+        Output('{}-results-table-title'.format(id_name), 'children'),
+        [Input('flex-scenario-input', 'value')],
+    )
+    def update_title(scenario):
+
+        answer = 'Detailed results'
+        if scenario in SCENARIOS:
+            answer = 'Detailed Results'
+
+        return answer
+
+    update_title.__name__ = 'update_%s_title' % id_name
+    return update_title
 
 
 def compare_barplot_callback(app_handle, result_category):
@@ -358,7 +387,7 @@ def compare_barplot_callback(app_handle, result_category):
             )
             comp_results_data = prepare_results_tables(df_comp, scenario, result_category)
 
-            x = ELECTRIFICATION_OPTIONS + [NO_ACCESS]
+            x = [opt.upper() for opt in ELECTRIFICATION_OPTIONS] + [NO_ACCESS]
             y_flex = flex_results_data[idx_y]
             y_comp = comp_results_data[idx_y]
 
@@ -369,7 +398,7 @@ def compare_barplot_callback(app_handle, result_category):
                     go.Bar(
                         x=x,
                         y=y_flex,
-                        text=[SE4ALL_FLEX_SCENARIO for i in range(4)],
+                        text=[FLEX_SCENARIO_NAME for i in range(4)],
                         name=SE4ALL_FLEX_SCENARIO,
                         showlegend=False,
                         insidetextfont={'size': fs},
@@ -382,7 +411,7 @@ def compare_barplot_callback(app_handle, result_category):
                     go.Bar(
                         x=x,
                         y=y_comp,
-                        text=[scenario for i in range(4)],
+                        text=[SCENARIOS_DICT[scenario] for i in range(4)],
                         name=scenario,
                         showlegend=False,
                         insidetextfont={'size': fs},
@@ -494,7 +523,7 @@ def compare_table_columns_title_callback(app_handle, result_category):
     def flex_update_table_columns_title(scenario):
         columns_ids = []
         if scenario is not None:
-            flex_sce = 'Flex'
+            flex_sce = FLEX_SCENARIO_NAME
             comp_sce = SCENARIOS_DICT[scenario]
             for col in TABLE_COLUMNS_ID:
                 if col != 'labels':
@@ -709,6 +738,7 @@ def callbacks(app_handle):
         compare_table_columns_title_callback(app_handle, res_cat)
         compare_table_styling_callback(app_handle, res_cat)
         toggle_results_div_callback(app_handle, res_cat)
+        table_title_callback(app_handle, res_cat)
 
     for opt in ELECTRIFICATION_OPTIONS:
         rise_slider_callback(app_handle, opt)
