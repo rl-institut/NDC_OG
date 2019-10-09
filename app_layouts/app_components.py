@@ -357,13 +357,31 @@ def sub_indicator_line(id_name, text, score, sub_group_idx, sub_idx):
 def sub_indicator_table(id_name, sub_df=RISE_SUB_INDICATORS):
     """Fills the RISE sub indicators table."""
     sub_groups = sub_df.loc['rise_{}'.format(id_name)].sub_indicator_group.unique()
-    divs = []
-    divs.append(html.H3(className='cell', children='RISE {} sub-indicators'.format(id_name)))
-    divs.append(
+    divs = [
+        html.H3(className='cell', children='RISE {} sub-indicators'.format(id_name)),
         html.Div(
-            'Explain indicators here and instruct the user'
+            className='cell grid-x',
+            children=[
+                html.P(
+                    className='cell medium-10',
+                    children='Explain indicators here and instruct the user',
+                ),
+                html.Div(
+                    className='cell medium-2 rise_sub__dropdown',
+                    children=dcc.Dropdown(
+                        id='flex-rise-{}-general-toggle'.format(id_name),
+                        options=[
+                            {'label': 'Yes to all', 'value': 1},
+                            {'label': 'No to all', 'value': 0},
+                            {'label': 'Default', 'value': -1},
+                        ],
+                        value=0,
+                        clearable=False
+                    )
+                )
+            ]
         )
-    )
+    ]
     for j, sub_group in enumerate(sub_groups):
         divs.append(
             html.H4(className='cell', children=sub_group)

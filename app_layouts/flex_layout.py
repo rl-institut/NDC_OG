@@ -729,34 +729,75 @@ def rise_update_scores(app_handle, id_name):
     flex_update_rise_value.__name__ = 'flex_update_rise_%s_value' % id_name
     return flex_update_rise_value
 
-def rise_update_subscore_values(app_handle, opt, p, q):
+
+def rise_update_set_all_upon_country_selection(app_handle, id_name):
+    """When a country is selected, the rise subindicators values are displayed
+
+    :param app_handle:
+    :param id_name:
+    :return:
+    """
     @app_handle.callback(
-        Output('flex-rise-{}-sub-group{}-{}-toggle'.format(opt, p, q), 'value'),
+        Output('flex-rise-{}-general-toggle'.format(id_name), 'value'),
+        [Input('flex-country-input', 'value')]
+    )
+    def flex_update_set_all(_):
+        return -1  # correspond to default value of the dropdown
+
+    flex_update_set_all.__name__ = 'flex_update_set_all_{}'.format(id_name)
+    return flex_update_set_all
+
+
+def rise_update_subscore_values(app_handle, id_name, p, q):
+    """Update the values of the RISE subindicators upon country selection
+
+    :param app_handle: handle to the dash app
+    :param id_name: one the ELECTRIFICATION_OPTIONS
+    :param p: the index of the rise sub-indicator's group
+    :param q: the index of the question within the rise sub-indicator's group
+    :return: callback function
+    """
+    @app_handle.callback(
+        Output('flex-rise-{}-sub-group{}-{}-toggle'.format(id_name, p, q), 'value'),
         [
-            Input('flex-country-input', 'value'),
+            Input('flex-rise-{}-general-toggle'.format(id_name), 'value'),
         ],
         [
+            State('flex-country-input', 'value'),
             State('flex-rise-store', 'data')
         ]
     )
-    def flex_update_rise_value(country_iso, cur_rise_data):
+    def flex_update_subscore_value(set_all, country_iso, cur_rise_data):
         answer = 0
-        if country_iso is not None:
-            # select country
-            sub_df = RISE_SUB_INDICATOR_SCORES.loc[
-                RISE_SUB_INDICATOR_SCORES.country_iso == country_iso
-            ]
-            # select electrification option
-            sub_df = sub_df.loc[sub_df.indicator == 'rise_{}'.format(opt)]
-            # select sub-indicator group
-            sub_group = sub_df.sub_indicator_group.unique()[p]
-            sub_df = sub_df.loc[sub_df.sub_indicator_group == sub_group]
-            # select question within sub-indicator group
-            value = sub_df.iloc[q].value
+        if set_all is not None and country_iso is not None:
+            if set_all == 1:
+                answer = float(1./RISE_SUB_INDICATOR_STRUCTURE[id_name][p])
+            elif set_all == 0:
+                answer = 0
+            elif set_all == -1:
+                # select country
+                sub_df = RISE_SUB_INDICATOR_SCORES.loc[
+                    RISE_SUB_INDICATOR_SCORES.country_iso == country_iso
+                    ]
+                # select electrification option
+                sub_df = sub_df.loc[sub_df.indicator == 'rise_{}'.format(id_name)]
+                # select sub-indicator group
+                sub_group = sub_df.sub_indicator_group.unique()[p]
+                sub_df = sub_df.loc[sub_df.sub_indicator_group == sub_group]
+                # select question within sub-indicator group
+                value = sub_df.iloc[q].value
 
-            if value:
-                answer =  float(1./value)
+                if value:
+                    answer = float(1. / value)
         return answer
+
+    flex_update_subscore_value.__name__ = 'flex_update_subscore_value_{}_{}_{}'.format(
+        id_name,
+        p,
+        q
+    )
+    return flex_update_subscore_value
+
 
 def callbacks(app_handle):
 
@@ -774,7 +815,7 @@ def callbacks(app_handle):
         rise_sub_indicator_display_callback(app_handle, opt)
         rise_update_scores(app_handle, opt)
         rise_sub_indicator_button_style_callback(app_handle, opt)
-
+        rise_update_set_all_upon_country_selection(app_handle, opt)
         for p, m in enumerate(RISE_SUB_INDICATOR_STRUCTURE[opt]):
             for q in range(m):
                 rise_update_subscore_values(app_handle, opt, p, q)
