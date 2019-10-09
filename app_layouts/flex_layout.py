@@ -720,8 +720,7 @@ def rise_update_scores(app_handle, id_name):
                         df.country_iso == country_iso, 'rise_{}'.format(id_name)
                     ].values[0]
             if 'rise-store' in prop_id:
-                if id_name == cur_view['sub_indicators_view']:
-                    answer = cur_rise_data.get(id_name)
+                answer = cur_rise_data.get(id_name)
 
         if answer is None:
             answer = cur_val
@@ -923,19 +922,14 @@ def callbacks(app_handle):
 
     @app_handle.callback(
         Output('flex-rise-store', 'data'),
-        sub_indicators_inputs,
-        [
-            State('flex-view-store', 'data')
-         ]
+        sub_indicators_inputs
     )
     def flex_update_rise_sub_indicators(*args):
         """Change the display of results-div between the app's views."""
-        cur_view = args[-1]
-        id_name = cur_view.get('sub_indicators_view')
 
         cur_rise_data = {}
 
-        if id_name is not None and id_name in ELECTRIFICATION_OPTIONS:
+        for id_name in ELECTRIFICATION_OPTIONS:
 
             # find the position of the sub-indicators values in the arguments' list
             idx_start, idx_end = sub_indicators_num[id_name]
