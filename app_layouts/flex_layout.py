@@ -76,6 +76,8 @@ SCENARIOS_DATA.update(
     {reg: extract_centroids(REGIONS_NDC[reg]).to_json() for reg in REGIONS_NDC}
 )
 
+RISE_SUB_INDICATOR_SCORES = pd.read_csv('data/RISE_subindicators_country.csv')
+
 list_countries_dropdown = []
 DF = pd.read_json(SCENARIOS_DATA[SE4ALL_SCENARIO])
 DF = DF.sort_values('country')
@@ -728,6 +730,34 @@ def rise_update_scores(app_handle, id_name):
     flex_update_rise_value.__name__ = 'flex_update_rise_%s_value' % id_name
     return flex_update_rise_value
 
+def rise_update_subscore_values(app_handle, opt, p, q):
+    @app_handle.callback(
+        Output('flex-rise-{}-sub-group{}-{}-toggle'.format(opt, p, q), 'value'),
+        [
+            Input('flex-country-input', 'value'),
+        ],
+        [
+            State('flex-rise-store', 'data')
+        ]
+    )
+    def flex_update_rise_value(country_iso, cur_rise_data):
+        answer = 0
+        if country_iso is not None:
+            # select country
+            sub_df = RISE_SUB_INDICATOR_SCORES.loc[
+                RISE_SUB_INDICATOR_SCORES.country_iso == country_iso
+            ]
+            # select electrification option
+            sub_df = sub_df.loc[sub_df.indicator == 'rise_{}'.format(opt)]
+            # select sub-indicator group
+            sub_group = sub_df.sub_indicator_group.unique()[p]
+            sub_df = sub_df.loc[sub_df.sub_indicator_group == sub_group]
+            # select question within sub-indicator group
+            value = sub_df.iloc[q].value
+
+            if value:
+                answer =  float(1./value)
+        return answer
 
 def callbacks(app_handle):
 
@@ -745,6 +775,10 @@ def callbacks(app_handle):
         rise_sub_indicator_display_callback(app_handle, opt)
         rise_update_scores(app_handle, opt)
         rise_sub_indicator_button_style_callback(app_handle, opt)
+
+        for p, m in enumerate(RISE_SUB_INDICATOR_STRUCTURE[opt]):
+            for q in range(m):
+                rise_update_subscore_values(app_handle, opt, p, q)
 
     @app_handle.callback(
         Output('flex-view-store', 'data'),
