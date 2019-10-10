@@ -52,6 +52,10 @@ body {
   right: 5px;
 }
 
+#intro-text-div span{
+    font-weight: bold;
+}
+
 .intro-link-div {
     text-align: center;
 }
