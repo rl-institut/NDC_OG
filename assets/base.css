@@ -25,6 +25,8 @@ body {
 #intro-text-div {
     padding-top: 3rem;
     padding-bottom: 2rem;
+    text-align: justify;
+
 }
 
 #intro-description-content,
