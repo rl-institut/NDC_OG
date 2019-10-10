@@ -2,6 +2,10 @@ body {
     background-color: #FFF;
 }
 
+#header-div {
+    margin-bottom: 1.5rem;
+}
+
 #header-content {
     text-align: left;
 }
