@@ -57,6 +57,11 @@ layout = html.Div(
                                     id='intro-citation-content',
                                     children=citation_content
                                 ),
+                                html.Div(
+                                    id='intro-mobile-disclaimer-content',
+                                    className='show-for-medium-only',
+                                    children='This app is not optimized for small screens'
+                                )
                             ],
                         )
 
