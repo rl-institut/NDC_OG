@@ -406,8 +406,8 @@ def compare_barplot_callback(app_handle, result_category):
                         text=[FLEX_SCENARIO_NAME for i in range(4)],
                         name=SE4ALL_FLEX_SCENARIO,
                         showlegend=False,
-                        insidetextfont={'size': fs},
-                        textposition='auto',
+                        insidetextfont={'size': fs, 'color': 'white'},
+                        textposition='inside',
                         marker=dict(
                             color=list(BARPLOT_ELECTRIFICATION_COLORS.values())
                         ),
@@ -419,8 +419,8 @@ def compare_barplot_callback(app_handle, result_category):
                         text=[SCENARIOS_DICT[scenario] for i in range(4)],
                         name=scenario,
                         showlegend=False,
-                        insidetextfont={'size': fs},
-                        textposition='auto',
+                        insidetextfont={'size': fs, 'color': 'white'},
+                        textposition='inside',
                         marker=dict(
                             color=['#a062d0', '#9ac1e5', '#f3a672', '#cccccc']
                         ),

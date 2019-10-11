@@ -715,7 +715,7 @@ def compare_barplot_callback(app_handle, result_category):
                 country_txt = country_txt[:-1]
                 comp_txt = comp_txt[:-1]
 
-            fs = 12
+            fs = 15
 
             fig.update(
                 {
@@ -724,7 +724,7 @@ def compare_barplot_callback(app_handle, result_category):
                             x=x,
                             y=y_ref,
                             text=country_txt,
-                            insidetextfont={'size': fs},
+                            insidetextfont={'size': fs, 'color': 'white'},
                             textposition='auto',
                             marker=dict(
                                 color=list(BARPLOT_ELECTRIFICATION_COLORS.values())
@@ -735,7 +735,7 @@ def compare_barplot_callback(app_handle, result_category):
                             x=x,
                             y=y_comp,
                             text=comp_txt,
-                            insidetextfont={'size': fs},
+                            insidetextfont={'size': fs, 'color': 'white'},
                             textposition='auto',
                             marker=dict(
                                 color=['#a062d0', '#9ac1e5', '#f3a672', '#cccccc']
