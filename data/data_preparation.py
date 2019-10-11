@@ -907,7 +907,7 @@ def compute_ndc_results_from_raw_data(scenario, min_tier_level, fname='data/raw_
     :return:
     """
     # Load data from csv
-    df = pd.read_csv(fname, float_precision='high')
+    df = pd.read_csv(fname, float_precision='high', encoding='latin')
     # Compute endogenous results for the given scenario
     df = prepare_scenario_data(df, scenario, min_tier_level, prepare_endogenous=True)
     # Compute the exogenous results

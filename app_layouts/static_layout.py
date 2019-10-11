@@ -219,8 +219,8 @@ layout = html.Div(
                                 className='cell medium-6',
                                 children=[
                                     html.Div(
-                                        id='scenario-div',
-                                        className='grid-x',
+                                        id='scenario-input-div',
+                                        className='grid-x input-div',
                                         children=[
                                             html.Div(
                                                 id='scenario-label',
@@ -228,7 +228,7 @@ layout = html.Div(
                                                 children='Explore a scenario:'
                                             ),
                                             html.Div(
-                                                id='scenario-input-div',
+                                                id='scenario-input-wrapper',
                                                 className='cell medium-9',
                                                 children=dcc.Dropdown(
                                                     id='scenario-input',
@@ -249,7 +249,7 @@ layout = html.Div(
                                     ),
                                     html.Div(
                                         id='region-input-div',
-                                        className='grid-x',
+                                        className='grid-x input-div',
                                         children=[
                                             html.Div(
                                                 id='region-label',
@@ -274,7 +274,7 @@ layout = html.Div(
                                     html.Div(
                                         id='country-input-div',
                                         title='country selection description',
-                                        className='grid-x',
+                                        className='grid-x input-div',
                                         children=[
                                             html.Div(
                                                 id='country-label',
@@ -295,17 +295,17 @@ layout = html.Div(
                                     ),
                                     html.Div(
                                         id='compare-input-div',
-                                        className='grid-x',
-                                        style={'display': 'none'},
+                                        className='grid-x input-div',
+                                        style={'visibility': 'hidden'},
                                         children=[
                                             html.Div(
                                                 id='country-comp-label',
-                                                className='cell medium-4',
+                                                className='cell medium-3',
                                                 children='Compare with:'
                                             ),
                                             html.Div(
                                                 id='compare-input-wrapper',
-                                                className='cell medium-8',
+                                                className='cell medium-9',
                                                 children=dcc.Dropdown(
                                                     id='compare-input',
                                                     options=COMPARE_OPTIONS,
@@ -316,6 +316,11 @@ layout = html.Div(
 
                                         ],
 
+                                    ),
+                                    html.Div(
+                                        id='specific-info-div',
+                                        className='instructions',
+                                        children='Blablabla'
                                     ),
                                 ]
                             ),
@@ -1017,17 +1022,17 @@ def toggle_results_div_callback(app_handle, result_type, result_category):
 
         if result_type == RES_COUNTRY:
             if cur_view['app_view'] == VIEW_COUNTRY:
-                cur_style.update({'display': 'block'})
+                cur_style = {}
             elif cur_view['app_view'] in [VIEW_GENERAL,VIEW_AGGREGATE, VIEW_COMPARE]:
                 cur_style.update({'display': 'none'})
         elif result_type == RES_AGGREGATE:
             if cur_view['app_view'] == VIEW_AGGREGATE:
-                cur_style.update({'display': 'block'})
+                cur_style = {}
             elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
                 cur_style.update({'display': 'none'})
         elif result_type == RES_COMPARE:
             if cur_view['app_view'] == VIEW_COMPARE:
-                cur_style.update({'display': 'block'})
+                cur_style = {}
             elif cur_view['app_view'] in [VIEW_GENERAL, VIEW_COUNTRY, VIEW_AGGREGATE]:
                 cur_style.update({'display': 'none'})
 
@@ -1231,7 +1236,7 @@ def callbacks(app_handle):
             cur_style = {'display': 'block'}
 
         if cur_view['app_view'] in [VIEW_GENERAL, VIEW_AGGREGATE]:
-            cur_style.update({'display': 'block'})
+            cur_style = {}
         elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
             cur_style.update({'display': 'none'})
         return cur_style
@@ -1247,7 +1252,7 @@ def callbacks(app_handle):
             cur_style = {'display': 'block'}
 
         if cur_view['app_view'] in [VIEW_GENERAL, VIEW_AGGREGATE]:
-            cur_style.update({'display': 'block'})
+            cur_style = {}
         elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
             cur_style.update({'display': 'none'})
         return cur_style
@@ -1263,7 +1268,7 @@ def callbacks(app_handle):
             cur_style = {'display': 'none'}
 
         if cur_view['app_view'] == VIEW_COUNTRY:
-            cur_style.update({'display': 'block'})
+            cur_style = {}
         elif cur_view['app_view'] in [VIEW_GENERAL, VIEW_AGGREGATE, VIEW_COMPARE]:
             cur_style.update({'display': 'none'})
         return cur_style
@@ -1278,12 +1283,12 @@ def callbacks(app_handle):
     def toggle_compare_input_div_display(cur_view, cur_style):
         """Change the display of compare-input-div between the app's views."""
         if cur_style is None:
-            cur_style = {'display': 'none'}
+            cur_style = {'visibility': 'hidden'}
 
         if cur_view['app_view'] in [VIEW_GENERAL, VIEW_AGGREGATE]:
-            cur_style.update({'display': 'none'})
+            cur_style.update({'visibility': 'hidden'})
         elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
-            cur_style.update({'display': 'block'})
+            cur_style.update({'visibility': 'visible'})
         return cur_style
 
     @app_handle.callback(
