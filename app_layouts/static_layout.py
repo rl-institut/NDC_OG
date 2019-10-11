@@ -300,12 +300,12 @@ layout = html.Div(
                                         children=[
                                             html.Div(
                                                 id='country-comp-label',
-                                                className='cell medium-4',
+                                                className='cell medium-3',
                                                 children='Compare with:'
                                             ),
                                             html.Div(
                                                 id='compare-input-wrapper',
-                                                className='cell medium-8',
+                                                className='cell medium-9',
                                                 children=dcc.Dropdown(
                                                     id='compare-input',
                                                     options=COMPARE_OPTIONS,
@@ -1017,17 +1017,17 @@ def toggle_results_div_callback(app_handle, result_type, result_category):
 
         if result_type == RES_COUNTRY:
             if cur_view['app_view'] == VIEW_COUNTRY:
-                cur_style.update({'display': 'block'})
+                cur_style = {}
             elif cur_view['app_view'] in [VIEW_GENERAL,VIEW_AGGREGATE, VIEW_COMPARE]:
                 cur_style.update({'display': 'none'})
         elif result_type == RES_AGGREGATE:
             if cur_view['app_view'] == VIEW_AGGREGATE:
-                cur_style.update({'display': 'block'})
+                cur_style = {}
             elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
                 cur_style.update({'display': 'none'})
         elif result_type == RES_COMPARE:
             if cur_view['app_view'] == VIEW_COMPARE:
-                cur_style.update({'display': 'block'})
+                cur_style = {}
             elif cur_view['app_view'] in [VIEW_GENERAL, VIEW_COUNTRY, VIEW_AGGREGATE]:
                 cur_style.update({'display': 'none'})
 
@@ -1231,7 +1231,7 @@ def callbacks(app_handle):
             cur_style = {'display': 'block'}
 
         if cur_view['app_view'] in [VIEW_GENERAL, VIEW_AGGREGATE]:
-            cur_style.update({'display': 'block'})
+            cur_style = {}
         elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
             cur_style.update({'display': 'none'})
         return cur_style
@@ -1247,7 +1247,7 @@ def callbacks(app_handle):
             cur_style = {'display': 'block'}
 
         if cur_view['app_view'] in [VIEW_GENERAL, VIEW_AGGREGATE]:
-            cur_style.update({'display': 'block'})
+            cur_style = {}
         elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
             cur_style.update({'display': 'none'})
         return cur_style
@@ -1263,7 +1263,7 @@ def callbacks(app_handle):
             cur_style = {'display': 'none'}
 
         if cur_view['app_view'] == VIEW_COUNTRY:
-            cur_style.update({'display': 'block'})
+            cur_style = {}
         elif cur_view['app_view'] in [VIEW_GENERAL, VIEW_AGGREGATE, VIEW_COMPARE]:
             cur_style.update({'display': 'none'})
         return cur_style
@@ -1283,7 +1283,7 @@ def callbacks(app_handle):
         if cur_view['app_view'] in [VIEW_GENERAL, VIEW_AGGREGATE]:
             cur_style.update({'display': 'none'})
         elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
-            cur_style.update({'display': 'block'})
+            cur_style = {}
         return cur_style
 
     @app_handle.callback(
