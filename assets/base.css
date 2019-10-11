@@ -185,6 +185,18 @@ body {
     //border: solid 2px #E8F0F9;
 }
 
+.align__icon{
+    display: flex;
+    justify-content: right;
+    text-align: center;
+    align-items: center;
+}
+
+.info__icon{
+    height: 2rem;
+    width: 2rem;
+}
+
 .daq__slider{
     display: none;
     vertical-align: center;
@@ -236,4 +248,11 @@ body {
 .aggregate__results h4,
 .compare__results h4{
     text-align: center;
+}
+
+.country__info__flag{
+    padding: 10px;
+    border: solid 1px black;
+    // border-radius: 5px;
+
 }
