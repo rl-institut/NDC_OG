@@ -680,9 +680,9 @@ def rise_sub_indicator_display_callback(app_handle, id_name):
 def rise_sub_indicator_button_style_callback(app_handle, id_name):
 
     @app_handle.callback(
-        Output('flex-rise-{}-label'.format(id_name), 'style'),
+        Output('flex-rise-{}-btn'.format(id_name), 'style'),
         [Input('flex-view-store', 'data')],
-        [State('flex-rise-{}-label'.format(id_name), 'style')]
+        [State('flex-rise-{}-btn'.format(id_name), 'style')]
     )
     def rise_update_button_style(cur_view, cur_style):
         """Change the display of results-div between the app's views."""
@@ -757,9 +757,9 @@ def callbacks(app_handle):
         Output('flex-view-store', 'data'),
         [
             Input('flex-country-input', 'value'),
-            Input('flex-rise-grid-label', 'n_clicks'),
-            Input('flex-rise-mg-label', 'n_clicks'),
-            Input('flex-rise-shs-label', 'n_clicks'),
+            Input('flex-rise-grid-btn', 'n_clicks'),
+            Input('flex-rise-mg-btn', 'n_clicks'),
+            Input('flex-rise-shs-btn', 'n_clicks'),
         ],
         [State('flex-view-store', 'data')]
     )
