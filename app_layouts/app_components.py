@@ -354,15 +354,20 @@ def rise_slider(id_name, display_name):
         className='cell medium-4 grid-x grid-margin-x',
         title='rise mg description',
         children=[
-            html.Button(
+            html.Div(
                 id='flex-rise-{}-label'.format(id_name),
                 className='cell medium-4 medium-offset-3 daq__slider__label',
-                children=display_name
+                children="RISE Score for \n {}".format(ELECTRIFICATION_DICT[id_name])
             ),
             html.Div(
                 id='flex-rise-{}-value'.format(id_name),
                 className='cell medium-3 daq__slider__value',
                 children=''
+            ),
+            html.Button(
+                id='flex-rise-{}-label'.format(id_name),
+                className='cell medium-7 medium-offset-3 daq__slider__btn',
+                children=display_name
             ),
             dcc.Slider(
                 id='flex-rise-{}-input'.format(id_name),
@@ -499,9 +504,9 @@ def controls_div():
             children=html.Div(
                 className='grid-x align-center',
                 children=[
-                    rise_slider('grid', 'RISE Grid'),
-                    rise_slider('mg', 'RISE MG'),
-                    rise_slider('shs', 'RISE SHS'),
+                    rise_slider('grid', 'Show RISE Sub-Indicators'),
+                    rise_slider('mg', 'Show RISE Sub-Indicators'),
+                    rise_slider('shs', 'Show RISE Sub-Indicators'),
                     html.Div(
                         id='flex-rise-sub-indicators-div',
                         className='cell medium-9',

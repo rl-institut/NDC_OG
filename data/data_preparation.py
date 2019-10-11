@@ -649,13 +649,13 @@ def prepare_scenario_data(
 
 def _compute_ghg_emissions(df, min_tier_level, bau_df=None):
     """Compute green house gases emissions in `extract_results_scenario."""
-    # source : ???
-    df['hh_no_access_consumption'] = 55
-    # source : ???
+    # source : CDM AMS.I-L (https://cdm.unfccc.int/methodologies/PAmethodologies/tools/am-tool-07-v1.1.pdf/history_view
+    df['hh_no_access_consumption'] = 55  # kWh/year/hh
     df['grid_emission_factor'] = df.emission_factor / 1000
-    df['mg_emission_factor'] = 0.2
+    # 20% diesel share
+    df['mg_emission_factor'] = 0.2  # t_CO2/MWh
     df['shs_emission_factor'] = 0
-    df['no_access_emission_factor'] = 6.8
+    df['no_access_emission_factor'] = 6.8  # t_CO2/MWh
 
     df['pop_no_access_2030'] = df.pop_newly_electrified_2030 - df[
         ['pop_get_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS]].sum(axis=1)
@@ -907,7 +907,7 @@ def compute_ndc_results_from_raw_data(scenario, min_tier_level, fname='data/raw_
     :return:
     """
     # Load data from csv
-    df = pd.read_csv(fname, float_precision='high')
+    df = pd.read_csv(fname, float_precision='high', encoding='latin')
     # Compute endogenous results for the given scenario
     df = prepare_scenario_data(df, scenario, min_tier_level, prepare_endogenous=True)
     # Compute the exogenous results

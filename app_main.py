@@ -24,7 +24,29 @@ external_css = [
 for css in external_css:
     app.css.append_css({"external_url": css})
 
+app.index_string = '''
+    <!DOCTYPE html>
+    <html>
 
+        <head>
+            <meta charset="UTF-8">
+            <meta description="NDC visualisation">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            {%favicon%}
+            {%css%}
+        </head>
+
+        <body>
+            {%app_entry%}
+        <footer>
+            {%config%}
+            {%scripts%}
+            {%renderer%}
+        </footer>
+        </body>
+
+    </html>
+    '''
 
 app.title = 'NDC visualisation'
 

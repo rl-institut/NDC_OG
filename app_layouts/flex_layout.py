@@ -208,8 +208,8 @@ layout = html.Div(
                                 className='cell medium-6',
                                 children=[
                                     html.Div(
-                                        id='flex-scenario-div',
-                                        className='grid-x',
+                                        id='flex-scenario-input-div',
+                                        className='grid-x input-div',
                                         children=[
                                             html.Div(
                                                 id='flex-scenario-label',
@@ -217,7 +217,7 @@ layout = html.Div(
                                                 children='Explore a scenario:'
                                             ),
                                             html.Div(
-                                                id='flex-scenario-input-div',
+                                                id='flex-scenario-input-wrapper',
                                                 className='cell medium-9',
                                                 children=dcc.Dropdown(
                                                     id='flex-scenario-input',
@@ -239,7 +239,7 @@ layout = html.Div(
                                     html.Div(
                                         id='flex-country-input-div',
                                         title='country selection description',
-                                        className='grid-x',
+                                        className='grid-x input-div',
                                         children=[
                                             html.Div(
                                                 id='flex-country-label',
@@ -257,6 +257,11 @@ layout = html.Div(
                                                 )
                                             ),
                                         ]
+                                    ),
+                                    html.Div(
+                                        id='flex-specific-info-div',
+                                        className='instructions',
+                                        children='Blablabla'
                                     ),
                                 ]
                             ),
@@ -617,7 +622,7 @@ def toggle_results_div_callback(app_handle, result_category):
         if cur_view['app_view'] in [VIEW_COUNTRY_SELECT]:
             cur_style.update({'display': 'none'})
         else:
-            cur_style.update({'display': 'block'})
+            cur_style = {}
         return cur_style
 
     toggle_results_div_display.__name__ = 'flex-toggle_%s_display' % id_name
@@ -656,10 +661,10 @@ def rise_sub_indicator_display_callback(app_handle, id_name):
             cur_style = {'display': 'none'}
         if cur_view['sub_indicators_view'] == id_name:
             if cur_view['sub_indicators_change']:
-                cur_style.update({'display': 'block'})
+                cur_style = {}
             else:
                 if cur_style['display'] == 'none':
-                    cur_style.update({'display': 'block'})
+                    cur_style = {}
                 else:
                     cur_style.update({'display': 'none'})
         else:
@@ -811,7 +816,7 @@ def callbacks(app_handle):
         if cur_style is None:
             cur_style = {'display': 'none'}
         if cur_view['sub_indicators_view'] in ELECTRIFICATION_OPTIONS:
-            cur_style.update({'display': 'block'})
+            cur_style = {}
         else:
             cur_style.update({'display': 'none'})
         return cur_style
