@@ -57,6 +57,8 @@ body {
   top: 170px;
   right: 5px;
   z-index: 9999999;
+  color: orange;
+  border-color: orange;
 }
 
 #intro-text-div span{
