@@ -372,7 +372,7 @@ def rise_slider(id_name, display_name):
                 children=''
             ),
             html.Button(
-                id='flex-rise-{}-label'.format(id_name),
+                id='flex-rise-{}-btn'.format(id_name),
                 className='cell medium-7 medium-offset-3 daq__slider__btn',
                 children=display_name
             ),
