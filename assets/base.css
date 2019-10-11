@@ -160,6 +160,18 @@ body {
     color: #333333;
 }
 
+.instructions {
+    border-radius: 10px;
+    padding: 40px;
+    //margin-left: 20px;
+    //margin-right: 20px;
+    //margin-top: 20px;
+    margin-bottom: 20px;
+    text-align: justify;
+    background: #f1e9da;
+    color: #333333;
+}
+
 
 .app__checkbox {
     padding: 0px 5px 0px;

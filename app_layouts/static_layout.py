@@ -317,6 +317,11 @@ layout = html.Div(
                                         ],
 
                                     ),
+                                    html.Div(
+                                        id='specific-info-div',
+                                        className='instructions',
+                                        children='Blablabla'
+                                    ),
                                 ]
                             ),
                             html.Div(

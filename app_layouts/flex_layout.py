@@ -258,6 +258,11 @@ layout = html.Div(
                                             ),
                                         ]
                                     ),
+                                    html.Div(
+                                        id='flex-specific-info-div',
+                                        className='instructions',
+                                        children='Blablabla'
+                                    ),
                                 ]
                             ),
                         ]
