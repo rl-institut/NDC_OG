@@ -530,7 +530,8 @@ def compare_table_columns_title_callback(app_handle, result_category):
         if scenario is not None:
             flex_sce = FLEX_SCENARIO_NAME
             comp_sce = SCENARIOS_DICT[scenario]
-            for col in TABLE_COLUMNS_ID:
+            table_columns = TABLE_COLUMNS_ID[result_category]
+            for col in table_columns:
                 if col != 'labels':
                     columns_ids.append(
                         {'name': [TABLE_COLUMNS_LABEL[col], flex_sce], 'id': col}
@@ -561,8 +562,9 @@ def compare_table_styling_callback(app_handle, result_category):
     def flex_update_table_styling(cur_data, cur_style, country_iso):
         if country_iso is not None:
             table_data = pd.DataFrame.from_dict(cur_data)
+            table_columns = TABLE_COLUMNS_ID[result_category]
 
-            col_ref = TABLE_COLUMNS_ID[1:]
+            col_ref = table_columns[1:]
             col_comp = ['comp_{}'.format(col) for col in col_ref]
             table_data = table_data[col_ref + col_comp].applymap(
                 lambda x: 0 if x == '' else float(x.replace(',', '').replace('%', '')))
