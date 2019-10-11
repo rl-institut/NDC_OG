@@ -276,7 +276,7 @@ def results_div(result_type, result_category, flex_case=''):
                     className='cell medium-10 medium-offset-1'
                 ),
                 html.Div(
-                    className='cell medium-1 align__icon',
+                    className='cell medium-1 align__right',
                     children=html.Img(
                         id='{}-results-title-help'.format(id_name),
                         src='data:image/png;base64,{}'.format(INFO_ICON.decode()),
@@ -302,7 +302,7 @@ def results_div(result_type, result_category, flex_case=''):
 
                 ),
                 html.Div(
-                    className='cell medium-1 align__icon',
+                    className='cell medium-1 align__right',
                     children=html.Img(
                         id='{}-results-table-title-help'.format(id_name),
                         src='data:image/png;base64,{}'.format(INFO_ICON.decode()),

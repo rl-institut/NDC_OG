@@ -1403,8 +1403,6 @@ def callbacks(app_handle):
     def update_results_info_div(scenario, country_iso, cur_data):
 
         divs = []
-        nigeria_desc = ''
-        nigeria_info = []
         if scenario in SCENARIOS and country_iso is not None:
             df = pd.read_json(cur_data[scenario])
             df = df.loc[df.country_iso == country_iso]
@@ -1413,18 +1411,6 @@ def callbacks(app_handle):
             image_filename = 'icons/{}.png'.format(country_iso)
             encoded_image = base64.b64encode(open(image_filename, 'rb').read())
 
-            if country_iso == 'NGA':
-                nigeria_desc = 'Nigeria is a lower-middle income country located in West-Africa. Its current population is approximately 190 million people and for 2030 it is expected to grow to 264 million people. We estimated a current electrification rate of  63 % which leads to almost 100 people to be newly electrified until 2030.'
-
-                nigeria_info = [
-                    html.P(
-                        'Capital : Abuja'
-                    ),
-                    html.P(
-                        'Currency : Naira'
-                    )
-                ]
-
             divs = [
                 html.Div(
                     id='results-info-header-div',
@@ -1432,19 +1418,24 @@ def callbacks(app_handle):
                     children=[
                         html.Img(
                             src='data:image/png;base64,{}'.format(encoded_image.decode()),
-                            className='country__info__flag cell medium-6',
-                            style={'width': '30%'}
+                            className='country__info__flag cell medium-4',
                         ),
                         html.H1(
-                            className='cell medium-6',
+                            className='cell medium-8 align__center',
                             children=name
                         ),
                     ],
                 ),
+                html.Div(
+                    className='country__info__desc',
+                    children=df.description
+                ),
+
                 html.Table(
                     [
                         html.Tr(
-                            [
+                            id='country-key-indicators',
+                            children=[
                                 html.Td('Population (2017)'),
                                 html.Td('Electrification rate (2017)'),
                                 html.Td('GDP (2017)'),
@@ -1454,32 +1445,22 @@ def callbacks(app_handle):
                         ),
                         html.Tr(
                             [
-                                html.Td('16.67'),
-                                html.Td('0.45'),
-                                html.Td('1'),
-                                html.Td('-'),
-                                html.Td('EUR'),
+                                html.Td('{} million people'.format(pop_2017)),
+                                html.Td(
+                                    '{}'.format(
+                                        format_percent(df.electrification_rate.values[0] * 100)
+                                    )
+                                ),
+                                html.Td('{} Billion USD'.format(df.gdp_per_capita.values[0])),
+                                html.Td(df.capital.values[0]),
+                                html.Td(df.currency.values[0]),
                             ]
                         )
                     ]
                 ),
-                html.Div(children=nigeria_desc),
-                html.H4('Key indicators:'),
-                html.P(
-                    'Population (2017) : {} million people'.format(pop_2017)
-                ),
-                html.P(
-                    'Electrification rate (2017) : {}'.format(
-                        format_percent(df.electrification_rate.values[0] * 100)
-                    )
-                ),
-                html.P(
-                    'GDP (2017) : {} Billion USD'.format(df.gdp_per_capita.values[0])
-                ),
-
             ]
 
-        return divs + nigeria_info
+        return divs
 
     @app_handle.callback(
         Output('aggregate-info-div', 'children'),

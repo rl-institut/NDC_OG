@@ -185,9 +185,15 @@ body {
     //border: solid 2px #E8F0F9;
 }
 
-.align__icon{
+.align__right{
     display: flex;
     justify-content: right;
+    text-align: center;
+    align-items: center;
+}
+.align__center{
+    display: flex;
+    justify-content: center;
     text-align: center;
     align-items: center;
 }
@@ -251,8 +257,23 @@ body {
 }
 
 .country__info__flag{
-    padding: 10px;
-    border: solid 1px black;
-    // border-radius: 5px;
+    //padding: 0.5rem;
+    //border: solid 1px #333333;
+    background: #f1e9da;
 
+}
+
+.country__info__desc{
+    margin-top: 10px;
+    margin-bottom: 10px;
+    text-align: justify;
+}
+
+#results-info-div{
+    background: #f1e9da;
+    border: solid 0px #f1e9da;
+}
+
+#country-key-indicators td{
+    font-weight: bold;
 }
