@@ -452,9 +452,9 @@ def controls_div():
             children=html.Div(
                 className='grid-x align-center',
                 children=[
-                    rise_slider('grid', 'RISE Grid'),
-                    rise_slider('mg', 'RISE MG'),
-                    rise_slider('shs', 'RISE SHS'),
+                    rise_slider('grid', 'Show RISE Sub-Indicators'),
+                    rise_slider('mg', 'Show RISE Sub-Indicators'),
+                    rise_slider('shs', 'Show RISE Sub-Indicators'),
                     html.Div(
                         id='flex-rise-sub-indicators-div',
                         className='cell medium-9',
