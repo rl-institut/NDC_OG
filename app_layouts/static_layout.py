@@ -219,8 +219,8 @@ layout = html.Div(
                                 className='cell medium-6',
                                 children=[
                                     html.Div(
-                                        id='scenario-div',
-                                        className='grid-x',
+                                        id='scenario-input-div',
+                                        className='grid-x input-div',
                                         children=[
                                             html.Div(
                                                 id='scenario-label',
@@ -228,7 +228,7 @@ layout = html.Div(
                                                 children='Explore a scenario:'
                                             ),
                                             html.Div(
-                                                id='scenario-input-div',
+                                                id='scenario-input-wrapper',
                                                 className='cell medium-9',
                                                 children=dcc.Dropdown(
                                                     id='scenario-input',
@@ -249,7 +249,7 @@ layout = html.Div(
                                     ),
                                     html.Div(
                                         id='region-input-div',
-                                        className='grid-x',
+                                        className='grid-x input-div',
                                         children=[
                                             html.Div(
                                                 id='region-label',
@@ -274,7 +274,7 @@ layout = html.Div(
                                     html.Div(
                                         id='country-input-div',
                                         title='country selection description',
-                                        className='grid-x',
+                                        className='grid-x input-div',
                                         children=[
                                             html.Div(
                                                 id='country-label',

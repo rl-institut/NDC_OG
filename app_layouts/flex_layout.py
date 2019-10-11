@@ -208,8 +208,8 @@ layout = html.Div(
                                 className='cell medium-6',
                                 children=[
                                     html.Div(
-                                        id='flex-scenario-div',
-                                        className='grid-x',
+                                        id='flex-scenario-input-div',
+                                        className='grid-x input-div',
                                         children=[
                                             html.Div(
                                                 id='flex-scenario-label',
@@ -217,7 +217,7 @@ layout = html.Div(
                                                 children='Explore a scenario:'
                                             ),
                                             html.Div(
-                                                id='flex-scenario-input-div',
+                                                id='flex-scenario-input-wrapper',
                                                 className='cell medium-9',
                                                 children=dcc.Dropdown(
                                                     id='flex-scenario-input',
@@ -239,7 +239,7 @@ layout = html.Div(
                                     html.Div(
                                         id='flex-country-input-div',
                                         title='country selection description',
-                                        className='grid-x',
+                                        className='grid-x input-div',
                                         children=[
                                             html.Div(
                                                 id='flex-country-label',
