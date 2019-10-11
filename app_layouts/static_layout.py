@@ -295,8 +295,8 @@ layout = html.Div(
                                     ),
                                     html.Div(
                                         id='compare-input-div',
-                                        className='grid-x',
-                                        style={'display': 'none'},
+                                        className='grid-x input-div',
+                                        style={'visibility': 'hidden'},
                                         children=[
                                             html.Div(
                                                 id='country-comp-label',
@@ -1278,12 +1278,12 @@ def callbacks(app_handle):
     def toggle_compare_input_div_display(cur_view, cur_style):
         """Change the display of compare-input-div between the app's views."""
         if cur_style is None:
-            cur_style = {'display': 'none'}
+            cur_style = {'visibility': 'hidden'}
 
         if cur_view['app_view'] in [VIEW_GENERAL, VIEW_AGGREGATE]:
-            cur_style.update({'display': 'none'})
+            cur_style.update({'visibility': 'hidden'})
         elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
-            cur_style = {}
+            cur_style.update({'visibility': 'visible'})
         return cur_style
 
     @app_handle.callback(
