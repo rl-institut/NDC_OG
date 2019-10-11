@@ -185,6 +185,18 @@ body {
     //border: solid 2px #E8F0F9;
 }
 
+.align__icon{
+    display: flex;
+    justify-content: right;
+    text-align: center;
+    align-items: center;
+}
+
+.info__icon{
+    height: 2rem;
+    width: 2rem;
+}
+
 .daq__slider{
     display: none;
     vertical-align: center;

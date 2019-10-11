@@ -7,7 +7,7 @@ from dash.dependencies import Output, Input, State
 import dash_daq as daq
 import dash_table
 import plotly.graph_objs as go
-from app_main import APP_BG_COLOR
+from app_main import APP_BG_COLOR, INFO_ICON
 from data.data_preparation import (
     SCENARIOS,
     SCENARIOS_DICT,
@@ -269,17 +269,21 @@ def results_div(result_type, result_category, flex_case=''):
     results_div_content = [
         html.Div(
             className='grid-x',
-            children =[
+            children=[
                 html.H3(
                     id='{}-results-title'.format(id_name),
                     children='Results',
-                    className='cell medium-6'
+                    className='cell medium-10 medium-offset-1'
                 ),
-                html.I(
-                    children='? Icon',
-                    title='Hover text',
-                    className='cell medium-2'
-                )
+                html.Div(
+                    className='cell medium-1 align__icon',
+                    children=html.Img(
+                        id='{}-results-title-help'.format(id_name),
+                        src='data:image/png;base64,{}'.format(INFO_ICON.decode()),
+                        title='Hover text',
+                        className='info__icon'
+                    )
+                ),
             ]
         ),
         dcc.Dropdown(
@@ -294,15 +298,18 @@ def results_div(result_type, result_category, flex_case=''):
                 html.H3(
                     id='{}-results-table-title'.format(id_name),
                     children='Detailed results for scenario',
-                    className='cell medium-6'
+                    className='cell medium-10 medium-offset-1'
 
                 ),
-                html.I(
-                    children='? Icon',
-                    title='Hover text',
-                    className='cell medium-2'
-
-                )
+                html.Div(
+                    className='cell medium-1 align__icon',
+                    children=html.Img(
+                        id='{}-results-table-title-help'.format(id_name),
+                        src='data:image/png;base64,{}'.format(INFO_ICON.decode()),
+                        title='Hover text',
+                        className='info__icon'
+                    )
+                ),
             ]
         ),
         dash_table.DataTable(
