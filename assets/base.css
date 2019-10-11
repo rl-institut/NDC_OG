@@ -2,6 +2,10 @@ body {
     background-color: #FFF;
 }
 
+#header-div {
+    margin-bottom: 1.5rem;
+}
+
 #header-content {
     text-align: left;
 }
@@ -21,6 +25,8 @@ body {
 #intro-text-div {
     padding-top: 3rem;
     padding-bottom: 2rem;
+    text-align: justify;
+
 }
 
 #intro-description-content,
@@ -48,8 +54,13 @@ body {
 
 #back-intro-link{
   position: absolute;
-  top: 217.8px;
+  top: 170px;
   right: 5px;
+  z-index: 9999999;
+}
+
+#intro-text-div span{
+    font-weight: bold;
 }
 
 .intro-link-div {
@@ -109,6 +120,12 @@ body {
     padding: 40px;
 }
 
+.input-div {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+
+
+}
 
 .results_style {
     margin-top: 40px;
@@ -145,9 +162,21 @@ body {
     margin-top: 20px;
     margin-bottom: 20px;
     text-align: justify;
-    background: #333333;
+    background: #f1e9da;
     //background: #002E4F;
-    color: #FFFFFF;
+    color: #333333;
+}
+
+.instructions {
+    border-radius: 10px;
+    padding: 40px;
+    //margin-left: 20px;
+    //margin-right: 20px;
+    //margin-top: 20px;
+    margin-bottom: 20px;
+    text-align: justify;
+    background: #f1e9da;
+    color: #333333;
 }
 
 
@@ -156,7 +185,26 @@ body {
     //border: solid 2px #E8F0F9;
 }
 
+.align__right{
+    display: flex;
+    justify-content: right;
+    text-align: center;
+    align-items: center;
+}
+.align__center{
+    display: flex;
+    justify-content: center;
+    text-align: center;
+    align-items: center;
+}
+
+.info__icon{
+    height: 2rem;
+    width: 2rem;
+}
+
 .daq__slider{
+    display: none;
     vertical-align: center;
     //border: solid 2px red;
     width: 100%;
@@ -171,22 +219,61 @@ body {
 }
 
 .daq__slider__label{
+    padding: 10px;
+    //padding-right: 20px;
+    border-radius: 5px;
+    border: solid 1px #333333;
+    display: flex;
+    justify-content: center;
+    text-align: center;
+    align-items: center;
+}
+.daq__slider__btn{
+    margin-top: 0.5rem;
     padding: 20px;
     //padding-right: 20px;
     border-radius: 5px;
     border: solid 1px #333333;
     text-align: center;
+    align-items: center;
+    text-decoration: underline;
+    text-decoration-style: dotted;
 }
 
 .daq__slider__value{
-    padding: 20px;
+    padding: 10px;
     border-radius: 5px;
     border: solid 1px #333333;
     text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .country__results h4,
 .aggregate__results h4,
 .compare__results h4{
     text-align: center;
+}
+
+.country__info__flag{
+    //padding: 0.5rem;
+    //border: solid 1px #333333;
+    background: #f1e9da;
+
+}
+
+.country__info__desc{
+    margin-top: 10px;
+    margin-bottom: 10px;
+    text-align: justify;
+}
+
+#results-info-div{
+    background: #f1e9da;
+    border: solid 0px #f1e9da;
+}
+
+#country-key-indicators td{
+    font-weight: bold;
 }

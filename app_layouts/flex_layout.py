@@ -208,8 +208,8 @@ layout = html.Div(
                                 className='cell medium-6',
                                 children=[
                                     html.Div(
-                                        id='flex-scenario-div',
-                                        className='grid-x',
+                                        id='flex-scenario-input-div',
+                                        className='grid-x input-div',
                                         children=[
                                             html.Div(
                                                 id='flex-scenario-label',
@@ -217,7 +217,7 @@ layout = html.Div(
                                                 children='Explore a scenario:'
                                             ),
                                             html.Div(
-                                                id='flex-scenario-input-div',
+                                                id='flex-scenario-input-wrapper',
                                                 className='cell medium-9',
                                                 children=dcc.Dropdown(
                                                     id='flex-scenario-input',
@@ -239,7 +239,7 @@ layout = html.Div(
                                     html.Div(
                                         id='flex-country-input-div',
                                         title='country selection description',
-                                        className='grid-x',
+                                        className='grid-x input-div',
                                         children=[
                                             html.Div(
                                                 id='flex-country-label',
@@ -257,6 +257,11 @@ layout = html.Div(
                                                 )
                                             ),
                                         ]
+                                    ),
+                                    html.Div(
+                                        id='flex-specific-info-div',
+                                        className='instructions',
+                                        children='Blablabla'
                                     ),
                                 ]
                             ),
@@ -401,8 +406,8 @@ def compare_barplot_callback(app_handle, result_category):
                         text=[FLEX_SCENARIO_NAME for i in range(4)],
                         name=SE4ALL_FLEX_SCENARIO,
                         showlegend=False,
-                        insidetextfont={'size': fs},
-                        textposition='auto',
+                        insidetextfont={'size': fs, 'color': 'white'},
+                        textposition='inside',
                         marker=dict(
                             color=list(BARPLOT_ELECTRIFICATION_COLORS.values())
                         ),
@@ -414,8 +419,8 @@ def compare_barplot_callback(app_handle, result_category):
                         text=[SCENARIOS_DICT[scenario] for i in range(4)],
                         name=scenario,
                         showlegend=False,
-                        insidetextfont={'size': fs},
-                        textposition='auto',
+                        insidetextfont={'size': fs, 'color': 'white'},
+                        textposition='inside',
                         marker=dict(
                             color=['#a062d0', '#9ac1e5', '#f3a672', '#cccccc']
                         ),
@@ -525,7 +530,8 @@ def compare_table_columns_title_callback(app_handle, result_category):
         if scenario is not None:
             flex_sce = FLEX_SCENARIO_NAME
             comp_sce = SCENARIOS_DICT[scenario]
-            for col in TABLE_COLUMNS_ID:
+            table_columns = TABLE_COLUMNS_ID[result_category]
+            for col in table_columns:
                 if col != 'labels':
                     columns_ids.append(
                         {'name': [TABLE_COLUMNS_LABEL[col], flex_sce], 'id': col}
@@ -556,8 +562,9 @@ def compare_table_styling_callback(app_handle, result_category):
     def flex_update_table_styling(cur_data, cur_style, country_iso):
         if country_iso is not None:
             table_data = pd.DataFrame.from_dict(cur_data)
+            table_columns = TABLE_COLUMNS_ID[result_category]
 
-            col_ref = TABLE_COLUMNS_ID[1:]
+            col_ref = table_columns[1:]
             col_comp = ['comp_{}'.format(col) for col in col_ref]
             table_data = table_data[col_ref + col_comp].applymap(
                 lambda x: 0 if x == '' else float(x.replace(',', '').replace('%', '')))
@@ -617,7 +624,7 @@ def toggle_results_div_callback(app_handle, result_category):
         if cur_view['app_view'] in [VIEW_COUNTRY_SELECT]:
             cur_style.update({'display': 'none'})
         else:
-            cur_style.update({'display': 'block'})
+            cur_style = {}
         return cur_style
 
     toggle_results_div_display.__name__ = 'flex-toggle_%s_display' % id_name
@@ -656,10 +663,10 @@ def rise_sub_indicator_display_callback(app_handle, id_name):
             cur_style = {'display': 'none'}
         if cur_view['sub_indicators_view'] == id_name:
             if cur_view['sub_indicators_change']:
-                cur_style.update({'display': 'block'})
+                cur_style = {}
             else:
                 if cur_style['display'] == 'none':
-                    cur_style.update({'display': 'block'})
+                    cur_style = {}
                 else:
                     cur_style.update({'display': 'none'})
         else:
@@ -811,7 +818,7 @@ def callbacks(app_handle):
         if cur_style is None:
             cur_style = {'display': 'none'}
         if cur_view['sub_indicators_view'] in ELECTRIFICATION_OPTIONS:
-            cur_style.update({'display': 'block'})
+            cur_style = {}
         else:
             cur_style.update({'display': 'none'})
         return cur_style
