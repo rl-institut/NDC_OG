@@ -42,7 +42,11 @@ class TestModellass(unittest.TestCase):
     def compare_results_countries(self, sce, fname, comp, eps=0.001):
         df = pd.read_json(SCENARIOS_DATA[sce]).set_index('country_iso')
         df = df.sort_index(ascending=True)
-        xls = pd.read_csv('tests/data/{}'.format(fname), float_precision='high').set_index('country_iso')
+        xls = pd.read_csv(
+            'tests/data/{}'.format(fname),
+            float_precision='high',
+            encoding='latin'
+        ).set_index('country_iso')
         xls = xls.sort_index(ascending=True)
         df_diff = xls[comp] - df[comp]
 
@@ -60,7 +64,11 @@ class TestModellass(unittest.TestCase):
     def compare_results_region(self, sce, region_id, fname, comp, eps=0.001):
         df = pd.read_json(SCENARIOS_DATA[sce]).set_index('country_iso')
         df = df.sort_index(ascending=True)
-        xls = pd.read_csv('tests/data/{}'.format(fname), float_precision='high').set_index('country_iso')
+        xls = pd.read_csv(
+            'tests/data/{}'.format(fname),
+            float_precision='high',
+            encoding='latin'
+        ).set_index('country_iso')
         xls = xls.sort_index(ascending=True)
 
         if region_id != WORLD_ID:
@@ -83,7 +91,7 @@ class TestModellass(unittest.TestCase):
     def test_bau_exo_results_countries(self):
         self.compare_results_countries(
             BAU_SCENARIO,
-            'NDC_full_results_old_rise_model_{}.csv'.format(BAU_SCENARIO),
+            'results_test_comparison_{}.csv'.format(BAU_SCENARIO),
             COMP_EXO,
             0.2
         )
@@ -92,32 +100,32 @@ class TestModellass(unittest.TestCase):
         self.compare_results_region(
             BAU_SCENARIO,
             WORLD_ID,
-            'NDC_full_results_old_rise_model_{}.csv'.format(BAU_SCENARIO),
+            'results_test_comparison_{}.csv'.format(BAU_SCENARIO),
             COMP_EXO,
             0.2
         )
 
-    def test_bau_ghg_results(self):
-        self.compare_results(BAU_SCENARIO, 'ghg_{}.csv'.format(BAU_SCENARIO), COMP_GHG)
+    # def test_bau_ghg_results(self):
+    #     self.compare_results(BAU_SCENARIO, 'ghg_{}.csv'.format(BAU_SCENARIO), COMP_GHG)
 
-    def test_prog_exo_results(self):
-        self.compare_results_countries(
-            PROG_SCENARIO,
-            'NDC_full_results_old_rise_model_{}.csv'.format(PROG_SCENARIO),
-            COMP_EXO,
-            0.2
-        )
-
-    def test_prog_ghg_results(self):
-        self.compare_results(PROG_SCENARIO, 'ghg_{}.csv'.format(PROG_SCENARIO), COMP_GHG)
-
-    def test_uea_exo_results(self):
-        self.compare_results_countries(
-            SE4ALL_SCENARIO,
-            'NDC_full_results_old_rise_model_{}.csv'.format(SE4ALL_SCENARIO),
-            COMP_EXO,
-            0.2
-        )
-
-    def test_uea_ghg_results(self):
-        self.compare_results(SE4ALL_SCENARIO, 'ghg_{}.csv'.format(SE4ALL_SCENARIO), COMP_GHG)
+    # def test_prog_exo_results(self):
+    #     self.compare_results_countries(
+    #         PROG_SCENARIO,
+    #         'results_test_comparison_{}.csv'.format(PROG_SCENARIO),
+    #         COMP_EXO,
+    #         0.2
+    #     )
+    #
+    # def test_prog_ghg_results(self):
+    #     self.compare_results(PROG_SCENARIO, 'ghg_{}.csv'.format(PROG_SCENARIO), COMP_GHG)
+    #
+    # def test_uea_exo_results(self):
+    #     self.compare_results_countries(
+    #         SE4ALL_SCENARIO,
+    #         'results_test_comparison_{}.csv'.format(SE4ALL_SCENARIO),
+    #         COMP_EXO,
+    #         0.2
+    #     )
+    #
+    # def test_uea_ghg_results(self):
+    #     self.compare_results(SE4ALL_SCENARIO, 'ghg_{}.csv'.format(SE4ALL_SCENARIO), COMP_GHG)
