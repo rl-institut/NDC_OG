@@ -15,12 +15,15 @@ from data.data_preparation import (
     HH_GET,
     HH_CAP,
     HH_SCN2,
+    INVEST,
+    INVEST_CAP,
     GHG,
     GHG_CAP,
     compute_ndc_results_from_raw_data
 )
 
 COMP_EXO = POP_GET + HH_GET + HH_CAP + HH_SCN2
+COMP_INVEST = INVEST + INVEST_CAP
 COMP_GHG = GHG + GHG_CAP
 
 WORLD_ID = 'WD'
@@ -37,6 +40,11 @@ def highlight_mismatch(col=None, df_diff=None, eps=0.001):
     return df_diff.loc[np.abs(df_diff[col]) > eps]
 
 
+def highlight_mismatch_region(col=None, df_diff=None, eps=0.001):
+    """Filter lines of a Dataframe column which are larger than threshold"""
+    return np.abs(df_diff[col]) > eps
+
+
 class TestModellass(unittest.TestCase):
 
     def compare_results_countries(self, sce, fname, comp, eps=0.001):
@@ -48,8 +56,9 @@ class TestModellass(unittest.TestCase):
             encoding='latin'
         ).set_index('country_iso')
         xls = xls.sort_index(ascending=True)
-        df_diff = xls[comp] - df[comp]
 
+        df_diff = xls[comp] - df[comp]
+        print(df_diff)
         l = []
         for col in comp:
             temp = highlight_mismatch(col, df_diff, eps).index.to_list()
@@ -79,7 +88,7 @@ class TestModellass(unittest.TestCase):
 
         l = []
         for col in comp:
-            temp = highlight_mismatch(col, df_diff, eps).index.to_list()
+            temp = highlight_mismatch_region(col, df_diff, eps)
             if temp:
                 print('problems with ', col, temp)
                 print(len(temp))
@@ -105,27 +114,87 @@ class TestModellass(unittest.TestCase):
             0.2
         )
 
-    # def test_bau_ghg_results(self):
-    #     self.compare_results(BAU_SCENARIO, 'ghg_{}.csv'.format(BAU_SCENARIO), COMP_GHG)
+    def test_bau_invest_results_countries(self):
+        self.compare_results_countries(
+            BAU_SCENARIO,
+            'results_test_comparison_{}.csv'.format(BAU_SCENARIO),
+            COMP_INVEST,
+            0.2
+        )
 
-    # def test_prog_exo_results(self):
-    #     self.compare_results_countries(
-    #         PROG_SCENARIO,
-    #         'results_test_comparison_{}.csv'.format(PROG_SCENARIO),
-    #         COMP_EXO,
-    #         0.2
-    #     )
-    #
-    # def test_prog_ghg_results(self):
-    #     self.compare_results(PROG_SCENARIO, 'ghg_{}.csv'.format(PROG_SCENARIO), COMP_GHG)
-    #
-    # def test_uea_exo_results(self):
-    #     self.compare_results_countries(
-    #         SE4ALL_SCENARIO,
-    #         'results_test_comparison_{}.csv'.format(SE4ALL_SCENARIO),
-    #         COMP_EXO,
-    #         0.2
-    #     )
-    #
-    # def test_uea_ghg_results(self):
-    #     self.compare_results(SE4ALL_SCENARIO, 'ghg_{}.csv'.format(SE4ALL_SCENARIO), COMP_GHG)
+    def test_bau_invest_results_region(self):
+        self.compare_results_region(
+            BAU_SCENARIO,
+            WORLD_ID,
+            'results_test_comparison_{}.csv'.format(BAU_SCENARIO),
+            COMP_INVEST,
+            0.2
+        )
+
+    def test_prog_exo_results(self):
+        self.compare_results_countries(
+            PROG_SCENARIO,
+            'results_test_comparison_{}.csv'.format(PROG_SCENARIO),
+            COMP_EXO,
+            0.2
+        )
+
+    def test_prog_exo_results_region(self):
+        self.compare_results_region(
+            PROG_SCENARIO,
+            WORLD_ID,
+            'results_test_comparison_{}.csv'.format(PROG_SCENARIO),
+            COMP_EXO,
+            0.2
+        )
+
+    def test_prog_invest_results(self):
+        self.compare_results_countries(
+            PROG_SCENARIO,
+            'results_test_comparison_{}.csv'.format(PROG_SCENARIO),
+            COMP_INVEST,
+            0.2
+        )
+
+    def test_prog_invest_results_region(self):
+        self.compare_results_region(
+            PROG_SCENARIO,
+            WORLD_ID,
+            'results_test_comparison_{}.csv'.format(PROG_SCENARIO),
+            COMP_INVEST,
+            0.2
+        )
+
+    def test_uea_exo_results(self):
+        self.compare_results_countries(
+            SE4ALL_SCENARIO,
+            'results_test_comparison_{}.csv'.format(SE4ALL_SCENARIO),
+            COMP_EXO,
+            0.2
+        )
+
+    def test_uea_exo_results_region(self):
+        self.compare_results_region(
+            SE4ALL_SCENARIO,
+            WORLD_ID,
+            'results_test_comparison_{}.csv'.format(SE4ALL_SCENARIO),
+            COMP_EXO,
+            0.2
+        )
+
+    def test_uea_invest_results(self):
+        self.compare_results_countries(
+            SE4ALL_SCENARIO,
+            'results_test_comparison_{}.csv'.format(SE4ALL_SCENARIO),
+            COMP_INVEST,
+            0.2
+        )
+
+    def test_uea_invest_results_region(self):
+        self.compare_results_region(
+            SE4ALL_SCENARIO,
+            WORLD_ID,
+            'results_test_comparison_{}.csv'.format(SE4ALL_SCENARIO),
+            COMP_INVEST,
+            0.2
+        )
