@@ -933,17 +933,6 @@ def compare_title_callback(app_handle, result_category):
     return update_title
 
 
-# def result_info_hover_callback(app_handle, result_type, result_category):
-#     id_name = '{}-{}'.format(result_type, result_category)
-#
-#     @app_handle.callback(
-#         Output('{}-results-title-help'.format(id_name), 'title'),
-#         [Input('view-store', 'data')],
-#         [State('{}-div'.format(id_name), 'style')]
-#     )
-# aggregate-pop-
-
-
 def table_title_callback(app_handle, result_type, result_category):
 
     id_name = '{}-{}'.format(result_type, result_category)
@@ -1129,6 +1118,95 @@ def toggle_results_div_callback(app_handle, result_type, result_category):
     return toggle_results_div_display
 
 
+def update_maps_callback(app_handle, region):
+
+    @app_handle.callback(
+        Output('{}-map'.format(region), 'figure'),
+        [
+            Input('scenario-input', 'value'),
+        ],
+        [
+            State('{}-map'.format(region), 'figure'),
+            State('data-store', 'data')
+        ]
+    )
+    def update_map(scenario, fig, cur_data):
+        """Plot color map of the percentage of people with a given electrification option."""
+        region_id = MAP_REGIONS[region]
+
+        # load the data of the scenario
+        df = pd.read_json(cur_data[scenario])
+
+        centroid = pd.read_json(cur_data[region_id])
+
+        # narrow to the region if the scope is not on the whole world
+        df = df.loc[df.region == REGIONS_NDC[region_id]]
+
+        if region_id == 'SA':
+            region_name = REGIONS_GPD[WORLD_ID]
+        elif region_id == 'AS':
+            region_name = REGIONS_GPD[region_id]
+        elif region_id == 'AF':
+            region_name = REGIONS_GPD[region_id]
+        else:
+            region_name = REGIONS_GPD[region_id]
+
+        fig['data'][0].update(
+            {
+                'locations': df['country_iso'],
+                'z': np.ones(len(df.index)),
+                'text': country_hover_text(df),
+            }
+        )
+
+        points = []
+        i = 0
+        if scenario == BAU_SCENARIO:
+            z = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
+            z[NO_ACCESS] = 1 - z.sum(axis=1)
+            options = ELECTRIFICATION_OPTIONS + [NO_ACCESS]
+
+        else:
+            z = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
+            z[NO_ACCESS] = 0
+            options = ELECTRIFICATION_OPTIONS
+        n = 4
+        colors = BARPLOT_ELECTRIFICATION_COLORS
+        show_legend = True
+
+        # Populate the map with bar plots mapped onto circles
+        for idx, c in centroid.iterrows():
+            for j, opt in enumerate(options):
+                if j == n - 1 and z.iloc[i, j] == 0:
+                    # Otherwise points with radius of 0 are displayed with non zero radius
+                    pass
+                else:
+                    points.append(
+                        go.Scattergeo(
+                            lon=[c['Longitude']],
+                            lat=[c['Latitude']],
+                            hoverinfo='skip',
+                            marker=go.scattergeo.Marker(
+                                size=z.iloc[i, j:n].sum() * 25,
+                                color=colors[opt],
+                                line=go.scattergeo.marker.Line(width=0)
+                            ),
+                            showlegend=show_legend,
+                            legendgroup='group{}'.format(j),
+                            name=ELECTRIFICATION_DICT[opt],
+                        )
+                    )
+            show_legend = False
+            i = i + 1
+
+        fig['data'][1:] = points
+
+        return fig
+
+    update_map.__name__ = 'update_%s_map' % region
+    return update_map
+
+
 def callbacks(app_handle):
 
     # build callbacks automatically for various categories
@@ -1156,96 +1234,9 @@ def callbacks(app_handle):
     for res_type in [RES_COUNTRY, RES_AGGREGATE, RES_COMPARE]:
         ghg_dropdown_options_callback(app_handle, res_type)
 
-    @app_handle.callback(
-        Output('map', 'figure'),
-        [
-            Input('region-input', 'value'),
-            Input('scenario-input', 'value'),
-        ],
-        [
-            State('map', 'figure'),
-            State('data-store', 'data')
-        ]
-    )
-    def update_map(region_id, scenario, fig, cur_data):
-        """Plot color map of the percentage of people with a given electrification option."""
+    for region in MAP_REGIONS:
+        update_maps_callback(app_handle, region)
 
-        # load the data of the scenario
-        df = pd.read_json(cur_data[scenario])
-
-        if region_id is None:
-            region_id = WORLD_ID
-
-        centroid = pd.read_json(cur_data[region_id])
-
-        if region_id != WORLD_ID:
-            # narrow to the region if the scope is not on the whole world
-            df = df.loc[df.region == REGIONS_NDC[region_id]]
-
-        if region_id == 'SA':
-            region_name = REGIONS_GPD[WORLD_ID]
-            geo = 'geo2'
-        elif region_id == 'AS':
-            region_name = REGIONS_GPD[region_id]
-            geo = 'geo3'
-        else:
-            region_name = REGIONS_GPD[region_id]
-            geo = 'geo'
-
-        fig['data'][0].update(
-            {
-                'locations': df['country_iso'],
-                'z': np.ones(len(df.index)),
-                'text': country_hover_text(df),
-                'geo': geo,
-            }
-        )
-
-        points = []
-        i = 0
-        if scenario == BAU_SCENARIO:
-            z = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
-            z[NO_ACCESS] = 1 - z.sum(axis=1)
-            options = ELECTRIFICATION_OPTIONS + [NO_ACCESS]
-
-        else:
-            z = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0).round(3)
-            z[NO_ACCESS] = 0
-            options = ELECTRIFICATION_OPTIONS
-        n = 4
-        colors = BARPLOT_ELECTRIFICATION_COLORS
-        show_legend = True
-
-        # Populate the map with bar plots mapped onto circles
-        for idx, c in centroid.iterrows():
-            for j, opt in enumerate(options):
-                if j == n-1 and z.iloc[i, j] == 0:
-                    # Otherwise points with radius of 0 are displayed with non zero radius
-                    pass
-                else:
-                    points.append(
-                        go.Scattergeo(
-                            lon=[c['Longitude']],
-                            lat=[c['Latitude']],
-                            hoverinfo='skip',
-                            marker=go.scattergeo.Marker(
-                                size=z.iloc[i, j:n].sum() * 25,
-                                color=colors[opt],
-                                line=go.scattergeo.marker.Line(width=0)
-                            ),
-                            showlegend=show_legend,
-                            legendgroup='group{}'.format(j),
-                            name=ELECTRIFICATION_DICT[opt],
-                            geo=geo
-                        )
-                    )
-            show_legend = False
-            i = i + 1
-
-        fig['data'][1:] = points
-
-        fig['layout']['geo'].update({'scope': region_name.lower()})
-        return fig
 
     @app_handle.callback(
         Output('view-store', 'data'),
