@@ -176,6 +176,23 @@ def create_tooltip(cell):
     )
 
 
+def map_div(region, layout, map_data):
+    return html.Div(
+        id='{}-map-div'.format(region),
+        className='cell small-7 medium-4 select-map',
+        children=[
+            html.Button(
+                id='{}-map-btn'.format(region),
+                children='Click me'),
+            dcc.Graph(
+                id='{}-map'.format(region),
+                figure=go.Figure(
+                    data=map_data,
+                    layout=layout),
+            )
+        ]
+    )
+
 def results_div(result_type, result_category, flex_case=''):
     """
     :param result_type: one of country, aggregate, or compare
