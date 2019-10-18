@@ -23,6 +23,7 @@ from data.data_preparation import (
     GHG_RES,
     GHG_ER_RES,
     RISE_SUB_INDICATORS,
+    RESULTS_TITLE_HELP,
 )
 
 RES_COUNTRY = 'country'
@@ -84,10 +85,12 @@ TABLE_ROWS_TOOLTIPS = {
     'Higher TIER case':
         'Needed initial investments to supply expected demand by 2030 for one TIER level up, '
         'in million USD',
-    'Lower TIER': '1',
-    'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]): '2',
-    'Higher TIER': '3',
-    'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]): '4',
+    'Lower TIER': 'Green-House-Gas emissions by 2030, in million ton CO2',
+    'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]): 'Difference of Green-House-Gas emissions '
+        'with Business-as-Usual scenario emissions, in million tons CO2',
+    'Higher TIER': 'Green-House-Gas emissions by 2030 for one TIER level up, in million ton CO2',
+    'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]): 'Difference of Green-House-Gas emissions '
+        'with Business-as-Usual scenario emissions for one TIER level up, in million tons CO2',
 }
 # labels of the columns of the result tables
 TABLE_COLUMNS_LABEL = ELECTRIFICATION_DICT.copy()
@@ -280,7 +283,7 @@ def results_div(result_type, result_category, flex_case=''):
                     children=html.Img(
                         id='{}-results-title-help'.format(id_name),
                         src='data:image/png;base64,{}'.format(INFO_ICON.decode()),
-                        title='Hover text',
+                        title=RESULTS_TITLE_HELP[result_category],
                         className='info__icon'
                     )
                 ),
@@ -302,7 +305,7 @@ def results_div(result_type, result_category, flex_case=''):
 
                 ),
                 html.Div(
-                    className='cell medium-1 align__right',
+                    className='cell medium-1 align__right display__none',
                     children=html.Img(
                         id='{}-results-table-title-help'.format(id_name),
                         src='data:image/png;base64,{}'.format(INFO_ICON.decode()),

@@ -71,6 +71,11 @@ SCENARIOS_NAMES = {
 
 FLEX_SCENARIO_NAME = 'Custom'
 
+POP_RES = 'pop'
+INVEST_RES = 'invest'
+GHG_RES = 'ghg'
+GHG_ER_RES = 'ghg-er'
+
 SCENARIOS_DESCRIPTIONS = {
     BAU_SCENARIO:
         [html.H4('What it shows:'), '''The ''', html.Span('Business-as-Usual'), ''' (''',
@@ -94,6 +99,12 @@ WHAT_CAN_YOU_DO_DESCRIPTIONS = {
     BAU_SCENARIO: ['''Hover over the three regional maps to view country specific information. For more information, select a region or country from the maps or the dropdown menu above. Via the dropdown menu you can also alter the scenario you wish to explore. Once a country is selected, you may also choose a region or second country for comparison.'''],
     SE4ALL_SCENARIO: ['''Hover over the three regional maps to view country specific information. For more information, select a region or country from the maps or the dropdown menu above. Via the dropdown menu you can also alter the scenario you wish to explore. Once a country is selected, you may also choose a region or second country for comparison.'''],
     PROG_SCENARIO: ['''Hover over the three regional maps to view country specific information. For more information, select a region or country from the maps or the dropdown menu above. Via the dropdown menu you can also alter the scenario you wish to explore. Once a country is selected, you may also choose a region or second country for comparison.''']
+}
+
+RESULTS_TITLE_HELP = {
+    POP_RES: '''The share of people / people in million / households in million to be electrified through Grid extension, Mini-Grid deployment and Solar-Home-System adoption, for the BaU, uEA and prOG scenarios.''',
+    INVEST_RES: '''Lower and higher TIER case initial investment needs for Grid extension, Mini-Grid deployment and Solar-Home-System adoption, for the BaU, uEA and prOG scenarios.''',
+    GHG_RES: '''Lower and higher TIER case cumulated GHG emissions stemming from Grid extension, Mini-Grid deployment and the use of alternative forms of energy by people without access. As respective emissions are cumulated until 2030, also full-access scenarios (uEA and prOG) show emissions stemming from people lacking access to electricity. Emissions from the adoption of Solar-Home-Systems are assumed to be zero. Emissions and reduction potentials are estimated for the BaU, uEA and prOG scenarios. '''
 }
 
 ELECTRIFICATION_DICT = {
@@ -164,11 +175,6 @@ for opt in ELECTRIFICATION_OPTIONS:
         sub_group_df = RISE_SUB_INDICATORS.loc['rise_{}'.format(opt)]
         sub_group_df = sub_group_df.loc[sub_group_df.sub_indicator_group == sub_group]
         RISE_SUB_INDICATOR_STRUCTURE[opt].append(len(sub_group_df.index))
-
-POP_RES = 'pop'
-INVEST_RES = 'invest'
-GHG_RES = 'ghg'
-GHG_ER_RES = 'ghg-er'
 
 
 def prepare_results_tables(df, sce=BAU_SCENARIO, result_category=POP_RES, ghg_er=False):
