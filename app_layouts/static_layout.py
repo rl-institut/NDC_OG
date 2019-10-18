@@ -33,6 +33,7 @@ from data.data_preparation import (
 
 from .app_components import (
     results_div,
+    map_div,
     round_digits,
     format_percent,
     TABLES_LABEL_STYLING,
@@ -64,6 +65,8 @@ WORLD_ID = 'WD'
 REGIONS_GPD = dict(WD='World', SA='South America', AF='Africa', AS='Asia')
 
 REGIONS_NDC = dict(WD=['LA', 'SSA', 'DA'], SA='LA', AF='SSA', AS='DA')
+
+MAP_REGIONS = {'africa': 'AF', 'asia': 'AS', 'south-america': 'SA'}
 
 VIEW_GENERAL = 'general'
 VIEW_COUNTRY = 'specific'
@@ -129,10 +132,9 @@ map_data = [
     )
 ]
 
-layout = go.Layout(
-    # plot_bgcolor='red',
+map_options = dict(
     paper_bgcolor=APP_BG_COLOR,
-    #autosize=True,
+    #autosize=False,
     height=500,
     margin=dict(
         l=2,
@@ -140,43 +142,50 @@ layout = go.Layout(
         b=2,
         t=2
     ),
-    legend=dict(orientation='h', xanchor='center', x=0.5),
-    geo=go.layout.Geo(
-        bgcolor=APP_BG_COLOR,
-        scope='world',
-        showlakes=True,
-        showcountries=True,
-        lakecolor='rgb(255, 255, 255)',
-        projection=dict(type='orthographic'),
-    ),
-    # south america
-    geo2=go.layout.Geo(
-        bgcolor=APP_BG_COLOR,
-        scope='world',
-        showlakes=True,
-        showcountries=True,
-        lakecolor='rgb(255, 255, 255)',
-        projection=dict(type='equirectangular'),
-        lonaxis=dict(range=[-95, -30.0]),
-        lataxis=dict(range=[-60, 30]),
-        framewidth=0,
-    ),
-    # asia
-    geo3=go.layout.Geo(
-        bgcolor=APP_BG_COLOR,
-        scope='world',
-        showlakes=True,
-        showcountries=True,
-        lakecolor='rgb(255, 255, 255)',
-        projection=dict(type='equirectangular'),
-        lonaxis=dict(range=[25, -170]),
-        lataxis=dict(range=[-15, 90]),
-        framewidth=0,
-    )
+    legend=dict(orientation='h', xanchor='center', x=0.5)
 )
 
-fig_map = go.Figure(data=map_data, layout=layout)
-
+MAP_LAYOUTS = {
+    'asia': go.Layout(
+        geo=go.layout.Geo(
+            bgcolor=APP_BG_COLOR,
+            scope='world',
+            showlakes=True,
+            showcountries=True,
+            lakecolor='rgb(255, 255, 255)',
+            projection=dict(type='equirectangular'),
+            lonaxis=dict(range=[40, 150]),
+            lataxis=dict(range=[-15, 70]),
+            framewidth=0,
+        ),
+        **map_options
+    ),
+    'africa': go.Layout(
+        geo=go.layout.Geo(
+            bgcolor=APP_BG_COLOR,
+            scope='africa',
+            showlakes=True,
+            showcountries=True,
+            lakecolor='rgb(255, 255, 255)',
+            projection=dict(type='equirectangular'),
+        ),
+        **map_options
+    ),
+    'south-america': go.Layout(
+        geo=go.layout.Geo(
+            bgcolor=APP_BG_COLOR,
+            scope='world',
+            showlakes=True,
+            showcountries=True,
+            lakecolor='rgb(255, 255, 255)',
+            projection=dict(type='equirectangular'),
+            lonaxis=dict(range=[-95, -30.0]),
+            lataxis=dict(range=[-60, 30]),
+            framewidth=0,
+        ),
+        **map_options
+    )
+}
 
 layout = html.Div(
     id='main-div',
@@ -324,31 +333,9 @@ layout = html.Div(
                                     ),
                                 ]
                             ),
-                            html.Div(
-                                id='left-map-div',
-                                className='cell medium-6',
-                                children=dcc.Graph(
-                                    id='map',
-                                    figure=fig_map,
-                                )
-                            ),
-                            html.Div(
-                                id='right-map-div',
-                                className='cell medium-6',
-                                children=[
-                                    html.P(
-                                        'Hover over the map to view country specific information.'
-                                    ),
-                                    html.P(
-                                        'For more information, click on the country or select it '
-                                        'in the menu above.'
-                                    ),
-                                    html.P(
-                                        'To view the results aggregated over a region, please '
-                                        'select a region in the menu above'
-                                    )
-                                ]
-                            ),
+                        ] + [
+                            map_div(region, MAP_LAYOUTS[region], map_data)
+                            for region in MAP_REGIONS
                         ]
                     ),
                 ),
