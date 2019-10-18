@@ -758,6 +758,8 @@ def rise_update_set_all_upon_country_selection(app_handle, id_name):
 def rise_update_subscore_values(app_handle, id_name, p, q):
     """Update the values of the RISE subindicators upon country selection
 
+        flex-country-input triggers the callback rise_update_set_all_upon_country_selection
+        which triggers this call back
     :param app_handle: handle to the dash app
     :param id_name: one the ELECTRIFICATION_OPTIONS
     :param p: the index of the rise sub-indicator's group
@@ -920,6 +922,7 @@ def callbacks(app_handle):
             country_iso,
             flex_data
     ):
+        """Recompute the exogenous results with the updated RISE scores"""
         if rise_grid is not None:
             flex_data.update({'rise_grid': rise_grid})
         if rise_mg is not None:
