@@ -76,6 +76,8 @@ SCENARIOS_DATA.update(
     {reg: extract_centroids(REGIONS_NDC[reg]).to_json() for reg in REGIONS_NDC}
 )
 
+RISE_SUB_INDICATOR_SCORES = pd.read_csv('data/RISE_subindicators_country.csv')
+
 list_countries_dropdown = []
 DF = pd.read_json(SCENARIOS_DATA[SE4ALL_SCENARIO])
 DF = DF.sort_values('country')
@@ -725,8 +727,7 @@ def rise_update_scores(app_handle, id_name):
                         df.country_iso == country_iso, 'rise_{}'.format(id_name)
                     ].values[0]
             if 'rise-store' in prop_id:
-                if id_name == cur_view['sub_indicators_view']:
-                    answer = cur_rise_data.get(id_name)
+                answer = cur_rise_data.get(id_name)
 
         if answer is None:
             answer = cur_val
@@ -734,6 +735,77 @@ def rise_update_scores(app_handle, id_name):
 
     flex_update_rise_value.__name__ = 'flex_update_rise_%s_value' % id_name
     return flex_update_rise_value
+
+
+def rise_update_set_all_upon_country_selection(app_handle, id_name):
+    """When a country is selected, the rise subindicators values are displayed
+
+    :param app_handle:
+    :param id_name:
+    :return:
+    """
+    @app_handle.callback(
+        Output('flex-rise-{}-general-toggle'.format(id_name), 'value'),
+        [Input('flex-country-input', 'value')]
+    )
+    def flex_update_set_all(_):
+        return -1  # correspond to default value of the dropdown
+
+    flex_update_set_all.__name__ = 'flex_update_set_all_{}'.format(id_name)
+    return flex_update_set_all
+
+
+def rise_update_subscore_values(app_handle, id_name, p, q):
+    """Update the values of the RISE subindicators upon country selection
+
+        flex-country-input triggers the callback rise_update_set_all_upon_country_selection
+        which triggers this call back
+    :param app_handle: handle to the dash app
+    :param id_name: one the ELECTRIFICATION_OPTIONS
+    :param p: the index of the rise sub-indicator's group
+    :param q: the index of the question within the rise sub-indicator's group
+    :return: callback function
+    """
+    @app_handle.callback(
+        Output('flex-rise-{}-sub-group{}-{}-toggle'.format(id_name, p, q), 'value'),
+        [
+            Input('flex-rise-{}-general-toggle'.format(id_name), 'value'),
+        ],
+        [
+            State('flex-country-input', 'value'),
+            State('flex-rise-store', 'data')
+        ]
+    )
+    def flex_update_subscore_value(set_all, country_iso, cur_rise_data):
+        answer = 0
+        if set_all is not None and country_iso is not None:
+            if set_all == 1:
+                answer = float(1./RISE_SUB_INDICATOR_STRUCTURE[id_name][p])
+            elif set_all == 0:
+                answer = 0
+            elif set_all == -1:
+                # select country
+                sub_df = RISE_SUB_INDICATOR_SCORES.loc[
+                    RISE_SUB_INDICATOR_SCORES.country_iso == country_iso
+                    ]
+                # select electrification option
+                sub_df = sub_df.loc[sub_df.indicator == 'rise_{}'.format(id_name)]
+                # select sub-indicator group
+                sub_group = sub_df.sub_indicator_group.unique()[p]
+                sub_df = sub_df.loc[sub_df.sub_indicator_group == sub_group]
+                # select question within sub-indicator group
+                value = sub_df.iloc[q].value
+
+                if value:
+                    answer = float(1. / value)
+        return answer
+
+    flex_update_subscore_value.__name__ = 'flex_update_subscore_value_{}_{}_{}'.format(
+        id_name,
+        p,
+        q
+    )
+    return flex_update_subscore_value
 
 
 def callbacks(app_handle):
@@ -752,6 +824,10 @@ def callbacks(app_handle):
         rise_sub_indicator_display_callback(app_handle, opt)
         rise_update_scores(app_handle, opt)
         rise_sub_indicator_button_style_callback(app_handle, opt)
+        rise_update_set_all_upon_country_selection(app_handle, opt)
+        for p, m in enumerate(RISE_SUB_INDICATOR_STRUCTURE[opt]):
+            for q in range(m):
+                rise_update_subscore_values(app_handle, opt, p, q)
 
     @app_handle.callback(
         Output('flex-view-store', 'data'),
@@ -846,6 +922,7 @@ def callbacks(app_handle):
             country_iso,
             flex_data
     ):
+        """Recompute the exogenous results with the updated RISE scores"""
         if rise_grid is not None:
             flex_data.update({'rise_grid': rise_grid})
         if rise_mg is not None:
@@ -896,19 +973,14 @@ def callbacks(app_handle):
 
     @app_handle.callback(
         Output('flex-rise-store', 'data'),
-        sub_indicators_inputs,
-        [
-            State('flex-view-store', 'data')
-         ]
+        sub_indicators_inputs
     )
     def flex_update_rise_sub_indicators(*args):
         """Change the display of results-div between the app's views."""
-        cur_view = args[-1]
-        id_name = cur_view.get('sub_indicators_view')
 
         cur_rise_data = {}
 
-        if id_name is not None and id_name in ELECTRIFICATION_OPTIONS:
+        for id_name in ELECTRIFICATION_OPTIONS:
 
             # find the position of the sub-indicators values in the arguments' list
             idx_start, idx_end = sub_indicators_num[id_name]
@@ -928,7 +1000,7 @@ def callbacks(app_handle):
             # round the total score to 100 if it was 99.999999 due to floating point error
             if 100 - rise_score < 1e-5:
                 rise_score = 100
-            cur_rise_data[id_name] = rise_score
+            cur_rise_data[id_name] = round(rise_score, 2)
         return cur_rise_data
 
 
