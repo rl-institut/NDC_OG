@@ -423,7 +423,7 @@ def sub_indicator_table(id_name, sub_df=RISE_SUB_INDICATORS):
             children=[
                 html.P(
                     className='cell medium-10',
-                    children='Explain indicators here and instruct the user',
+                    children='''The Rise Subindicators set the framework for the development of a chosen indicator (Grid, MG, SHS). By answereing the questions by selecting yes or no from the drop down buttom you can experiment with different framework scenarios.''',
                 ),
                 html.Div(
                     className='cell medium-2 rise_sub__dropdown',

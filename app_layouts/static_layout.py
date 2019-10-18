@@ -15,6 +15,7 @@ from data.data_preparation import (
     SCENARIOS,
     BAU_SCENARIO,
     SCENARIOS_DESCRIPTIONS,
+    WHAT_CAN_YOU_DO_DESCRIPTIONS,
     SCENARIOS_DICT,
     SCENARIOS_NAMES,
     ELECTRIFICATION_OPTIONS,
@@ -1526,6 +1527,12 @@ def callbacks(app_handle):
     def update_scenario_description(scenario):
         return SCENARIOS_DESCRIPTIONS[scenario]
 
+    @app_handle.callback(
+        Output('specific-info-div', 'children'),
+        [Input('scenario-input', 'value')]
+    )
+    def update_scenario_specific_description(scenario):
+        return WHAT_CAN_YOU_DO_DESCRIPTIONS[scenario]
 
 if __name__ == '__main__':
     app.run_server(debug=True)
