@@ -1000,7 +1000,7 @@ def callbacks(app_handle):
             # round the total score to 100 if it was 99.999999 due to floating point error
             if 100 - rise_score < 1e-5:
                 rise_score = 100
-            cur_rise_data[id_name] = rise_score
+            cur_rise_data[id_name] = round(rise_score, 2)
         return cur_rise_data
 
 
