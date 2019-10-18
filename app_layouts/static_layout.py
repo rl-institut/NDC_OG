@@ -43,7 +43,9 @@ from .app_components import (
     TABLE_COLUMNS_ID,
     COMPARE_COLUMNS_ID,
     TABLE_COLUMNS_LABEL,
-    BARPLOT_YAXIS_OPT
+    BARPLOT_YAXIS_OPT,
+    BARPLOT_INVEST_YLABEL,
+    BARPLOT_GHG_YLABEL,
 )
 
 URL_PATHNAME = 'static'
@@ -55,9 +57,6 @@ def extract_centroids(reg):
         reg = [reg]
     centroids = pd.read_csv('data/centroid.csv')
     return centroids.loc[centroids.region.isin(reg)].copy()
-
-
-
 
 
 WORLD_ID = 'WD'
@@ -219,8 +218,8 @@ layout = html.Div(
                                 className='cell medium-6',
                                 children=[
                                     html.Div(
-                                        id='scenario-div',
-                                        className='grid-x',
+                                        id='scenario-input-div',
+                                        className='grid-x input-div',
                                         children=[
                                             html.Div(
                                                 id='scenario-label',
@@ -228,7 +227,7 @@ layout = html.Div(
                                                 children='Explore a scenario:'
                                             ),
                                             html.Div(
-                                                id='scenario-input-div',
+                                                id='scenario-input-wrapper',
                                                 className='cell medium-9',
                                                 children=dcc.Dropdown(
                                                     id='scenario-input',
@@ -249,7 +248,7 @@ layout = html.Div(
                                     ),
                                     html.Div(
                                         id='region-input-div',
-                                        className='grid-x',
+                                        className='grid-x input-div',
                                         children=[
                                             html.Div(
                                                 id='region-label',
@@ -274,7 +273,7 @@ layout = html.Div(
                                     html.Div(
                                         id='country-input-div',
                                         title='country selection description',
-                                        className='grid-x',
+                                        className='grid-x input-div',
                                         children=[
                                             html.Div(
                                                 id='country-label',
@@ -295,17 +294,17 @@ layout = html.Div(
                                     ),
                                     html.Div(
                                         id='compare-input-div',
-                                        className='grid-x',
-                                        style={'display': 'none'},
+                                        className='grid-x input-div',
+                                        style={'visibility': 'hidden'},
                                         children=[
                                             html.Div(
                                                 id='country-comp-label',
-                                                className='cell medium-4',
+                                                className='cell medium-3',
                                                 children='Compare with:'
                                             ),
                                             html.Div(
                                                 id='compare-input-wrapper',
-                                                className='cell medium-8',
+                                                className='cell medium-9',
                                                 children=dcc.Dropdown(
                                                     id='compare-input',
                                                     options=COMPARE_OPTIONS,
@@ -316,6 +315,11 @@ layout = html.Div(
 
                                         ],
 
+                                    ),
+                                    html.Div(
+                                        id='specific-info-div',
+                                        className='instructions',
+                                        children='Blablabla'
                                     ),
                                 ]
                             ),
@@ -377,6 +381,8 @@ def country_barplot_callback(app_handle, result_category):
 
     id_name = '{}-{}'.format('country', result_category)
 
+    result_cat = result_category
+
     @app_handle.callback(
         Output('{}-barplot'.format(id_name), 'figure'),
         [
@@ -411,9 +417,26 @@ def country_barplot_callback(app_handle, result_category):
 
             y_vals = np.vstack(y_vals)
 
-            for j, opt in enumerate(BARPLOT_YAXIS_OPT):
+            for j, opt in enumerate(BARPLOT_YAXIS_OPT[result_cat]):
                 fig['data'][j].update({'x': x_vals})
                 fig['data'][j].update({'y': y_vals[:, j]})
+
+            if result_cat == INVEST_RES:
+                yaxis_label = BARPLOT_INVEST_YLABEL
+            elif result_cat == GHG_RES:
+                yaxis_label = BARPLOT_GHG_YLABEL
+            else:
+                yaxis_label = y_sel
+
+            fig['layout'].update(
+                {
+                    'yaxis': go.layout.YAxis(
+                        title=go.layout.yaxis.Title(
+                            text=yaxis_label,
+                        )
+                    )
+                }
+            )
 
         return fig
 
@@ -481,7 +504,7 @@ def country_table_callback(app_handle, result_category):
                 table_rows = TABLE_ROWS[result_cat]
                 results_data['labels'] = pd.Series(table_rows)
 
-                answer_table = results_data[TABLE_COLUMNS_ID].to_dict('records')
+                answer_table = results_data[TABLE_COLUMNS_ID[result_cat]].to_dict('records')
         return answer_table
 
     update_table.__name__ = 'update_%s_table' % id_name
@@ -492,6 +515,8 @@ def aggregate_barplot_callback(app_handle, result_category):
     """Generate a callback for input components."""
 
     id_name = '{}-{}'.format(RES_AGGREGATE, result_category)
+
+    result_cat = result_category
 
     @app_handle.callback(
         Output('{}-barplot'.format(id_name), 'figure'),
@@ -531,9 +556,27 @@ def aggregate_barplot_callback(app_handle, result_category):
 
             y_vals = np.vstack(y_vals)
 
-            for j, opt in enumerate(BARPLOT_YAXIS_OPT):
+            for j, opt in enumerate(BARPLOT_YAXIS_OPT[result_cat]):
                 fig['data'][j].update({'x': x_vals})
                 fig['data'][j].update({'y': y_vals[:, j]})
+
+            if result_cat == INVEST_RES:
+                yaxis_label = BARPLOT_INVEST_YLABEL
+            elif result_cat == GHG_RES:
+                yaxis_label = BARPLOT_GHG_YLABEL
+            else:
+                yaxis_label = y_sel
+
+            fig['layout'].update(
+                {
+                    'yaxis': go.layout.YAxis(
+                        title=go.layout.yaxis.Title(
+                            text=yaxis_label,
+                        )
+                    )
+                }
+            )
+
         return fig
 
     update_barplot.__name__ = 'update_%s_barplot' % id_name
@@ -603,7 +646,7 @@ def aggregate_table_callback(app_handle, result_category):
                 table_rows = TABLE_ROWS[result_cat]
                 results_data['labels'] = pd.Series(table_rows)
 
-                answer_table = results_data[TABLE_COLUMNS_ID].to_dict('records')
+                answer_table = results_data[TABLE_COLUMNS_ID[result_cat]].to_dict('records')
         return answer_table
 
     update_table.__name__ = 'update_%s_table' % id_name
@@ -614,6 +657,8 @@ def compare_barplot_callback(app_handle, result_category):
     """Generate a callback for input components."""
 
     id_name = '{}-{}'.format(RES_COMPARE, result_category)
+
+    result_cat = result_category
 
     @app_handle.callback(
         Output('{}-barplot'.format(id_name), 'figure'),
@@ -645,10 +690,12 @@ def compare_barplot_callback(app_handle, result_category):
                     df_comp = df_comp.loc[df_comp.region == REGIONS_NDC[comp_sel]]
                 df_comp = df_comp[EXO_RESULTS + ['pop_newly_electrified_2030']].sum(axis=0)
                 comp_name = REGIONS_GPD[comp_sel]
+                comp_iso = comp_name
             else:
                 # compare the reference country to a country
                 df_comp = df_comp.loc[df_comp.country_iso == comp_sel]
                 comp_name = df_comp.country.values[0]
+                comp_iso = df_comp.country_iso.values[0]
 
             ref_results_data = prepare_results_tables(df_ref, scenario, result_category)
             comp_results_data = prepare_results_tables(df_comp, scenario, result_category)
@@ -657,37 +704,65 @@ def compare_barplot_callback(app_handle, result_category):
             y_ref = ref_results_data[idx_y]
             y_comp = comp_results_data[idx_y]
 
-            fs = 12
+            country_txt = [country_sel for i in range(4)]
+
+            comp_txt = [comp_iso for i in range(4)]
+
+            if result_cat == INVEST_RES:
+                x = x[:-1]
+                y_ref = y_ref[:-1]
+                y_comp = y_comp[:-1]
+                country_txt = country_txt[:-1]
+                comp_txt = comp_txt[:-1]
+
+            fs = 15
 
             fig.update(
-                {'data': [
-                    go.Bar(
-                        x=x,
-                        y=y_ref,
-                        text=[country_sel for i in range(4)],
-                        name=df_ref.country.values[0],
-                        insidetextfont={'size': fs},
-                        textposition='auto',
-                        marker=dict(
-                            color=list(BARPLOT_ELECTRIFICATION_COLORS.values())
+                {
+                    'data': [
+                        go.Bar(
+                            x=x,
+                            y=y_ref,
+                            text=country_txt,
+                            insidetextfont={'size': fs, 'color': 'white'},
+                            textposition='auto',
+                            marker=dict(
+                                color=list(BARPLOT_ELECTRIFICATION_COLORS.values())
+                            ),
+                            hoverinfo='y+text'
                         ),
-                        hoverinfo='y+text'
-                    ),
-                    go.Bar(
-                        x=x,
-                        y=y_comp,
-                        text=[comp_name for i in range(4)],
-                        name=comp_name,
-                        insidetextfont={'size': fs},
-                        textposition='auto',
-                        marker=dict(
-                            color=['#a062d0', '#9ac1e5', '#f3a672', '#cccccc']
+                        go.Bar(
+                            x=x,
+                            y=y_comp,
+                            text=comp_txt,
+                            insidetextfont={'size': fs, 'color': 'white'},
+                            textposition='auto',
+                            marker=dict(
+                                color=['#a062d0', '#9ac1e5', '#f3a672', '#cccccc']
+                            ),
+                            hoverinfo='y+text'
                         ),
-                        hoverinfo='y+text'
-                    ),
-                ]
+                    ],
                 }
             )
+
+            if result_cat == INVEST_RES:
+                yaxis_label = BARPLOT_INVEST_YLABEL
+            elif result_cat == GHG_RES:
+                yaxis_label = BARPLOT_GHG_YLABEL
+            else:
+                yaxis_label = y_sel
+
+            fig['layout'].update(
+                {
+                    'yaxis': go.layout.YAxis(
+                        title=go.layout.yaxis.Title(
+                            text=yaxis_label,
+                        )
+                    )
+                }
+            )
+
         return fig
 
     update_barplot.__name__ = 'update_%s_barplot' % id_name
@@ -777,6 +852,8 @@ def compare_table_columns_title_callback(app_handle, result_category):
 
     id_name = '{}-{}'.format(RES_COMPARE, result_category)
 
+    result_cat = result_category
+
     @app_handle.callback(
         Output('{}-results-table'.format(id_name), 'columns'),
         [
@@ -788,7 +865,7 @@ def compare_table_columns_title_callback(app_handle, result_category):
 
         columns_ids = []
         if country_sel is not None and comp_sel is not None:
-            for col in TABLE_COLUMNS_ID:
+            for col in TABLE_COLUMNS_ID[result_cat]:
                 if col != 'labels':
                     columns_ids.append(
                         {'name': [TABLE_COLUMNS_LABEL[col], country_sel], 'id': col}
@@ -808,6 +885,8 @@ def compare_table_styling_callback(app_handle, result_category):
 
     id_name = '{}-{}'.format(RES_COMPARE, result_category)
 
+    result_cat = result_category
+
     @app_handle.callback(
         Output('{}-results-table'.format(id_name), 'style_data_conditional'),
         [Input('{}-results-table'.format(id_name), 'data')],
@@ -823,8 +902,8 @@ def compare_table_styling_callback(app_handle, result_category):
         if comp_sel is not None and country_iso is not None:
             data = pd.DataFrame.from_dict(cur_data)
 
-            col_ref = TABLE_COLUMNS_ID[1:]
-            col_comp = ['comp_{}'.format(col) for col in TABLE_COLUMNS_ID[1:]]
+            col_ref = TABLE_COLUMNS_ID[result_cat][1:]
+            col_comp = ['comp_{}'.format(col) for col in TABLE_COLUMNS_ID[result_cat][1:]]
             data = data[col_ref + col_comp].applymap(
                 lambda x: 0 if x == '' else float(x.replace(',', '').replace('%', '')))
             ref = data[col_ref]
@@ -955,11 +1034,17 @@ def compare_title_callback(app_handle, result_category):
                 comp_name = REGIONS_GPD[comp_sel]
             else:
                 comp_name = df.loc[df.country_iso == comp_sel].country.values[0]
+                comp_iso = df.loc[df.country_iso == comp_sel].country_iso.values[0]
+                comp_name = '{} ({})'.format(comp_name, comp_iso)
+
+            country_name = df.loc[df.country_iso == country_iso].country.values[0]
+
             answer = 'Comparison of {}'.format(
                 description.format(
-                    'between {} and {}'.format(
-                        df.loc[df.country_iso == country_iso].country.values[0],
-                        comp_name
+                    'between {} ({}) and {}'.format(
+                        country_name,
+                        country_iso,
+                        comp_name,
                     )
                 )
             )
@@ -1017,17 +1102,17 @@ def toggle_results_div_callback(app_handle, result_type, result_category):
 
         if result_type == RES_COUNTRY:
             if cur_view['app_view'] == VIEW_COUNTRY:
-                cur_style.update({'display': 'block'})
+                cur_style = {}
             elif cur_view['app_view'] in [VIEW_GENERAL,VIEW_AGGREGATE, VIEW_COMPARE]:
                 cur_style.update({'display': 'none'})
         elif result_type == RES_AGGREGATE:
             if cur_view['app_view'] == VIEW_AGGREGATE:
-                cur_style.update({'display': 'block'})
+                cur_style = {}
             elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
                 cur_style.update({'display': 'none'})
         elif result_type == RES_COMPARE:
             if cur_view['app_view'] == VIEW_COMPARE:
-                cur_style.update({'display': 'block'})
+                cur_style = {}
             elif cur_view['app_view'] in [VIEW_GENERAL, VIEW_COUNTRY, VIEW_AGGREGATE]:
                 cur_style.update({'display': 'none'})
 
@@ -1231,7 +1316,7 @@ def callbacks(app_handle):
             cur_style = {'display': 'block'}
 
         if cur_view['app_view'] in [VIEW_GENERAL, VIEW_AGGREGATE]:
-            cur_style.update({'display': 'block'})
+            cur_style = {}
         elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
             cur_style.update({'display': 'none'})
         return cur_style
@@ -1247,7 +1332,7 @@ def callbacks(app_handle):
             cur_style = {'display': 'block'}
 
         if cur_view['app_view'] in [VIEW_GENERAL, VIEW_AGGREGATE]:
-            cur_style.update({'display': 'block'})
+            cur_style = {}
         elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
             cur_style.update({'display': 'none'})
         return cur_style
@@ -1263,7 +1348,7 @@ def callbacks(app_handle):
             cur_style = {'display': 'none'}
 
         if cur_view['app_view'] == VIEW_COUNTRY:
-            cur_style.update({'display': 'block'})
+            cur_style = {}
         elif cur_view['app_view'] in [VIEW_GENERAL, VIEW_AGGREGATE, VIEW_COMPARE]:
             cur_style.update({'display': 'none'})
         return cur_style
@@ -1278,12 +1363,12 @@ def callbacks(app_handle):
     def toggle_compare_input_div_display(cur_view, cur_style):
         """Change the display of compare-input-div between the app's views."""
         if cur_style is None:
-            cur_style = {'display': 'none'}
+            cur_style = {'visibility': 'hidden'}
 
         if cur_view['app_view'] in [VIEW_GENERAL, VIEW_AGGREGATE]:
-            cur_style.update({'display': 'none'})
+            cur_style.update({'visibility': 'hidden'})
         elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
-            cur_style.update({'display': 'block'})
+            cur_style.update({'visibility': 'visible'})
         return cur_style
 
     @app_handle.callback(
@@ -1318,8 +1403,6 @@ def callbacks(app_handle):
     def update_results_info_div(scenario, country_iso, cur_data):
 
         divs = []
-        nigeria_desc = ''
-        nigeria_info = []
         if scenario in SCENARIOS and country_iso is not None:
             df = pd.read_json(cur_data[scenario])
             df = df.loc[df.country_iso == country_iso]
@@ -1328,47 +1411,56 @@ def callbacks(app_handle):
             image_filename = 'icons/{}.png'.format(country_iso)
             encoded_image = base64.b64encode(open(image_filename, 'rb').read())
 
-            if country_iso == 'NGA':
-                nigeria_desc = 'Nigeria is a lower-middle income country located in West-Africa. Its current population is approximately 190 million people and for 2030 it is expected to grow to 264 million people. We estimated a current electrification rate of  63 % which leads to almost 100 people to be newly electrified until 2030.'
-
-                nigeria_info = [
-                    html.P(
-                        'Capital : Abuja'
-                    ),
-                    html.P(
-                        'Currency : Naira'
-                    )
-                ]
-
-
             divs = [
                 html.Div(
                     id='results-info-header-div',
+                    className='grid-x',
                     children=[
-                        html.Div(name),
                         html.Img(
                             src='data:image/png;base64,{}'.format(encoded_image.decode()),
-                            className='country__info__flag',
-                            style={'width': '30%'}
-                        )
+                            className='country__info__flag cell medium-4',
+                        ),
+                        html.H1(
+                            className='cell medium-8 align__center',
+                            children=name
+                        ),
                     ],
                 ),
-                html.Div(children=nigeria_desc),
-                html.H4('Key indicators:'),
-                html.P(
-                    'Population (2017) : {} million people'.format(pop_2017)
-                ),
-                html.P(
-                    'Electrification rate (2017) : {}%'.format(df.electrification_rate.values[
-                                                                   0]*100)
-                ),
-                html.P(
-                    'GDP (2017) : {} Billion USD'.format(df.gdp_per_capita.values[0])
+                html.Div(
+                    className='country__info__desc',
+                    children=df.description
                 ),
 
+                html.Table(
+                    [
+                        html.Tr(
+                            id='country-key-indicators',
+                            children=[
+                                html.Td('Population (2017)'),
+                                html.Td('Electrification rate (2017)'),
+                                html.Td('GDP (2017)'),
+                                html.Td('Capital'),
+                                html.Td('Currency'),
+                            ]
+                        ),
+                        html.Tr(
+                            [
+                                html.Td('{} million people'.format(pop_2017)),
+                                html.Td(
+                                    '{}'.format(
+                                        format_percent(df.electrification_rate.values[0] * 100)
+                                    )
+                                ),
+                                html.Td('{} Billion USD'.format(df.gdp_per_capita.values[0])),
+                                html.Td(df.capital.values[0]),
+                                html.Td(df.currency.values[0]),
+                            ]
+                        )
+                    ]
+                ),
             ]
 
-        return divs + nigeria_info
+        return divs
 
     @app_handle.callback(
         Output('aggregate-info-div', 'children'),

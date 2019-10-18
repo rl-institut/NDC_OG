@@ -7,7 +7,7 @@ from dash.dependencies import Output, Input, State
 import dash_daq as daq
 import dash_table
 import plotly.graph_objs as go
-from app_main import APP_BG_COLOR
+from app_main import APP_BG_COLOR, INFO_ICON
 from data.data_preparation import (
     SCENARIOS,
     SCENARIOS_DICT,
@@ -95,6 +95,15 @@ TABLE_COLUMNS_LABEL['labels'] = ''
 TABLE_COLUMNS_LABEL[NO_ACCESS] = NO_ACCESS
 TABLE_COLUMNS_LABEL['total'] = 'Total'
 TABLE_COLUMNS_ID = ['labels'] + ELECTRIFICATION_OPTIONS + [NO_ACCESS] + ['total']
+
+TABLE_COLUMNS_ID = {
+    POP_RES: ['labels'] + ELECTRIFICATION_OPTIONS + [NO_ACCESS] + ['total'],
+    INVEST_RES: ['labels'] + ELECTRIFICATION_OPTIONS + ['total'],
+    GHG_RES: ['labels'] + ELECTRIFICATION_OPTIONS + [NO_ACCESS] + ['total'],
+    GHG_ER_RES: ['labels'] + ELECTRIFICATION_OPTIONS + [NO_ACCESS] + ['total']
+}
+
+
 COMPARE_COLUMNS_ID = ['labels']
 for opt in ELECTRIFICATION_OPTIONS + [NO_ACCESS] + ['total']:
     COMPARE_COLUMNS_ID.append(opt)
@@ -108,7 +117,15 @@ BARPLOT_ELECTRIFICATION_COLORS = {
     NO_ACCESS: '#a6a6a6'
 }
 
-BARPLOT_YAXIS_OPT = ELECTRIFICATION_OPTIONS.copy() + [NO_ACCESS]
+BARPLOT_YAXIS_OPT = {
+    POP_RES: ELECTRIFICATION_OPTIONS.copy() + [NO_ACCESS],
+    INVEST_RES: ELECTRIFICATION_OPTIONS.copy(),
+    GHG_RES: ELECTRIFICATION_OPTIONS.copy() + [NO_ACCESS],
+    GHG_ER_RES: ELECTRIFICATION_OPTIONS.copy() + [NO_ACCESS],
+}
+
+BARPLOT_INVEST_YLABEL = 'Initial Investments (in billion USD)'
+BARPLOT_GHG_YLABEL = 'GHG Emissions (in million tons CO2)'
 
 
 def round_digits(val):
@@ -174,9 +191,14 @@ def results_div(result_type, result_category, flex_case=''):
     barplot_mode = 'stack'
     if result_type == RES_COMPARE:
         barplot_mode = 'group'
+        show_legends = False
+    else:
+        show_legends = True
 
     x_vals = [SCENARIOS_DICT[sce] for sce in SCENARIOS]
     fs = 15
+
+    barplot_yaxis_opt = BARPLOT_YAXIS_OPT[result_category]
 
     # add a barplot above the tables with the results
     barplot = dcc.Graph(
@@ -195,17 +217,17 @@ def results_div(result_type, result_category, flex_case=''):
                     ),
                     hoverinfo='y+text'
                 )
-                for y_opt in BARPLOT_YAXIS_OPT
+                for y_opt in barplot_yaxis_opt
             ],
             layout=go.Layout(
                 title='',
                 barmode=barplot_mode,
                 paper_bgcolor=APP_BG_COLOR,
                 plot_bgcolor=APP_BG_COLOR,
-                showlegend=True,
+                showlegend=show_legends,
                 autosize=True,
                 margin=dict(
-                    l=55,
+                    l=80,
                     r=0,
                     b=30,
                     t=30
@@ -224,14 +246,15 @@ def results_div(result_type, result_category, flex_case=''):
 
     columns_ids = []
     table_rows = TABLE_ROWS[result_category]
+    table_columns = TABLE_COLUMNS_ID[result_category]
 
     if result_type in [RES_COUNTRY, RES_AGGREGATE]:
         duplicate_headers = False
-        columns_ids = [{'name': TABLE_COLUMNS_LABEL[col], 'id': col} for col in TABLE_COLUMNS_ID]
+        columns_ids = [{'name': TABLE_COLUMNS_LABEL[col], 'id': col} for col in table_columns]
 
     elif result_type == RES_COMPARE:
         duplicate_headers = True
-        for col in TABLE_COLUMNS_ID:
+        for col in table_columns:
             if col != 'labels':
                 columns_ids.append({'name': [TABLE_COLUMNS_LABEL[col], 'value'], 'id': col})
                 columns_ids.append(
@@ -244,9 +267,24 @@ def results_div(result_type, result_category, flex_case=''):
         print('error in the result type in results_div()')
 
     results_div_content = [
-        html.H3(
-            id='{}-results-title'.format(id_name),
-            children='Results'
+        html.Div(
+            className='grid-x',
+            children=[
+                html.H3(
+                    id='{}-results-title'.format(id_name),
+                    children='Results',
+                    className='cell medium-10 medium-offset-1'
+                ),
+                html.Div(
+                    className='cell medium-1 align__right',
+                    children=html.Img(
+                        id='{}-results-title-help'.format(id_name),
+                        src='data:image/png;base64,{}'.format(INFO_ICON.decode()),
+                        title='Hover text',
+                        className='info__icon'
+                    )
+                ),
+            ]
         ),
         dcc.Dropdown(
             id='{}-barplot-yaxis-input'.format(id_name),
@@ -254,9 +292,25 @@ def results_div(result_type, result_category, flex_case=''):
             value=table_rows[0],
         ),
         barplot,
-        html.H3(
-            id='{}-results-table-title'.format(id_name),
-            children='Detailed results for scenario'
+        html.Div(
+            className='grid-x',
+            children=[
+                html.H3(
+                    id='{}-results-table-title'.format(id_name),
+                    children='Detailed results for scenario',
+                    className='cell medium-10 medium-offset-1'
+
+                ),
+                html.Div(
+                    className='cell medium-1 align__right',
+                    children=html.Img(
+                        id='{}-results-table-title-help'.format(id_name),
+                        src='data:image/png;base64,{}'.format(INFO_ICON.decode()),
+                        title='Hover text',
+                        className='info__icon'
+                    )
+                ),
+            ]
         ),
         dash_table.DataTable(
             id='{}-results-table'.format(id_name),
@@ -307,15 +361,20 @@ def rise_slider(id_name, display_name):
         className='cell medium-4 grid-x grid-margin-x',
         title='rise mg description',
         children=[
-            html.Button(
+            html.Div(
                 id='flex-rise-{}-label'.format(id_name),
                 className='cell medium-4 medium-offset-3 daq__slider__label',
-                children=display_name
+                children="RISE Score for \n {}".format(ELECTRIFICATION_DICT[id_name])
             ),
             html.Div(
                 id='flex-rise-{}-value'.format(id_name),
                 className='cell medium-3 daq__slider__value',
                 children=''
+            ),
+            html.Button(
+                id='flex-rise-{}-btn'.format(id_name),
+                className='cell medium-7 medium-offset-3 daq__slider__btn',
+                children=display_name
             ),
             dcc.Slider(
                 id='flex-rise-{}-input'.format(id_name),
@@ -470,9 +529,9 @@ def controls_div():
             children=html.Div(
                 className='grid-x align-center',
                 children=[
-                    rise_slider('grid', 'RISE Grid'),
-                    rise_slider('mg', 'RISE MG'),
-                    rise_slider('shs', 'RISE SHS'),
+                    rise_slider('grid', 'Show RISE Sub-Indicators'),
+                    rise_slider('mg', 'Show RISE Sub-Indicators'),
+                    rise_slider('shs', 'Show RISE Sub-Indicators'),
                     html.Div(
                         id='flex-rise-sub-indicators-div',
                         className='cell medium-9',
