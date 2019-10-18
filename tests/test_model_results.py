@@ -17,14 +17,13 @@ from data.data_preparation import (
     HH_SCN2,
     INVEST,
     INVEST_CAP,
-    GHG,
-    GHG_CAP,
+    GHG_ALL,
     compute_ndc_results_from_raw_data
 )
 
 COMP_EXO = POP_GET + HH_GET + HH_CAP + HH_SCN2
 COMP_INVEST = INVEST + INVEST_CAP
-COMP_GHG = GHG + GHG_CAP
+COMP_GHG = GHG_ALL
 
 WORLD_ID = 'WD'
 REGIONS_NDC = dict(WD=['LA', 'SSA', 'DA'], SA='LA', AF='SSA', AS='DA')
