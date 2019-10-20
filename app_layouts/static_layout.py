@@ -1206,6 +1206,23 @@ def update_maps_callback(app_handle, region):
     update_map.__name__ = 'update_%s_map' % region
     return update_map
 
+def select_map_callback(app_handle, region):
+    @app_handle.callback(
+        Output('{}-map-div'.format(region), 'className'),
+        [
+            Input('{}-map-btn'.format(reg), 'n_clicks')
+            for reg in MAP_REGIONS
+        ],
+        [State('{}-map-btn'.format(region), 'className')]
+    )
+    def select_map(*args):
+        ctx = dash.callback_context
+        answer = 'cell small-7 medium-4 select-map'
+        if ctx.triggered:
+            prop_id = ctx.triggered[0]['prop_id']
+            if region in prop_id:
+                answer = 'cell small-7 medium-4 select-map-selected'
+        return answer
 
 def callbacks(app_handle):
 
@@ -1236,6 +1253,7 @@ def callbacks(app_handle):
 
     for region in MAP_REGIONS:
         update_maps_callback(app_handle, region)
+        select_map_callback(app_handle, region)
 
 
     @app_handle.callback(
@@ -1530,6 +1548,7 @@ def callbacks(app_handle):
     )
     def update_scenario_specific_description(scenario):
         return WHAT_CAN_YOU_DO_DESCRIPTIONS[scenario]
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)
