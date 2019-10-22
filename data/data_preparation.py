@@ -159,6 +159,8 @@ INVEST_RES = 'invest'
 GHG_RES = 'ghg'
 GHG_ER_RES = 'ghg-er'
 
+EUR_TO_USD_2017 = 1.11
+
 
 def prepare_results_tables(df, sce=BAU_SCENARIO, result_category=POP_RES, ghg_er=False):
 
@@ -436,7 +438,11 @@ def prepare_shs_investment_cost():
     shs_costs = pd.read_csv('data/shs_power_investment_cost.csv', comment='#')
     shs_costs['cost_per_kW'] = 1000 * shs_costs.investment / shs_costs.power
     # take the mean value of the mean cost per kW for each category
-    return np.mean([shs_costs[shs_costs.category == idx].cost_per_kW.mean() for idx in [5, 6, 7]])
+    inv_cost_eur = np.mean(
+        [shs_costs[shs_costs.category == idx].cost_per_kW.mean()
+         for idx in [5, 6, 7]]
+    )
+    return inv_cost_eur * EUR_TO_USD_2017
 
 
 SHS_POWER_CATEGORIES, SHS_SALES_VOLUMES = prepare_shs_power_and_sales_volumes()
@@ -667,18 +673,18 @@ def _compute_ghg_emissions(df, min_tier_level, bau_df=None):
         * df.hh_grid_tier_yearly_electricity_consumption \
         * (df.grid_emission_factor / 1000)
     # integral is the surface of a triangle
-    df['ghg_grid_cumul'] = 0.5 * df.ghg_grid_2030 * (2030 - 2017)
+    df['ghg_grid_cumul'] = 0.5 * df.ghg_grid_2030 * (14)
 
     df['ghg_mg_2030'] = \
         (df.pop_get_mg_2030 / df.hh_av_size) \
         * df.hh_mg_tier_yearly_electricity_consumption \
         * (df.mg_emission_factor / 1000)
     # integral is the surface of a triangle
-    df['ghg_mg_cumul'] = 0.5 * df.ghg_mg_2030 * (2030 - 2017)
+    df['ghg_mg_cumul'] = 0.5 * df.ghg_mg_2030 * (14)
 
     df['ghg_shs_2030'] = df.pop_get_shs_2030 * df.shs_emission_factor
     # integral is the surface of a triangle
-    df['ghg_shs_cumul'] = 0.5 * df.ghg_shs_2030 * (2030 - 2017)
+    df['ghg_shs_cumul'] = 0.5 * df.ghg_shs_2030 * (14)
 
     df['ghg_no_access_2017'] = \
         (df.dark_rate * df.pop_2017 / df.hh_av_size) \
@@ -706,13 +712,13 @@ def _compute_ghg_emissions(df, min_tier_level, bau_df=None):
 
         # integral is the surface of a triangle as everyone has access
         # to electricity by 2030 in these scenarios
-        df['ghg_no_access_cumul'] = 0.5 * df.ghg_no_access_2017 * (2030 - 2017)
+        df['ghg_no_access_cumul'] = 0.5 * df.ghg_no_access_2017 * (14)
     else:
         # integral is the sum of the surfaces of a triangle and a square
         df['ghg_no_access_cumul'] = (
                                             df.ghg_no_access_2030
                                             + (df.ghg_no_access_2017 - df.ghg_no_access_2030) / 2
-                                    ) * (2030 - 2017)
+                                    ) * (14)
 
     df['ghg_tot_cumul'] = \
         df.ghg_grid_cumul \
@@ -742,18 +748,18 @@ def _compute_ghg_emissions(df, min_tier_level, bau_df=None):
         * df.hh_grid_tier_cap_yearly_electricity_consumption \
         * (df.grid_emission_factor / 1000)
     # integral is the surface of a triangle
-    df['tier_capped_ghg_grid_cumul'] = 0.5 * df.tier_capped_ghg_grid_2030 * (2030 - 2017)
+    df['tier_capped_ghg_grid_cumul'] = 0.5 * df.tier_capped_ghg_grid_2030 * (14)
 
     df['tier_capped_ghg_mg_2030'] = \
         (df.pop_get_mg_2030 / df.hh_av_size) \
         * df.hh_mg_tier_cap_yearly_electricity_consumption \
         * (df.mg_emission_factor / 1000)
     # integral is the surface of a triangle
-    df['tier_capped_ghg_mg_cumul'] = 0.5 * df.tier_capped_ghg_mg_2030 * (2030 - 2017)
+    df['tier_capped_ghg_mg_cumul'] = 0.5 * df.tier_capped_ghg_mg_2030 * (14)
 
     df['tier_capped_ghg_shs_2030'] = df.ghg_shs_2030
     # integral is the surface of a triangle
-    df['tier_capped_ghg_shs_cumul'] = 0.5 * df.tier_capped_ghg_shs_2030 * (2030 - 2017)
+    df['tier_capped_ghg_shs_cumul'] = 0.5 * df.tier_capped_ghg_shs_2030 * (14)
 
     df['tier_capped_ghg_no_access_2030'] = df.ghg_no_access_2030
 
@@ -774,13 +780,13 @@ def _compute_ghg_emissions(df, min_tier_level, bau_df=None):
 
         # integral is the surface of a triangle as everyone has access
         # to electricity by 2030 in these scenarios
-        df['tier_capped_ghg_no_access_cumul'] = 0.5 * df.ghg_no_access_2017 * (2030 - 2017)
+        df['tier_capped_ghg_no_access_cumul'] = 0.5 * df.ghg_no_access_2017 * (14)
     else:
         # integral is the sum of the surfaces of a triangle and a square
         df['tier_capped_ghg_no_access_cumul'] = (
             df.ghg_no_access_2030
             + (df.ghg_no_access_2017 - df.ghg_no_access_2030) / 2
-        ) * (2030 - 2017)
+        ) * (14)
 
     df['tier_capped_ghg_tot_cumul'] = \
         df.tier_capped_ghg_grid_cumul \
