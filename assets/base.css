@@ -65,6 +65,10 @@ body {
     font-weight: bold;
 }
 
+.scenario__info span{
+    font-weight: bold;
+}
+
 .intro-link-div {
     text-align: center;
 }
@@ -171,7 +175,7 @@ body {
 
 .instructions {
     border-radius: 10px;
-    padding: 40px;
+    padding: 29px;
     //margin-left: 20px;
     //margin-right: 20px;
     //margin-top: 20px;
@@ -278,4 +282,8 @@ body {
 
 #country-key-indicators td{
     font-weight: bold;
+}
+
+.display__none {
+    display: none;
 }

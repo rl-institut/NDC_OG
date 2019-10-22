@@ -71,18 +71,40 @@ SCENARIOS_NAMES = {
 
 FLEX_SCENARIO_NAME = 'Custom'
 
+POP_RES = 'pop'
+INVEST_RES = 'invest'
+GHG_RES = 'ghg'
+GHG_ER_RES = 'ghg-er'
+
 SCENARIOS_DESCRIPTIONS = {
     BAU_SCENARIO:
-        [html.H4('What it shows:'), '''The Business-as-Usual (BaU) scenario quantifies the number of new technology-specific electrifications (Grid Extension, Mini-Grids or Solar-Home Systems) until 2030 by projecting current business-as-usual growth rates into the future.''',
-         html.H4('How it is obtained:'),  '''Regional projections of electrification rates and technologies are mapped to the country-level and modelled until 2030. The BaU scenario is based on the "New Policies" Scenario of the ''', html.A(children="international Energy Agency’s World Energy Outlook 2018", href='https://www.iea.org/weo2018/scenarios/'), '''. '''],
+        [html.H4('What it shows:'), '''The ''', html.Span('Business-as-Usual'), ''' (''',
+         html.Span('BaU'), ''') quantifies 
+        the number of new technology-specific electrifications, ''', html.Span('investment needs'), ''' and ''', html.Span('emission reduction'), ''' potentials for ''', html.Span('Grid'), ''' extension, ''', html.Span('Mini-Grid'), ''' deployment and ''', html.Span('Solar-Home-System'), ''' dissemination until 2030, by projecting current business-as-usual growth rates into the future.''',
+         html.H4('How it is obtained:'),  '''Regional projections of electrification rates and 
+         technologies are mapped to the country-level and modelled until 2030. Based on these projections, ''', html.Span('investment needs'), ''' and ''', html.Span('emission reduction'), ''' potentials are calculated. The BaU scenario is based on the "New Policies" Scenario of the ''', html.A(children="international Energy Agency’s World Energy Outlook 2018", href='https://www.iea.org/weo2018/scenarios/'), '''. '''],
     SE4ALL_SCENARIO:
-        [html.H4('What it shows:'), '''The Universal-Energy-Access (uEA) scenario estimates the number of new technology-specific electrifications (Grid Extension, Mini-Grids or Solar-Home Systems) necessary to achieve the universal access goal until 2030. These estimations account for expected population growth rates and current infrastructure and current regulatory frameworks.''',
-         html.H4('How it is obtained:'),  '''Existing datasets providing night lights, population densities and transmission grids are combined to estimate the number of people lacking access to electricity. Appropriate electrification options are determined based on the remoteness and density of neglected populations. In this way, the model estimates the share of people that remain to be electrified by either Grid Extension, Mini-Grid deployment or Solar-Home-System adoption until 2030.''',
-         '''The GIS based estimates are further refined by accounting for (the lack of) favourable technology-specific frameworks through the integration of ''', html.A(children="ESMAP’s RISE Indicators", href='https://rise.esmap.org/'), ''' into the model’s calculations. '''],
+        [html.H4('What it shows:'), '''The ''', html.Span('Universal-Energy-Access'), ''' (''',
+         html.Span('uEA'), ''') scenario estimates the number of new ''', html.Span('technology-specific electrifications'), ''' (Grid Extension, Mini-Grids or Solar-Home-Systems) necessary to achieve the universal access goal until 2030. These estimations account for expected population growth rates, current infrastructure and current regulatory frameworks. The scenario further modells ''', html.Span('investment needs'), ''' and ''', html.Span('emission reduction'), ''' potentials, for which either a   Lower Tier or a Higher Tier case can be displayed. ''',
+         html.H4('How it is obtained:'),  '''Existing datasets providing night lights, population densities and transmission grids are combined to estimate the number of people lacking access to electricity. Appropriate electrification options are determined based on the remoteness and density of neglected populations. In this way, the model estimates the share of people that remain to be electrified by either ''', html.Span('Grid'), ''' Extension, ''', html.Span('Mini-Grid'), ''' deployment or ''', html.Span('Solar-Home-System'), ''' adoption until 2030.''',
+         ''' The GIS based estimates are further refined by accounting for (the lack of) favourable technology-specific frameworks through the integration of ''', html.A(children="ESMAP’s RISE Indicators", href='https://rise.esmap.org/'), ''' into the model’s calculations. '''],
     PROG_SCENARIO:
-        [html.H4('What it shows:'), '''The Progressive-Off-Grid (prOG) scenario estimates the number of new technology-specific electrifications (Grid Extension, Mini-Grids or Solar-Home Systems) necessary to achieve the universal access goal until 2030. These estimations account for expected population growth rates and current infrastructure and progressive regulatory frameworks.''',
-         html.H4('How it is obtained:'),  '''Existing datasets providing night lights, population densities and transmission grids are combined to estimate the number of people lacking access to electricity. Appropriate electrification options are determined based on the remoteness and density of neglected populations. For the 2030 horizon, in this way the model estimates the share of neglected people that remain to be electrified by either Grid Extension, Mini-Grid deployment or Solar-Home System adoption.''',
+        [html.H4('What it shows:'), '''The ''', html.Span('Progressive-Off-Grid'), ''' (''',
+         html.Span('prOG'), ''') scenario estimates the number and mix of new ''', html.Span('technology-specific electrifications'), ''' (Grid Extension, Mini-Grids or Solar-Home-Systems) necessary to achieve the universal access goal until 2030 under optimal framework conditions. These estimations account for expected population growth rates, current infrastructure and progressive regulatory frameworks. The scenario further modells ''', html.Span('investment needs'), ''' and ''', html.Span('emission reduction'), ''' potentials, for which either a Lower Tier or a Higher Tier case can be displayed. ''',
+         html.H4('How it is obtained:'),  '''Existing datasets providing night lights, population densities and transmission grids are combined to estimate the number of people lacking access to electricity. Appropriate electrification options are determined based on the remoteness and density of neglected populations. For the 2030 horizon, in this way the model estimates the share of neglected people that remain to be electrified by either ''', html.Span('Grid'), ''' Extension, ''', html.Span('Mini-Grid'), ''' deployment or ''', html.Span('Solar-Home-System'), ''' adoption.''',
          '''In the prOG scenario, the GIS based estimates are modified to showcase the impact of fully favourable off-grid (Mini-Grid and Solar Home Systems) frameworks through the integration of maximized ''', html.A(children="ESMAP’s RISE Indicators", href='https://rise.esmap.org/'), ''' into the model’s calculations. ''']
+}
+
+WHAT_CAN_YOU_DO_DESCRIPTIONS = {
+    BAU_SCENARIO: ['''Hover over the three regional maps to view country specific information. For more information, select a region or country from the maps or the dropdown menu above. Via the dropdown menu you can also alter the scenario you wish to explore. Once a country is selected, you may also choose a region or second country for comparison.'''],
+    SE4ALL_SCENARIO: ['''Hover over the three regional maps to view country specific information. For more information, select a region or country from the maps or the dropdown menu above. Via the dropdown menu you can also alter the scenario you wish to explore. Once a country is selected, you may also choose a region or second country for comparison.'''],
+    PROG_SCENARIO: ['''Hover over the three regional maps to view country specific information. For more information, select a region or country from the maps or the dropdown menu above. Via the dropdown menu you can also alter the scenario you wish to explore. Once a country is selected, you may also choose a region or second country for comparison.''']
+}
+
+RESULTS_TITLE_HELP = {
+    POP_RES: '''The share of people / people in million / households in million to be electrified through Grid extension, Mini-Grid deployment and Solar-Home-System adoption, for the BaU, uEA and prOG scenarios.''',
+    INVEST_RES: '''Lower and higher TIER case initial investment needs for Grid extension, Mini-Grid deployment and Solar-Home-System adoption, for the BaU, uEA and prOG scenarios.''',
+    GHG_RES: '''Lower and higher TIER case cumulated GHG emissions stemming from Grid extension, Mini-Grid deployment and the use of alternative forms of energy by people without access. As respective emissions are cumulated until 2030, also full-access scenarios (uEA and prOG) show emissions stemming from people lacking access to electricity. Emissions from the adoption of Solar-Home-Systems are assumed to be zero. Emissions and reduction potentials are estimated for the BaU, uEA and prOG scenarios. '''
 }
 
 ELECTRIFICATION_DICT = {

@@ -200,8 +200,10 @@ layout = html.Div(
                                     html.Div(
                                         id='flex-general-info-div',
                                         className='scenario__info',
-                                        children='Click on the text next to the RISE controls '
-                                                 'to look at the RISE sub-indicators'
+                                        children=[
+                                            html.H4('Custom Scenarios'),
+                                            '''Complementary to the static evaluation of the modelled scenarios, the *Off-Grid Tool* allows the exploration and creation of your own scenarios. The universal-Electricity-Access scneario and the progressive-Off-Grid scenraio are based on the RISE indicators, reflecting countries' regulatory framework conditions. Through the alteration of RISE subindicators, one can simulate how technology-specific framework changes may affect a country's electrification development until 2030.'''
+                                        ]
                                     ),
                                 ]
                             ),
@@ -263,7 +265,10 @@ layout = html.Div(
                                     html.Div(
                                         id='flex-specific-info-div',
                                         className='instructions',
-                                        children='Blablabla'
+                                        children=[
+                                            html.H4('What you can do'),
+                                            '''Select a starting scenario and choose a country from the dropdown menu. Select one of the technology-specific RISE indicators to customize its subindicators (RISE Grid, RISE MG, RISE SHS).'''
+                                        ]
                                     ),
                                 ]
                             ),

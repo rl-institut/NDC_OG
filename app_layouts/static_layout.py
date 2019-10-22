@@ -15,6 +15,7 @@ from data.data_preparation import (
     SCENARIOS,
     BAU_SCENARIO,
     SCENARIOS_DESCRIPTIONS,
+    WHAT_CAN_YOU_DO_DESCRIPTIONS,
     SCENARIOS_DICT,
     SCENARIOS_NAMES,
     ELECTRIFICATION_OPTIONS,
@@ -375,6 +376,8 @@ layout = html.Div(
     ]
 )
 
+# Barplot and results callbacks for single country
+
 
 def country_barplot_callback(app_handle, result_category):
     """Generate a callback for input components."""
@@ -509,6 +512,9 @@ def country_table_callback(app_handle, result_category):
 
     update_table.__name__ = 'update_%s_table' % id_name
     return update_table
+
+
+# Barplot and results callbacks for region
 
 
 def aggregate_barplot_callback(app_handle, result_category):
@@ -651,6 +657,49 @@ def aggregate_table_callback(app_handle, result_category):
 
     update_table.__name__ = 'update_%s_table' % id_name
     return update_table
+
+
+def country_aggregate_title_callback(app_handle, result_type, result_category):
+
+    id_name = '{}-{}'.format(result_type, result_category)
+
+    if result_type == RES_COUNTRY:
+        inputs = [Input('country-input', 'value')]
+    elif result_type == RES_AGGREGATE:
+        inputs = [Input('region-input', 'value')]
+
+    inputs.append(Input('scenario-input', 'value'))
+
+    if result_category == POP_RES:
+        description = 'Electrification Mix'
+    elif result_category == INVEST_RES:
+        description = 'Initial Investments Needed (in billion USD)'
+    else:
+        description = 'Cumulated GHG Emissions (2017-2030) (in million tons CO2)'
+
+    @app_handle.callback(
+        Output('{}-results-title'.format(id_name), 'children'),
+        inputs,
+        [State('data-store', 'data')]
+    )
+    def update_title(input_trigger, scenario, cur_data):
+
+        answer = 'Results'
+        if scenario in SCENARIOS and input_trigger is not None:
+            if result_type == RES_COUNTRY:
+                df = pd.read_json(cur_data[scenario])
+                answer = '{}: '.format(df.loc[df.country_iso == input_trigger].country.values[0])
+            elif result_type == RES_AGGREGATE:
+                answer = '{}: Aggregated '.format(
+                    REGIONS_GPD[input_trigger]
+                )
+        return '{}{}'.format(answer, description)
+
+    update_title.__name__ = 'update_%s_title' % id_name
+    return update_title
+
+
+# Barplot and results callbacks for comparison between region and country
 
 
 def compare_barplot_callback(app_handle, result_category):
@@ -848,6 +897,98 @@ def compare_table_callback(app_handle, result_category):
     return update_table
 
 
+def compare_title_callback(app_handle, result_category):
+
+    id_name = '{}-{}'.format(RES_COMPARE, result_category)
+
+    if result_category == POP_RES:
+        description = 'Electrification Mix {}'
+    elif result_category == INVEST_RES:
+        description = 'Initial Investments needed {} (in billion USD)'
+    else:
+        description = 'Cumulated GHG Emissions (2017-2030) {} (in million tons CO2)'
+
+    @app_handle.callback(
+        Output('{}-results-title'.format(id_name), 'children'),
+        [
+            Input('country-input', 'value'),
+            Input('compare-input', 'value'),
+            Input('scenario-input', 'value')
+        ],
+        [State('data-store', 'data')]
+    )
+    def update_title(country_iso, comp_sel, scenario, cur_data):
+
+        answer = 'Results'
+        if scenario in SCENARIOS and country_iso is not None and comp_sel is not None:
+            df = pd.read_json(cur_data[scenario])
+            if comp_sel in REGIONS_NDC:
+                comp_name = REGIONS_GPD[comp_sel]
+            else:
+                comp_name = df.loc[df.country_iso == comp_sel].country.values[0]
+                comp_iso = df.loc[df.country_iso == comp_sel].country_iso.values[0]
+                comp_name = '{} ({})'.format(comp_name, comp_iso)
+
+            country_name = df.loc[df.country_iso == country_iso].country.values[0]
+
+            answer = 'Comparison of {}'.format(
+                description.format(
+                    'between {} ({}) and {}'.format(
+                        country_name,
+                        country_iso,
+                        comp_name,
+                    )
+                )
+            )
+        return answer
+
+    update_title.__name__ = 'update_%s_title' % id_name
+    return update_title
+
+
+# def result_info_hover_callback(app_handle, result_type, result_category):
+#     id_name = '{}-{}'.format(result_type, result_category)
+#
+#     @app_handle.callback(
+#         Output('{}-results-title-help'.format(id_name), 'title'),
+#         [Input('view-store', 'data')],
+#         [State('{}-div'.format(id_name), 'style')]
+#     )
+# aggregate-pop-
+
+
+def table_title_callback(app_handle, result_type, result_category):
+
+    id_name = '{}-{}'.format(result_type, result_category)
+
+    if result_type == RES_COUNTRY:
+        inputs = [Input('country-input', 'value')]
+    elif result_type == RES_AGGREGATE:
+        inputs = [Input('region-input', 'value')]
+    elif result_type == RES_COMPARE:
+        inputs = [Input('compare-input', 'value')]
+
+    inputs.append(Input('scenario-input', 'value'))
+
+    @app_handle.callback(
+        Output('{}-results-table-title'.format(id_name), 'children'),
+        inputs,
+    )
+    def update_title(input_trigger, scenario):
+
+        answer='Detailed results'
+        if scenario in SCENARIOS and input_trigger is not None:
+            answer = 'Detailed Results for {} ({}) Scenario'.format(
+                SCENARIOS_NAMES[scenario],
+                SCENARIOS_DICT[scenario]
+            )
+
+        return answer
+
+    update_title.__name__ = 'update_%s_title' % id_name
+    return update_title
+
+
 def compare_table_columns_title_callback(app_handle, result_category):
 
     id_name = '{}-{}'.format(RES_COMPARE, result_category)
@@ -963,127 +1104,6 @@ def ghg_dropdown_options_callback(app_handle, result_type):
 
     update_barplot.__name__ = 'update_%s_dropdown' % id_name
     return update_barplot
-
-
-def country_aggregate_title_callback(app_handle, result_type, result_category):
-
-    id_name = '{}-{}'.format(result_type, result_category)
-
-    if result_type == RES_COUNTRY:
-        inputs = [Input('country-input', 'value')]
-    elif result_type == RES_AGGREGATE:
-        inputs = [Input('region-input', 'value')]
-
-    inputs.append(Input('scenario-input', 'value'))
-
-    if result_category == POP_RES:
-        description = 'Electrification Mix'
-    elif result_category == INVEST_RES:
-        description = 'Initial Investments Needed (in billion USD)'
-    else:
-        description = 'Cumulated GHG Emissions (2017-2030) (in million tons CO2)'
-
-    @app_handle.callback(
-        Output('{}-results-title'.format(id_name), 'children'),
-        inputs,
-        [State('data-store', 'data')]
-    )
-    def update_title(input_trigger, scenario, cur_data):
-
-        answer = 'Results'
-        if scenario in SCENARIOS and input_trigger is not None:
-            if result_type == RES_COUNTRY:
-                df = pd.read_json(cur_data[scenario])
-                answer = '{}: '.format(df.loc[df.country_iso == input_trigger].country.values[0])
-            elif result_type == RES_AGGREGATE:
-                answer = '{}: Aggregated '.format(
-                    REGIONS_GPD[input_trigger]
-                )
-        return '{}{}'.format(answer, description)
-
-    update_title.__name__ = 'update_%s_title' % id_name
-    return update_title
-
-
-def compare_title_callback(app_handle, result_category):
-
-    id_name = '{}-{}'.format(RES_COMPARE, result_category)
-
-    if result_category == POP_RES:
-        description = 'Electrification Mix {}'
-    elif result_category == INVEST_RES:
-        description = 'Initial Investments needed {} (in billion USD)'
-    else:
-        description = 'Cumulated GHG Emissions (2017-2030) {} (in million tons CO2)'
-
-    @app_handle.callback(
-        Output('{}-results-title'.format(id_name), 'children'),
-        [
-            Input('country-input', 'value'),
-            Input('compare-input', 'value'),
-            Input('scenario-input', 'value')
-        ],
-        [State('data-store', 'data')]
-    )
-    def update_title(country_iso, comp_sel, scenario, cur_data):
-
-        answer = 'Results'
-        if scenario in SCENARIOS and country_iso is not None and comp_sel is not None:
-            df = pd.read_json(cur_data[scenario])
-            if comp_sel in REGIONS_NDC:
-                comp_name = REGIONS_GPD[comp_sel]
-            else:
-                comp_name = df.loc[df.country_iso == comp_sel].country.values[0]
-                comp_iso = df.loc[df.country_iso == comp_sel].country_iso.values[0]
-                comp_name = '{} ({})'.format(comp_name, comp_iso)
-
-            country_name = df.loc[df.country_iso == country_iso].country.values[0]
-
-            answer = 'Comparison of {}'.format(
-                description.format(
-                    'between {} ({}) and {}'.format(
-                        country_name,
-                        country_iso,
-                        comp_name,
-                    )
-                )
-            )
-        return answer
-
-    update_title.__name__ = 'update_%s_title' % id_name
-    return update_title
-
-
-def table_title_callback(app_handle, result_type, result_category):
-
-    id_name = '{}-{}'.format(result_type, result_category)
-
-    if result_type == RES_COUNTRY:
-        inputs = [Input('country-input', 'value')]
-    elif result_type == RES_AGGREGATE:
-        inputs = [Input('region-input', 'value')]
-    elif result_type == RES_COMPARE:
-        inputs = [Input('compare-input', 'value')]
-
-    inputs.append(Input('scenario-input', 'value'))
-
-    @app_handle.callback(
-        Output('{}-results-table-title'.format(id_name), 'children'),
-        inputs,
-    )
-    def update_title(input_trigger, scenario):
-
-        answer='Detailed results'
-        if scenario in SCENARIOS and input_trigger is not None:
-            answer = 'Detailed Results for {} ({}) Scenario'.format(
-                SCENARIOS_NAMES[scenario],
-                SCENARIOS_DICT[scenario]
-            )
-
-        return answer
-
-    update_title.__name__ = 'update_%s_title' % id_name
-    return update_title
 
 
 def toggle_results_div_callback(app_handle, result_type, result_category):
@@ -1526,6 +1546,12 @@ def callbacks(app_handle):
     def update_scenario_description(scenario):
         return SCENARIOS_DESCRIPTIONS[scenario]
 
+    @app_handle.callback(
+        Output('specific-info-div', 'children'),
+        [Input('scenario-input', 'value')]
+    )
+    def update_scenario_specific_description(scenario):
+        return WHAT_CAN_YOU_DO_DESCRIPTIONS[scenario]
 
 if __name__ == '__main__':
     app.run_server(debug=True)
