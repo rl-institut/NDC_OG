@@ -66,7 +66,7 @@ REGIONS_GPD = dict(WD='World', SA='South America', AF='Africa', AS='Asia')
 
 REGIONS_NDC = dict(WD=['LA', 'SSA', 'DA'], SA='LA', AF='SSA', AS='DA')
 
-MAP_REGIONS = {'africa': 'AF', 'asia': 'AS', 'south-america': 'SA'}
+MAP_REGIONS = {'africa': 'AF', 'asia': 'AS', 'southamerica': 'SA'}
 
 VIEW_GENERAL = 'general'
 VIEW_COUNTRY = 'specific'
@@ -171,7 +171,7 @@ MAP_LAYOUTS = {
         ),
         **map_options
     ),
-    'south-america': go.Layout(
+    'southamerica': go.Layout(
         geo=go.layout.Geo(
             bgcolor=APP_BG_COLOR,
             scope='world',
@@ -963,7 +963,6 @@ def table_title_callback(app_handle, result_type, result_category):
                 SCENARIOS_NAMES[scenario],
                 SCENARIOS_DICT[scenario]
             )
-        print(result_type)
         if result_category == INVEST_RES:
             answer = answer + ' (in billion USD)'
         elif result_category == GHG_RES:
@@ -1235,6 +1234,9 @@ def select_map_callback(app_handle, region):
                 answer = 'cell small-7 medium-4 select-map-selected'
         return answer
 
+    select_map.__name__ = 'select_%s_map' % region
+    return select_map
+
 
 def callbacks(app_handle):
 
@@ -1414,6 +1416,25 @@ def callbacks(app_handle):
         elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
             cur_style.update({'visibility': 'visible'})
         return cur_style
+
+    @app_handle.callback(
+        Output('region-input', 'value'),
+        [
+            Input('{}-map-btn'.format(region), 'n_clicks')
+            for region in MAP_REGIONS
+        ],
+        [State('region-input', 'value')]
+    )
+    def update_selected_region(*args):
+
+        region_id = WORLD_ID
+        ctx = dash.callback_context
+        if ctx.triggered:
+            prop_id = ctx.triggered[0]['prop_id']
+            region = prop_id.split('-')[0]
+            region_id = MAP_REGIONS[region]
+
+        return region_id
 
     @app_handle.callback(
         Output('country-input', 'value'),
