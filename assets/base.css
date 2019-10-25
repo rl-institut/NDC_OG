@@ -302,6 +302,10 @@ body {
     border: solid 0px #f1e9da;
 }
 
+#results-info-div table{
+    width: 100%;
+}
+
 #country-key-indicators td{
     font-weight: bold;
 }
