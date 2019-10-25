@@ -1008,68 +1008,68 @@ def compare_table_columns_title_callback(app_handle, result_category):
     return update_table_columns_title
 
 
-def compare_table_styling_callback(app_handle, result_category):
-
-    id_name = '{}-{}'.format(RES_COMPARE, result_category)
-
-    result_cat = result_category
-
-    @app_handle.callback(
-        Output('{}-results-table'.format(id_name), 'style_data_conditional'),
-        [Input('{}-results-table'.format(id_name), 'data')],
-        [
-            State('{}-results-table'.format(id_name), 'style_data_conditional'),
-            State('compare-input', 'value'),
-            State('country-input', 'value'),
-            State('scenario-input', 'value')
-        ]
-    )
-    def update_table_styling(cur_data, cur_style, comp_sel, country_iso, scenario):
-
-        if comp_sel is not None and country_iso is not None:
-            data = pd.DataFrame.from_dict(cur_data)
-
-            col_ref = TABLE_COLUMNS_ID[result_cat][1:]
-            col_comp = ['comp_{}'.format(col) for col in TABLE_COLUMNS_ID[result_cat][1:]]
-            data = data[col_ref + col_comp].applymap(
-                lambda x: 0 if x == '' else float(x.replace(',', '').replace('%', '')))
-            ref = data[col_ref]
-            comp = data[col_comp]
-
-            compare_results_styling = []
-            for j, col in enumerate(col_ref):
-                for i in range(len(ref.index)):
-                    apply_condition = True
-                    if ref.iloc[i, j] > comp.iloc[i, j]:
-                        color = COLOR_BETTER
-                        font = 'bold'
-                        if result_category == GHG_RES:
-                            if scenario == BAU_SCENARIO or np.mod(i, 2) == 0:
-                                color = COLOR_WORSE
-                                font = 'normal'
-                    elif ref.iloc[i, j] < comp.iloc[i, j]:
-                        color = COLOR_WORSE
-                        font = 'normal'
-                        if result_category == GHG_RES:
-                            if scenario == BAU_SCENARIO or np.mod(i, 2) == 0:
-                                color = COLOR_BETTER
-                                font = 'bold'
-                    else:
-                        apply_condition = False
-
-                    if apply_condition:
-                        compare_results_styling.append(
-                            {
-                                "if": {"column_id": col, "row_index": i},
-                                'color': color,
-                                'fontWeight': font
-                            }
-                        )
-                    cur_style = TABLES_LABEL_STYLING + compare_results_styling
-        return cur_style
-
-    update_table_styling.__name__ = 'update_%s_table_styling' % id_name
-    return update_table_styling
+# def compare_table_styling_callback(app_handle, result_category):
+#
+#     id_name = '{}-{}'.format(RES_COMPARE, result_category)
+#
+#     result_cat = result_category
+#
+#     @app_handle.callback(
+#         Output('{}-results-table'.format(id_name), 'style_data_conditional'),
+#         [Input('{}-results-table'.format(id_name), 'data')],
+#         [
+#             State('{}-results-table'.format(id_name), 'style_data_conditional'),
+#             State('compare-input', 'value'),
+#             State('country-input', 'value'),
+#             State('scenario-input', 'value')
+#         ]
+#     )
+#     def update_table_styling(cur_data, cur_style, comp_sel, country_iso, scenario):
+#
+#         if comp_sel is not None and country_iso is not None:
+#             data = pd.DataFrame.from_dict(cur_data)
+#
+#             col_ref = TABLE_COLUMNS_ID[result_cat][1:]
+#             col_comp = ['comp_{}'.format(col) for col in TABLE_COLUMNS_ID[result_cat][1:]]
+#             data = data[col_ref + col_comp].applymap(
+#                 lambda x: 0 if x == '' else float(x.replace(',', '').replace('%', '')))
+#             ref = data[col_ref]
+#             comp = data[col_comp]
+#
+#             compare_results_styling = []
+#             for j, col in enumerate(col_ref):
+#                 for i in range(len(ref.index)):
+#                     apply_condition = True
+#                     if ref.iloc[i, j] > comp.iloc[i, j]:
+#                         color = COLOR_BETTER
+#                         font = 'bold'
+#                         if result_category == GHG_RES:
+#                             if scenario == BAU_SCENARIO or np.mod(i, 2) == 0:
+#                                 color = COLOR_WORSE
+#                                 font = 'normal'
+#                     elif ref.iloc[i, j] < comp.iloc[i, j]:
+#                         color = COLOR_WORSE
+#                         font = 'normal'
+#                         if result_category == GHG_RES:
+#                             if scenario == BAU_SCENARIO or np.mod(i, 2) == 0:
+#                                 color = COLOR_BETTER
+#                                 font = 'bold'
+#                     else:
+#                         apply_condition = False
+#
+#                     if apply_condition:
+#                         compare_results_styling.append(
+#                             {
+#                                 "if": {"column_id": col, "row_index": i},
+#                                 'color': color,
+#                                 'fontWeight': font
+#                             }
+#                         )
+#                     cur_style = TABLES_LABEL_STYLING + compare_results_styling
+#         return cur_style
+#
+#     update_table_styling.__name__ = 'update_%s_table_styling' % id_name
+#     return update_table_styling
 
 
 def ghg_dropdown_options_callback(app_handle, result_type):
@@ -1216,6 +1216,7 @@ def update_maps_callback(app_handle, region):
     update_map.__name__ = 'update_%s_map' % region
     return update_map
 
+
 def select_map_callback(app_handle, region):
     @app_handle.callback(
         Output('{}-map-div'.format(region), 'className'),
@@ -1234,6 +1235,7 @@ def select_map_callback(app_handle, region):
                 answer = 'cell small-7 medium-4 select-map-selected'
         return answer
 
+
 def callbacks(app_handle):
 
     # build callbacks automatically for various categories
@@ -1247,7 +1249,7 @@ def callbacks(app_handle):
 
         compare_barplot_callback(app_handle, res_cat)
         compare_table_callback(app_handle, res_cat)
-        compare_table_styling_callback(app_handle, res_cat)
+        # compare_table_styling_callback(app_handle, res_cat)
         compare_table_columns_title_callback(app_handle, res_cat)
 
         for res_type in [RES_COUNTRY, RES_AGGREGATE]:
