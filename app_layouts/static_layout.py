@@ -952,12 +952,17 @@ def table_title_callback(app_handle, result_type, result_category):
     )
     def update_title(input_trigger, scenario):
 
-        answer='Detailed results'
+        answer = 'Detailed results'
         if scenario in SCENARIOS and input_trigger is not None:
             answer = 'Detailed Results for {} ({}) Scenario'.format(
                 SCENARIOS_NAMES[scenario],
                 SCENARIOS_DICT[scenario]
             )
+        print(result_type)
+        if result_category == INVEST_RES:
+            answer = answer + ' (in billion USD)'
+        elif result_category == GHG_RES:
+            answer = answer + ' (in million tons CO2)'
 
         return answer
 

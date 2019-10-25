@@ -56,8 +56,8 @@ INVEST_ROWS = [
 ]
 
 GHG_ROWS = [
-    'Lower TIER',
-    'Higher TIER',
+    'Lower TIER case',
+    'Higher TIER case',
 ]
 GHG_ER_ROWS = [
     'Lower TIER',
