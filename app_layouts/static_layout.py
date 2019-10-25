@@ -333,9 +333,14 @@ layout = html.Div(
                                     ),
                                 ]
                             ),
-                        ] + [
-                            map_div(region, MAP_LAYOUTS[region], map_data)
-                            for region in MAP_REGIONS
+                            html.Div(
+                                id='maps-div',
+                                className='cell grid-x',
+                                children=[
+                                    map_div(region, MAP_LAYOUTS[region], map_data)
+                                    for region in MAP_REGIONS
+                                ]
+                            )
                         ]
                     ),
                 ),
@@ -1327,9 +1332,25 @@ def callbacks(app_handle):
         return cur_view
 
     @app_handle.callback(
-        Output('left-map-div', 'style'),
+        Output('specific-info-div', 'style'),
         [Input('view-store', 'data')],
-        [State('left-map-div', 'style')]
+        [State('specific-info-div', 'style')]
+    )
+    def toggle_specific_info_display(cur_view, cur_style):
+        """Change the display information between the app's views."""
+        if cur_style is None:
+            cur_style = {'display': 'block'}
+
+        if cur_view['app_view'] in [VIEW_GENERAL, VIEW_AGGREGATE]:
+            cur_style = {}
+        elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
+            cur_style.update({'display': 'none'})
+        return cur_style
+
+    @app_handle.callback(
+        Output('maps-div', 'style'),
+        [Input('view-store', 'data')],
+        [State('maps-div', 'style')]
     )
     def toggle_map_div_display(cur_view, cur_style):
         """Change the display of map between the app's views."""
