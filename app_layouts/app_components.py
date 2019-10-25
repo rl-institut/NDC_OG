@@ -347,11 +347,17 @@ def results_div(result_type, result_category, flex_case=''):
             columns=columns_ids,
             style_data_conditional=TABLES_LABEL_STYLING,
             style_header=TABLES_HEADER_STYLING,
-            css=[{
-                'selector': '.dash-cell div.dash-cell-value',
-                'rule': 'display: inline; white-space: inherit; '
-                        'overflow: inherit; text-overflow: inherit;'
-            }],
+            css=[
+                {
+                    'selector': '.dash-cell div.dash-cell-value',
+                    'rule': 'display: inline; white-space: inherit; '
+                            'overflow: inherit; text-overflow: inherit;'
+                },
+                {
+                    'selector': '.column-0',
+                    'rule': 'text-decoration: underline; text-decoration-style: dotted;'
+                },
+            ],
             style_table={
                 'marginTop': '10px'
             },
