@@ -183,25 +183,26 @@ def map_div(region, layout, map_data):
         children=html.Div(
             className='grid-x',
             children=[
-            html.H4(
-                children=region,
-                className='cell medium-6',
-            ),
-            html.Button(
-                id='{}-map-btn'.format(region),
-                children='Select Region',
-                className='cell medium-12'
-            ),
-            dcc.Graph(
-                id='{}-map'.format(region),
-                className='cell',
-                figure=go.Figure(
-                    data=map_data,
-                    layout=layout),
-            )
-        ]
+                html.H4(
+                    children=region,
+                    className='cell medium-6',
+                ),
+                html.Button(
+                    id='{}-map-btn'.format(region),
+                    children='Select Region',
+                    className='cell medium-12'
+                ),
+                dcc.Graph(
+                    id='{}-map'.format(region),
+                    className='cell',
+                    figure=go.Figure(
+                        data=map_data,
+                        layout=layout),
+                )
+            ]
         )
     )
+
 
 def results_div(result_type, result_category, flex_case=''):
     """
