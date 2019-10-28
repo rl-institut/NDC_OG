@@ -149,7 +149,7 @@ MAP_LAYOUTS = {
     'asia': go.Layout(
         geo=go.layout.Geo(
             bgcolor=APP_BG_COLOR,
-            scope='world',
+            scope='asia',
             showlakes=True,
             showcountries=True,
             lakecolor='rgb(255, 255, 255)',
