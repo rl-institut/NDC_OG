@@ -130,6 +130,8 @@ BARPLOT_YAXIS_OPT = {
 BARPLOT_INVEST_YLABEL = 'Initial Investments (in billion USD)'
 BARPLOT_GHG_YLABEL = 'GHG Emissions (in million tons CO2)'
 
+MAP_DIV_STYLE = 'cell small-10 medium-4 '
+
 
 def round_digits(val):
     """Formats number by rounding to 2 digits and add commas for thousands"""
@@ -179,7 +181,7 @@ def create_tooltip(cell):
 def map_div(region, layout, map_data):
     return html.Div(
         id='{}-map-div'.format(region),
-        className='cell small-7 medium-4 select-map',
+        className=MAP_DIV_STYLE + 'select-map',
         children=html.Div(
             className='grid-x',
             children=[

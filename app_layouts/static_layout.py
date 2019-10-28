@@ -1228,11 +1228,11 @@ def select_map_callback(app_handle, region):
     )
     def select_map(*args):
         ctx = dash.callback_context
-        answer = 'cell small-7 medium-4 select-map'
+        answer = MAP_DIV_STYLE + 'select-map'
         if ctx.triggered:
             prop_id = ctx.triggered[0]['prop_id']
             if region in prop_id:
-                answer = 'cell small-7 medium-4 select-map-selected'
+                answer = MAP_DIV_STYLE + 'select-map-selected'
         return answer
 
     select_map.__name__ = 'select_%s_map' % region
