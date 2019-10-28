@@ -333,16 +333,17 @@ layout = html.Div(
                                     ),
                                 ]
                             ),
-                            html.Div(
-                                id='maps-div',
-                                className='cell grid-x',
-                                children=[
-                                    map_div(region, MAP_LAYOUTS[region], map_data)
-                                    for region in MAP_REGIONS
-                                ]
-                            )
+
                         ]
                     ),
+                ),
+                html.Div(
+                    id='maps-div',
+                    className='grid-x grid-margin-x align-center',
+                    children=[
+                        map_div(region, MAP_LAYOUTS[region], map_data)
+                        for region in MAP_REGIONS
+                    ]
                 ),
                 html.Div(
                     id='main-results-div',
