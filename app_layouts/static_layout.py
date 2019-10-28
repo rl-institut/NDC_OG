@@ -66,8 +66,6 @@ def extract_centroids(reg):
     return centroids.loc[centroids.region.isin(reg)].copy()
 
 
-
-
 VIEW_GENERAL = 'general'
 VIEW_COUNTRY = 'specific'
 VIEW_AGGREGATE = 'aggregate'
@@ -1576,13 +1574,15 @@ def callbacks(app_handle):
 
     @app_handle.callback(
         Output('data-store', 'data'),
-        [Input('map', 'clickData')],
+        [Input('{}-map'.format(region), 'clickData') for region in MAP_REGIONS],
         [State('data-store', 'data')]
     )
-    def update_data_store(clicked_data, cur_data):
-        if clicked_data is not None:
-            country_iso = clicked_data['points'][0]['location']
-            cur_data.update({'selected_country': country_iso})
+    def update_data_store(*args):
+        cur_data = args[-1]
+        for clicked_data in args[:-2]:
+            if clicked_data is not None:
+                country_iso = clicked_data['points'][0]['location']
+                cur_data.update({'selected_country': country_iso})
         return cur_data
 
     @app_handle.callback(
