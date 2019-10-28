@@ -26,6 +26,16 @@ from data.data_preparation import (
     RESULTS_TITLE_HELP,
 )
 
+WORLD_ID = 'WD'
+# Region names in nice format
+REGIONS_GPD = dict(WD='World', SA='South America', AF='Africa', AS='Asia')
+
+# code in the raw data columns
+REGIONS_NDC = dict(WD=['LA', 'SSA', 'DA'], SA='LA', AF='SSA', AS='DA')
+
+# Region names for div dynamic creation
+MAP_REGIONS = {'africa': 'AF', 'asia': 'AS', 'southamerica': 'SA'}
+
 RES_COUNTRY = 'country'
 RES_AGGREGATE = 'aggregate'
 RES_COMPARE = 'compare'
@@ -56,8 +66,8 @@ INVEST_ROWS = [
 ]
 
 GHG_ROWS = [
-    'Lower TIER',
-    'Higher TIER',
+    'Lower TIER case',
+    'Higher TIER case',
 ]
 GHG_ER_ROWS = [
     'Lower TIER',
@@ -130,6 +140,8 @@ BARPLOT_YAXIS_OPT = {
 BARPLOT_INVEST_YLABEL = 'Initial Investments (in billion USD)'
 BARPLOT_GHG_YLABEL = 'GHG Emissions (in million tons CO2)'
 
+MAP_DIV_STYLE = 'cell small-10 medium-4 '
+
 
 def round_digits(val):
     """Formats number by rounding to 2 digits and add commas for thousands"""
@@ -173,6 +185,34 @@ def create_tooltip(cell):
         '''
         **{value}**.
         '''.format(value=cell)
+    )
+
+
+def map_div(region, layout, map_data):
+    return html.Div(
+        id='{}-map-div'.format(region),
+        className=MAP_DIV_STYLE + 'select-map',
+        children=html.Div(
+            className='grid-x',
+            children=[
+                html.H4(
+                    children=REGIONS_GPD[MAP_REGIONS[region]],
+                    className='cell align__center',
+                ),
+                html.Button(
+                    id='{}-map-btn'.format(region),
+                    children='Select Region',
+                    className='btn btn--hollow cell medium-offset-4 medium-4'
+                ),
+                dcc.Graph(
+                    id='{}-map'.format(region),
+                    className='cell align__center',
+                    figure=go.Figure(
+                        data=map_data,
+                        layout=layout),
+                )
+            ]
+        )
     )
 
 
@@ -320,11 +360,17 @@ def results_div(result_type, result_category, flex_case=''):
             columns=columns_ids,
             style_data_conditional=TABLES_LABEL_STYLING,
             style_header=TABLES_HEADER_STYLING,
-            css=[{
-                'selector': '.dash-cell div.dash-cell-value',
-                'rule': 'display: inline; white-space: inherit; '
-                        'overflow: inherit; text-overflow: inherit;'
-            }],
+            css=[
+                {
+                    'selector': '.dash-cell div.dash-cell-value',
+                    'rule': 'display: inline; white-space: inherit; '
+                            'overflow: inherit; text-overflow: inherit;'
+                },
+                {
+                    'selector': '.column-0',
+                    'rule': 'text-decoration: underline; text-decoration-style: dotted;'
+                },
+            ],
             style_table={
                 'marginTop': '10px'
             },

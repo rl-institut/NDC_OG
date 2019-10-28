@@ -96,8 +96,31 @@ body {
     padding-top: 1.5rem;
 }
 
-#map {
+#maps-div {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+}
+
+.select-map {
     padding-top: 3rem;
+    border-radius: 5px;
+    border: dashed 3px #333333;
+    opacity: 0.2;
+}
+
+
+.select-map:hover {
+    border-radius: 5px;
+    border: solid 3px #333333;
+    opacity: 0.8;
+    //filter: alpha(opacity=40);
+}
+
+
+.select-map-selected {
+    padding-top: 3rem;
+    border-radius: 5px;
+    border: solid 5px #333333;
 }
 
 ._dash-undo-redo {
@@ -116,6 +139,11 @@ body {
 .header_style {
     background: #333333;
     color: #FFFFFF;
+}
+
+#main-head-content {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
 }
 
 .country_info_style {
@@ -162,8 +190,8 @@ body {
 
 .scenario__info {
     border-radius: 10px;
-    padding: 40px;
-    margin-left: 20px;
+    padding: 40px 40px 60px 40px;
+    //margin-left: 20px;
     margin-right: 20px;
     margin-top: 20px;
     margin-bottom: 20px;
@@ -278,6 +306,10 @@ body {
 #results-info-div{
     background: #f1e9da;
     border: solid 0px #f1e9da;
+}
+
+#results-info-div table{
+    width: 100%;
 }
 
 #country-key-indicators td{
