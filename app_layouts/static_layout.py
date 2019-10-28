@@ -48,6 +48,11 @@ from .app_components import (
     BARPLOT_YAXIS_OPT,
     BARPLOT_INVEST_YLABEL,
     BARPLOT_GHG_YLABEL,
+    MAP_DIV_STYLE,
+    WORLD_ID,
+    REGIONS_GPD,
+    REGIONS_NDC,
+    MAP_REGIONS,
 )
 
 URL_PATHNAME = 'static'
@@ -61,12 +66,7 @@ def extract_centroids(reg):
     return centroids.loc[centroids.region.isin(reg)].copy()
 
 
-WORLD_ID = 'WD'
-REGIONS_GPD = dict(WD='World', SA='South America', AF='Africa', AS='Asia')
 
-REGIONS_NDC = dict(WD=['LA', 'SSA', 'DA'], SA='LA', AF='SSA', AS='DA')
-
-MAP_REGIONS = {'africa': 'AF', 'asia': 'AS', 'southamerica': 'SA'}
 
 VIEW_GENERAL = 'general'
 VIEW_COUNTRY = 'specific'

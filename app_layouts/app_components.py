@@ -26,6 +26,16 @@ from data.data_preparation import (
     RESULTS_TITLE_HELP,
 )
 
+WORLD_ID = 'WD'
+# Region names in nice format
+REGIONS_GPD = dict(WD='World', SA='South America', AF='Africa', AS='Asia')
+
+# code in the raw data columns
+REGIONS_NDC = dict(WD=['LA', 'SSA', 'DA'], SA='LA', AF='SSA', AS='DA')
+
+# Region names for div dynamic creation
+MAP_REGIONS = {'africa': 'AF', 'asia': 'AS', 'southamerica': 'SA'}
+
 RES_COUNTRY = 'country'
 RES_AGGREGATE = 'aggregate'
 RES_COMPARE = 'compare'
@@ -186,8 +196,8 @@ def map_div(region, layout, map_data):
             className='grid-x',
             children=[
                 html.H4(
-                    children=region,
-                    className='cell medium-6',
+                    children=REGIONS_GPD[MAP_REGIONS[region]],
+                    className='cell align__center',
                 ),
                 html.Button(
                     id='{}-map-btn'.format(region),
