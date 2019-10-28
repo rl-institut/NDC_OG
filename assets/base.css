@@ -99,27 +99,23 @@ body {
 .select-map {
     padding-top: 3rem;
     border-radius: 5px;
-    border: solid 3px #333333;
+    border: dashed 3px #333333;
+    opacity: 0.2;
 }
 
-/*
+
 .select-map:hover {
     border-radius: 5px;
     border: solid 3px #333333;
-    background: red
-    opacity: 0.2;
+    opacity: 0.8;
     //filter: alpha(opacity=40);
 }
-*/
+
 
 .select-map-selected {
     padding-top: 3rem;
-
     border-radius: 5px;
-    border: solid 3px red;
-    background: red
-    opacity: 0.2;
-    //filter: alpha(opacity=40); /* msie */
+    border: solid 5px #333333;
 }
 
 ._dash-undo-redo {
