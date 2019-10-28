@@ -202,11 +202,11 @@ def map_div(region, layout, map_data):
                 html.Button(
                     id='{}-map-btn'.format(region),
                     children='Select Region',
-                    className='cell medium-12'
+                    className='btn btn--hollow cell medium-offset-4 medium-4'
                 ),
                 dcc.Graph(
                     id='{}-map'.format(region),
-                    className='cell',
+                    className='cell align__center',
                     figure=go.Figure(
                         data=map_data,
                         layout=layout),

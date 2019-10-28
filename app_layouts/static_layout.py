@@ -137,8 +137,8 @@ map_options = dict(
     #autosize=False,
     height=500,
     margin=dict(
-        l=2,
-        r=2,
+        l=10,
+        r=10,
         b=2,
         t=2
     ),
