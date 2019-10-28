@@ -96,6 +96,11 @@ body {
     padding-top: 1.5rem;
 }
 
+#maps-div {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+}
+
 .select-map {
     padding-top: 3rem;
     border-radius: 5px;
@@ -134,6 +139,11 @@ body {
 .header_style {
     background: #333333;
     color: #FFFFFF;
+}
+
+#main-head-content {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
 }
 
 .country_info_style {
@@ -180,8 +190,8 @@ body {
 
 .scenario__info {
     border-radius: 10px;
-    padding: 40px;
-    margin-left: 20px;
+    padding: 40px 40px 60px 40px;
+    //margin-left: 20px;
     margin-right: 20px;
     margin-top: 20px;
     margin-bottom: 20px;

@@ -208,8 +208,8 @@ layout = html.Div(
                     id='main-head-div',
                     className='cell',
                     children=html.Div(
-                        id='meain-head-content',
-                        className='grid-x grid-padding-x',
+                        id='main-head-content',
+                        className='grid-x',
                         children=[
                             html.Div(
                                 id='left-header-div',
