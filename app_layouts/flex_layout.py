@@ -14,7 +14,9 @@ from data.data_preparation import (
     BAU_SCENARIO,
     SE4ALL_SCENARIO,
     SE4ALL_FLEX_SCENARIO,
+    FLEX_SCENARIO_NAME,
     SCENARIOS_DICT,
+    SCENARIOS_NAMES,
     ELECTRIFICATION_OPTIONS,
     NO_ACCESS,
     RISE_INDICES,
@@ -65,6 +67,7 @@ VIEW_COUNTRY_SELECT = 'country'
 VIEW_CONTROLS = 'general'
 VIEW_COMPARE = 'compare'
 
+
 # A dict with the data for each scenario in json format
 SCENARIOS_DATA = {
     sce: compute_ndc_results_from_raw_data(sce, MIN_TIER_LEVEL).to_json() for sce in SCENARIOS
@@ -72,6 +75,8 @@ SCENARIOS_DATA = {
 SCENARIOS_DATA.update(
     {reg: extract_centroids(REGIONS_NDC[reg]).to_json() for reg in REGIONS_NDC}
 )
+
+RISE_SUB_INDICATOR_SCORES = pd.read_csv('data/RISE_subindicators_country.csv')
 
 list_countries_dropdown = []
 DF = pd.read_json(SCENARIOS_DATA[SE4ALL_SCENARIO])
@@ -195,8 +200,10 @@ layout = html.Div(
                                     html.Div(
                                         id='flex-general-info-div',
                                         className='scenario__info',
-                                        children='Click on the text next to the RISE controls '
-                                                 'to look at the RISE sub-indicators'
+                                        children=[
+                                            html.H4('Custom Scenarios'),
+                                            '''Complementary to the static evaluation of the modelled scenarios, the *Off-Grid Tool* allows the exploration and creation of your own scenarios. The universal-Electricity-Access scneario and the progressive-Off-Grid scenraio are based on the RISE indicators, reflecting countries' regulatory framework conditions. Through the alteration of RISE subindicators, one can simulate how technology-specific framework changes may affect a country's electrification development until 2030.'''
+                                        ]
                                     ),
                                 ]
                             ),
@@ -205,8 +212,8 @@ layout = html.Div(
                                 className='cell medium-6',
                                 children=[
                                     html.Div(
-                                        id='flex-scenario-div',
-                                        className='grid-x',
+                                        id='flex-scenario-input-div',
+                                        className='grid-x input-div',
                                         children=[
                                             html.Div(
                                                 id='flex-scenario-label',
@@ -214,13 +221,19 @@ layout = html.Div(
                                                 children='Explore a scenario:'
                                             ),
                                             html.Div(
-                                                id='flex-scenario-input-div',
+                                                id='flex-scenario-input-wrapper',
                                                 className='cell medium-9',
                                                 children=dcc.Dropdown(
                                                     id='flex-scenario-input',
                                                     options=[
-                                                        {'label': v, 'value': k}
-                                                        for k, v in SCENARIOS_DICT.items()
+                                                        {
+                                                            'label': '{} ({})'.format(
+                                                                SCENARIOS_NAMES[k],
+                                                                SCENARIOS_DICT[k]
+                                                            ),
+                                                            'value': k
+                                                        }
+                                                        for k in SCENARIOS
                                                     ],
                                                     value=BAU_SCENARIO,
                                                 )
@@ -230,7 +243,7 @@ layout = html.Div(
                                     html.Div(
                                         id='flex-country-input-div',
                                         title='country selection description',
-                                        className='grid-x',
+                                        className='grid-x input-div',
                                         children=[
                                             html.Div(
                                                 id='flex-country-label',
@@ -247,6 +260,14 @@ layout = html.Div(
                                                     multi=False
                                                 )
                                             ),
+                                        ]
+                                    ),
+                                    html.Div(
+                                        id='flex-specific-info-div',
+                                        className='instructions',
+                                        children=[
+                                            html.H4('What you can do'),
+                                            '''Select a starting scenario and choose a country from the dropdown menu. Select one of the technology-specific RISE indicators to customize its subindicators (RISE Grid, RISE MG, RISE SHS).'''
                                         ]
                                     ),
                                 ]
@@ -285,11 +306,11 @@ def result_title_callback(app_handle, result_category):
     id_name = 'flex-{}-{}'.format(RES_COMPARE, result_category)
 
     if result_category == POP_RES:
-        description = 'electrification mix {}'
+        description = 'Electrification Mix {}'
     elif result_category == INVEST_RES:
-        description = 'initial investments needed {} (in billion USD)'
+        description = 'Initial Investments Needed {} (in billion USD)'
     else:
-        description = 'cumulated GHG emissions (2017-2030) {} (in million tons CO2)'
+        description = 'Cumulated GHG Emissions (2017-2030) {} (in million tons CO2)'
 
     @app_handle.callback(
         Output('{}-results-title'.format(id_name), 'children'),
@@ -304,11 +325,11 @@ def result_title_callback(app_handle, result_category):
         answer = 'Results'
         if scenario in SCENARIOS and country_iso is not None:
             country = cur_data.get('country_name')
-            answer = '{}: comparison of {}'.format(
+            answer = '{}: Comparison of {}'.format(
                 country,
                 description.format(
                     'between {} and {} scenarios'.format(
-                        'Flex',
+                        FLEX_SCENARIO_NAME,
                         SCENARIOS_DICT[scenario]
                     )
                 )
@@ -317,6 +338,26 @@ def result_title_callback(app_handle, result_category):
 
     flex_update_title.__name__ = 'flex_update_%s_title' % id_name
     return flex_update_title
+
+
+def table_title_callback(app_handle, result_category):
+
+    id_name = 'flex-{}-{}'.format(RES_COMPARE, result_category)
+
+    @app_handle.callback(
+        Output('{}-results-table-title'.format(id_name), 'children'),
+        [Input('flex-scenario-input', 'value')],
+    )
+    def update_title(scenario):
+
+        answer = 'Detailed results'
+        if scenario in SCENARIOS:
+            answer = 'Detailed Results'
+
+        return answer
+
+    update_title.__name__ = 'update_%s_title' % id_name
+    return update_title
 
 
 def compare_barplot_callback(app_handle, result_category):
@@ -358,7 +399,7 @@ def compare_barplot_callback(app_handle, result_category):
             )
             comp_results_data = prepare_results_tables(df_comp, scenario, result_category)
 
-            x = ELECTRIFICATION_OPTIONS + [NO_ACCESS]
+            x = [opt.upper() for opt in ELECTRIFICATION_OPTIONS] + [NO_ACCESS]
             y_flex = flex_results_data[idx_y]
             y_comp = comp_results_data[idx_y]
 
@@ -369,11 +410,11 @@ def compare_barplot_callback(app_handle, result_category):
                     go.Bar(
                         x=x,
                         y=y_flex,
-                        text=[SE4ALL_FLEX_SCENARIO for i in range(4)],
+                        text=[FLEX_SCENARIO_NAME for i in range(4)],
                         name=SE4ALL_FLEX_SCENARIO,
                         showlegend=False,
-                        insidetextfont={'size': fs},
-                        textposition='auto',
+                        insidetextfont={'size': fs, 'color': 'white'},
+                        textposition='inside',
                         marker=dict(
                             color=list(BARPLOT_ELECTRIFICATION_COLORS.values())
                         ),
@@ -382,11 +423,11 @@ def compare_barplot_callback(app_handle, result_category):
                     go.Bar(
                         x=x,
                         y=y_comp,
-                        text=[scenario for i in range(4)],
+                        text=[SCENARIOS_DICT[scenario] for i in range(4)],
                         name=scenario,
                         showlegend=False,
-                        insidetextfont={'size': fs},
-                        textposition='auto',
+                        insidetextfont={'size': fs, 'color': 'white'},
+                        textposition='inside',
                         marker=dict(
                             color=['#a062d0', '#9ac1e5', '#f3a672', '#cccccc']
                         ),
@@ -494,9 +535,10 @@ def compare_table_columns_title_callback(app_handle, result_category):
     def flex_update_table_columns_title(scenario):
         columns_ids = []
         if scenario is not None:
-            flex_sce = 'Flex'
+            flex_sce = FLEX_SCENARIO_NAME
             comp_sce = SCENARIOS_DICT[scenario]
-            for col in TABLE_COLUMNS_ID:
+            table_columns = TABLE_COLUMNS_ID[result_category]
+            for col in table_columns:
                 if col != 'labels':
                     columns_ids.append(
                         {'name': [TABLE_COLUMNS_LABEL[col], flex_sce], 'id': col}
@@ -527,8 +569,9 @@ def compare_table_styling_callback(app_handle, result_category):
     def flex_update_table_styling(cur_data, cur_style, country_iso):
         if country_iso is not None:
             table_data = pd.DataFrame.from_dict(cur_data)
+            table_columns = TABLE_COLUMNS_ID[result_category]
 
-            col_ref = TABLE_COLUMNS_ID[1:]
+            col_ref = table_columns[1:]
             col_comp = ['comp_{}'.format(col) for col in col_ref]
             table_data = table_data[col_ref + col_comp].applymap(
                 lambda x: 0 if x == '' else float(x.replace(',', '').replace('%', '')))
@@ -588,7 +631,7 @@ def toggle_results_div_callback(app_handle, result_category):
         if cur_view['app_view'] in [VIEW_COUNTRY_SELECT]:
             cur_style.update({'display': 'none'})
         else:
-            cur_style.update({'display': 'block'})
+            cur_style = {}
         return cur_style
 
     toggle_results_div_display.__name__ = 'flex-toggle_%s_display' % id_name
@@ -627,10 +670,10 @@ def rise_sub_indicator_display_callback(app_handle, id_name):
             cur_style = {'display': 'none'}
         if cur_view['sub_indicators_view'] == id_name:
             if cur_view['sub_indicators_change']:
-                cur_style.update({'display': 'block'})
+                cur_style = {}
             else:
                 if cur_style['display'] == 'none':
-                    cur_style.update({'display': 'block'})
+                    cur_style = {}
                 else:
                     cur_style.update({'display': 'none'})
         else:
@@ -644,9 +687,9 @@ def rise_sub_indicator_display_callback(app_handle, id_name):
 def rise_sub_indicator_button_style_callback(app_handle, id_name):
 
     @app_handle.callback(
-        Output('flex-rise-{}-label'.format(id_name), 'style'),
+        Output('flex-rise-{}-btn'.format(id_name), 'style'),
         [Input('flex-view-store', 'data')],
-        [State('flex-rise-{}-label'.format(id_name), 'style')]
+        [State('flex-rise-{}-btn'.format(id_name), 'style')]
     )
     def rise_update_button_style(cur_view, cur_style):
         """Change the display of results-div between the app's views."""
@@ -689,8 +732,7 @@ def rise_update_scores(app_handle, id_name):
                         df.country_iso == country_iso, 'rise_{}'.format(id_name)
                     ].values[0]
             if 'rise-store' in prop_id:
-                if id_name == cur_view['sub_indicators_view']:
-                    answer = cur_rise_data.get(id_name)
+                answer = cur_rise_data.get(id_name)
 
         if answer is None:
             answer = cur_val
@@ -698,6 +740,77 @@ def rise_update_scores(app_handle, id_name):
 
     flex_update_rise_value.__name__ = 'flex_update_rise_%s_value' % id_name
     return flex_update_rise_value
+
+
+def rise_update_set_all_upon_country_selection(app_handle, id_name):
+    """When a country is selected, the rise subindicators values are displayed
+
+    :param app_handle:
+    :param id_name:
+    :return:
+    """
+    @app_handle.callback(
+        Output('flex-rise-{}-general-toggle'.format(id_name), 'value'),
+        [Input('flex-country-input', 'value')]
+    )
+    def flex_update_set_all(_):
+        return -1  # correspond to default value of the dropdown
+
+    flex_update_set_all.__name__ = 'flex_update_set_all_{}'.format(id_name)
+    return flex_update_set_all
+
+
+def rise_update_subscore_values(app_handle, id_name, p, q):
+    """Update the values of the RISE subindicators upon country selection
+
+        flex-country-input triggers the callback rise_update_set_all_upon_country_selection
+        which triggers this call back
+    :param app_handle: handle to the dash app
+    :param id_name: one the ELECTRIFICATION_OPTIONS
+    :param p: the index of the rise sub-indicator's group
+    :param q: the index of the question within the rise sub-indicator's group
+    :return: callback function
+    """
+    @app_handle.callback(
+        Output('flex-rise-{}-sub-group{}-{}-toggle'.format(id_name, p, q), 'value'),
+        [
+            Input('flex-rise-{}-general-toggle'.format(id_name), 'value'),
+        ],
+        [
+            State('flex-country-input', 'value'),
+            State('flex-rise-store', 'data')
+        ]
+    )
+    def flex_update_subscore_value(set_all, country_iso, cur_rise_data):
+        answer = 0
+        if set_all is not None and country_iso is not None:
+            if set_all == 1:
+                answer = float(1./RISE_SUB_INDICATOR_STRUCTURE[id_name][p])
+            elif set_all == 0:
+                answer = 0
+            elif set_all == -1:
+                # select country
+                sub_df = RISE_SUB_INDICATOR_SCORES.loc[
+                    RISE_SUB_INDICATOR_SCORES.country_iso == country_iso
+                    ]
+                # select electrification option
+                sub_df = sub_df.loc[sub_df.indicator == 'rise_{}'.format(id_name)]
+                # select sub-indicator group
+                sub_group = sub_df.sub_indicator_group.unique()[p]
+                sub_df = sub_df.loc[sub_df.sub_indicator_group == sub_group]
+                # select question within sub-indicator group
+                value = sub_df.iloc[q].value
+
+                if value:
+                    answer = float(1. / value)
+        return answer
+
+    flex_update_subscore_value.__name__ = 'flex_update_subscore_value_{}_{}_{}'.format(
+        id_name,
+        p,
+        q
+    )
+    return flex_update_subscore_value
 
 
 def callbacks(app_handle):
@@ -709,20 +822,25 @@ def callbacks(app_handle):
         compare_table_columns_title_callback(app_handle, res_cat)
         compare_table_styling_callback(app_handle, res_cat)
         toggle_results_div_callback(app_handle, res_cat)
+        table_title_callback(app_handle, res_cat)
 
     for opt in ELECTRIFICATION_OPTIONS:
         rise_slider_callback(app_handle, opt)
         rise_sub_indicator_display_callback(app_handle, opt)
         rise_update_scores(app_handle, opt)
         rise_sub_indicator_button_style_callback(app_handle, opt)
+        rise_update_set_all_upon_country_selection(app_handle, opt)
+        for p, m in enumerate(RISE_SUB_INDICATOR_STRUCTURE[opt]):
+            for q in range(m):
+                rise_update_subscore_values(app_handle, opt, p, q)
 
     @app_handle.callback(
         Output('flex-view-store', 'data'),
         [
             Input('flex-country-input', 'value'),
-            Input('flex-rise-grid-label', 'n_clicks'),
-            Input('flex-rise-mg-label', 'n_clicks'),
-            Input('flex-rise-shs-label', 'n_clicks'),
+            Input('flex-rise-grid-btn', 'n_clicks'),
+            Input('flex-rise-mg-btn', 'n_clicks'),
+            Input('flex-rise-shs-btn', 'n_clicks'),
         ],
         [State('flex-view-store', 'data')]
     )
@@ -781,7 +899,7 @@ def callbacks(app_handle):
         if cur_style is None:
             cur_style = {'display': 'none'}
         if cur_view['sub_indicators_view'] in ELECTRIFICATION_OPTIONS:
-            cur_style.update({'display': 'block'})
+            cur_style = {}
         else:
             cur_style.update({'display': 'none'})
         return cur_style
@@ -809,6 +927,7 @@ def callbacks(app_handle):
             country_iso,
             flex_data
     ):
+        """Recompute the exogenous results with the updated RISE scores"""
         if rise_grid is not None:
             flex_data.update({'rise_grid': rise_grid})
         if rise_mg is not None:
@@ -859,19 +978,14 @@ def callbacks(app_handle):
 
     @app_handle.callback(
         Output('flex-rise-store', 'data'),
-        sub_indicators_inputs,
-        [
-            State('flex-view-store', 'data')
-         ]
+        sub_indicators_inputs
     )
     def flex_update_rise_sub_indicators(*args):
         """Change the display of results-div between the app's views."""
-        cur_view = args[-1]
-        id_name = cur_view.get('sub_indicators_view')
 
         cur_rise_data = {}
 
-        if id_name is not None and id_name in ELECTRIFICATION_OPTIONS:
+        for id_name in ELECTRIFICATION_OPTIONS:
 
             # find the position of the sub-indicators values in the arguments' list
             idx_start, idx_end = sub_indicators_num[id_name]
@@ -891,7 +1005,7 @@ def callbacks(app_handle):
             # round the total score to 100 if it was 99.999999 due to floating point error
             if 100 - rise_score < 1e-5:
                 rise_score = 100
-            cur_rise_data[id_name] = rise_score
+            cur_rise_data[id_name] = round(rise_score, 2)
         return cur_rise_data
 
 

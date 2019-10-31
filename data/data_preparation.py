@@ -50,29 +50,61 @@ SHS = 'shs'
 NO_ACCESS = 'No Electricity'
 ELECTRIFICATION_OPTIONS = [GRID, MG, SHS]
 BAU_SCENARIO = 'bau'
-SE4ALL_SCENARIO = 'se4all'
-SE4ALL_FLEX_SCENARIO = 'se4all_shift'
+SE4ALL_SCENARIO = 'uea'
+SE4ALL_FLEX_SCENARIO = 'uEA_flex'
 PROG_SCENARIO = 'prog'
 SCENARIOS = [BAU_SCENARIO, SE4ALL_SCENARIO, PROG_SCENARIO]
 
-# Names for display
+# Names for short display
 SCENARIOS_DICT = {
     BAU_SCENARIO: 'BaU',
-    SE4ALL_SCENARIO: 'SE4All',
+    SE4ALL_SCENARIO: 'uEA',
     PROG_SCENARIO: 'prOG',
 }
+
+# Names for long display
+SCENARIOS_NAMES = {
+    BAU_SCENARIO: 'Business-as-Usual',
+    SE4ALL_SCENARIO: 'Universal-Energy-Access',
+    PROG_SCENARIO: 'Progressive-Off-Grid',
+}
+
+FLEX_SCENARIO_NAME = 'Custom'
+
+POP_RES = 'pop'
+INVEST_RES = 'invest'
+GHG_RES = 'ghg'
+GHG_ER_RES = 'ghg-er'
+
 SCENARIOS_DESCRIPTIONS = {
     BAU_SCENARIO:
-        [html.H4('What it shows:'), '''The Business-as-Usual (BaU) scenario quantifies the number of new technology-specific electrifications (Grid Extension, Mini-Grids or Solar-Home Systems) until 2030 by projecting current business-as-usual growth rates into the future.''',
-         html.H4('How it is obtained:'),  '''Regional projections of electrification rates and technologies are mapped to the country-level and modelled until 2030. The BaU scenario is based on the "New Policies" Scenario of the ''', html.A(children="international Energy Agency’s World Energy Outlook 2018", href='https://www.iea.org/weo2018/scenarios/'), '''. '''],
+        [html.H4('What it shows:'), '''The ''', html.Span('Business-as-Usual'), ''' (''',
+         html.Span('BaU'), ''') quantifies 
+        the number of new technology-specific electrifications, ''', html.Span('investment needs'), ''' and ''', html.Span('emission reduction'), ''' potentials for ''', html.Span('Grid'), ''' extension, ''', html.Span('Mini-Grid'), ''' deployment and ''', html.Span('Solar-Home-System'), ''' dissemination until 2030, by projecting current business-as-usual growth rates into the future.''',
+         html.H4('How it is obtained:'),  '''Regional projections of electrification rates and 
+         technologies are mapped to the country-level and modelled until 2030. Based on these projections, ''', html.Span('investment needs'), ''' and ''', html.Span('emission reduction'), ''' potentials are calculated. The BaU scenario is based on the "New Policies" Scenario of the ''', html.A(children="international Energy Agency’s World Energy Outlook 2018", href='https://www.iea.org/weo2018/scenarios/', target='_blank'), '''. '''],
     SE4ALL_SCENARIO:
-        [html.H4('What it shows:'), '''The Sustainable-Energy-For-All (SE4ALL) scenario estimates the number of new technology-specific electrifications (Grid Extension, Mini-Grids or Solar-Home Systems) necessary to achieve the universal access goal until 2030. These estimations account for expected population growth rates and current infrastructure and current regulatory frameworks.''',
-         html.H4('How it is obtained:'),  '''Existing datasets providing night lights, population densities and transmission grids are combined to estimate the number of people lacking access to electricity. Appropriate electrification options are determined based on the remoteness and density of neglected populations. In this way, the model estimates the share of people that remain to be electrified by either Grid Extension, Mini-Grid deployment or Solar-Home-System adoption until 2030.''',
-         '''The GIS based estimates are further refined by accounting for (the lack of) favourable technology-specific frameworks through the integration of ''', html.A(children="ESMAP’s RISE Indicators", href='https://rise.esmap.org/'), ''' into the model’s calculations. '''],
+        [html.H4('What it shows:'), '''The ''', html.Span('Universal-Energy-Access'), ''' (''',
+         html.Span('uEA'), ''') scenario estimates the number of new ''', html.Span('technology-specific electrifications'), ''' (Grid Extension, Mini-Grids or Solar-Home-Systems) necessary to achieve the universal access goal until 2030. These estimations account for expected population growth rates, current infrastructure and current regulatory frameworks. The scenario further modells ''', html.Span('investment needs'), ''' and ''', html.Span('emission reduction'), ''' potentials, for which either a   Lower Tier or a Higher Tier case can be displayed. ''',
+         html.H4('How it is obtained:'),  '''Existing datasets providing night lights, population densities and transmission grids are combined to estimate the number of people lacking access to electricity. Appropriate electrification options are determined based on the remoteness and density of neglected populations. In this way, the model estimates the share of people that remain to be electrified by either ''', html.Span('Grid'), ''' Extension, ''', html.Span('Mini-Grid'), ''' deployment or ''', html.Span('Solar-Home-System'), ''' adoption until 2030.''',
+         ''' The GIS based estimates are further refined by accounting for (the lack of) favourable technology-specific frameworks through the integration of ''', html.A(children="ESMAP’s RISE Indicators", href='https://rise.esmap.org/', target='_blank'), ''' into the model’s calculations. '''],
     PROG_SCENARIO:
-        [html.H4('What it shows:'), '''The Progressive-Off-Grid (prOG) scenario estimates the number of new technology-specific electrifications (Grid Extension, Mini-Grids or Solar-Home Systems) necessary to achieve the universal access goal until 2030. These estimations account for expected population growth rates and current infrastructure and progressive regulatory frameworks.''',
-         html.H4('How it is obtained:'),  '''Existing datasets providing night lights, population densities and transmission grids are combined to estimate the number of people lacking access to electricity. Appropriate electrification options are determined based on the remoteness and density of neglected populations. For the 2030 horizon, in this way the model estimates the share of neglected people that remain to be electrified by either Grid Extension, Mini-Grid deployment or Solar-Home System adoption.''',
-         '''In the prOG scenario, the GIS based estimates are modified to showcase the impact of fully favourable off-grid (Mini-Grid and Solar Home Systems) frameworks through the integration of maximized ''', html.A(children="ESMAP’s RISE Indicators", href='https://rise.esmap.org/'), ''' into the model’s calculations. ''']
+        [html.H4('What it shows:'), '''The ''', html.Span('Progressive-Off-Grid'), ''' (''',
+         html.Span('prOG'), ''') scenario estimates the number and mix of new ''', html.Span('technology-specific electrifications'), ''' (Grid Extension, Mini-Grids or Solar-Home-Systems) necessary to achieve the universal access goal until 2030 under optimal framework conditions. These estimations account for expected population growth rates, current infrastructure and progressive regulatory frameworks. The scenario further modells ''', html.Span('investment needs'), ''' and ''', html.Span('emission reduction'), ''' potentials, for which either a Lower Tier or a Higher Tier case can be displayed. ''',
+         html.H4('How it is obtained:'),  '''Existing datasets providing night lights, population densities and transmission grids are combined to estimate the number of people lacking access to electricity. Appropriate electrification options are determined based on the remoteness and density of neglected populations. For the 2030 horizon, in this way the model estimates the share of neglected people that remain to be electrified by either ''', html.Span('Grid'), ''' Extension, ''', html.Span('Mini-Grid'), ''' deployment or ''', html.Span('Solar-Home-System'), ''' adoption.''',
+         '''In the prOG scenario, the GIS based estimates are modified to showcase the impact of fully favourable off-grid (Mini-Grid and Solar Home Systems) frameworks through the integration of maximized ''', html.A(children="ESMAP’s RISE Indicators", href='https://rise.esmap.org/', target='_blank'), ''' into the model’s calculations. ''']
+}
+
+WHAT_CAN_YOU_DO_DESCRIPTIONS = {
+    BAU_SCENARIO: ['''Hover over the three regional maps to view country specific information. For more information, select a region or country from the maps or the dropdown menu above. Via the dropdown menu you can also alter the scenario you wish to explore. Once a country is selected, you may also choose a region or second country for comparison.'''],
+    SE4ALL_SCENARIO: ['''Hover over the three regional maps to view country specific information. For more information, select a region or country from the maps or the dropdown menu above. Via the dropdown menu you can also alter the scenario you wish to explore. Once a country is selected, you may also choose a region or second country for comparison.'''],
+    PROG_SCENARIO: ['''Hover over the three regional maps to view country specific information. For more information, select a region or country from the maps or the dropdown menu above. Via the dropdown menu you can also alter the scenario you wish to explore. Once a country is selected, you may also choose a region or second country for comparison.''']
+}
+
+RESULTS_TITLE_HELP = {
+    POP_RES: '''The share of people / people in million / households in million to be electrified through Grid extension, Mini-Grid deployment and Solar-Home-System adoption, for the BaU, uEA and prOG scenarios.''',
+    INVEST_RES: '''Lower and higher TIER case initial investment needs for Grid extension, Mini-Grid deployment and Solar-Home-System adoption, for the BaU, uEA and prOG scenarios.''',
+    GHG_RES: '''Lower and higher TIER case cumulated GHG emissions stemming from Grid extension, Mini-Grid deployment and the use of alternative forms of energy by people without access. As respective emissions are cumulated until 2030, also full-access scenarios (uEA and prOG) show emissions stemming from people lacking access to electricity. Emissions from the adoption of Solar-Home-Systems are assumed to be zero. Emissions and reduction potentials are estimated for the BaU, uEA and prOG scenarios. '''
 }
 
 ELECTRIFICATION_DICT = {
@@ -132,6 +164,9 @@ RISE_INDICES = ['rise_%s' % opt for opt in ELECTRIFICATION_OPTIONS]
 
 RISE_SUB_INDICATORS = pd.read_csv('data/RISE_indicators.csv').set_index('indicator')
 
+# take inverse fraction instead of percent
+RISE_SUB_INDICATORS.score_count_yes = round(100 / RISE_SUB_INDICATORS.score_count_yes)
+
 RISE_SUB_INDICATOR_STRUCTURE = {}
 for opt in ELECTRIFICATION_OPTIONS:
     RISE_SUB_INDICATOR_STRUCTURE[opt] = []
@@ -145,6 +180,8 @@ POP_RES = 'pop'
 INVEST_RES = 'invest'
 GHG_RES = 'ghg'
 GHG_ER_RES = 'ghg-er'
+
+EUR_TO_USD_2017 = 1.11
 
 
 def prepare_results_tables(df, sce=BAU_SCENARIO, result_category=POP_RES, ghg_er=False):
@@ -196,7 +233,31 @@ def prepare_results_tables(df, sce=BAU_SCENARIO, result_category=POP_RES, ghg_er
 
 
 def compute_rise_shifts(rise, pop_get, opt, flag=''):
+    """Model to compute the shifts due to RISE indicators
+        Given:
 
+        $i \in $ (grid, mg, shs)
+
+        $N_i$ : predicted population getting option $i$ in 2030
+
+        $R_i$ : RISE score for the option $i$
+
+        Definitions:
+
+        $\delta_{ij} = R_i - R_j$
+
+        $\Delta N_i$ : what gets added or removed from $N_i$
+
+        $\Delta N_{ij}$ : what is taken from $N_i$ and is transferred to $N_j$
+
+        Constraint is that $\sum_j \Delta N_j$
+    :param rise: array/list of RISE score for grid, mg, shs, resp.
+    :param pop_get: array/list of endogenous population getting grid, mg, shs, resp.
+    :param opt: 0->grid, 1->mg, 2->shs
+    :param flag: if there is an error, this will be displayed in the error message (could be the
+    name of a country, of a specific value linked to a country for example)
+    :return: the shift in the endo population due to the rise indicator for the given opt
+    """
     df = pd.DataFrame(
         data=[rise, pop_get, [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
         columns=ELECTRIFICATION_OPTIONS)
@@ -210,27 +271,35 @@ def compute_rise_shifts(rise, pop_get, opt, flag=''):
     p = list(set(range(3)) - set([m, n]))[0]
     R_p = df.iloc[0, p]
 
-    # calulate n_i
-    df.iloc[2] = df.iloc[1] / df.iloc[1].sum()
+    if R_n == R_p and R_p == R_m:
+        # all RISE scores are equal
+        df.iloc[4] = 0
+    else:
 
-    Delta_n = (R_m - R_n) / 100
+        # calculate the shifts
+        df.iloc[2] = df.iloc[1] / df.iloc[1].sum()
 
-    df.iloc[4, n] = - df.iloc[1, n] * Delta_n
+        Delta_n = (R_m - R_n) / 100
 
-    norm = 0
-    for j in [m, p]:
-        delta_jn = (df.iloc[0, j] - df.iloc[0, n])
-        norm = norm + delta_jn
-        df.iloc[4, j] = np.abs(df.iloc[4, n]) * delta_jn
+        df.iloc[4, n] = - df.iloc[1, n] * Delta_n
 
-    df.iloc[4, [m, p]] = df.iloc[4, [m, p]] / norm
+        norm = 0
+        for j in [m, p]:
+            delta_jn = (df.iloc[0, j] - df.iloc[0, n])
+            norm = norm + delta_jn
+            df.iloc[4, j] = np.abs(df.iloc[4, n]) * delta_jn
 
-    # --------------------------------------------------------
+        df.iloc[4, [m, p]] = df.iloc[4, [m, p]] / norm
 
-    DeltaN_pm = df.iloc[1, p] * (R_m - R_p) / 100
+        # --------------------------------------------------------
 
-    df.iloc[4, p] = df.iloc[4, p] - DeltaN_pm
-    df.iloc[4, m] = df.iloc[4, m] + DeltaN_pm
+        # $\Delta N_{pm} =  N_p \frac{\delta_{mp}}{100}$
+        DeltaN_pm = df.iloc[1, p] * (R_m - R_p) / 100
+
+        # $\Delta N_{p} = \Delta N_{np} - \Delta N_{pm}$
+        df.iloc[4, p] = df.iloc[4, p] - DeltaN_pm
+        # $\Delta N_{m} = \Delta N_{nm} + \Delta N_{pm}$
+        df.iloc[4, m] = df.iloc[4, m] + DeltaN_pm
 
     df.iloc[7] = df.iloc[4] + df.iloc[1]
 
@@ -391,7 +460,11 @@ def prepare_shs_investment_cost():
     shs_costs = pd.read_csv('data/shs_power_investment_cost.csv', comment='#')
     shs_costs['cost_per_kW'] = 1000 * shs_costs.investment / shs_costs.power
     # take the mean value of the mean cost per kW for each category
-    return np.mean([shs_costs[shs_costs.category == idx].cost_per_kW.mean() for idx in [5, 6, 7]])
+    inv_cost_eur = np.mean(
+        [shs_costs[shs_costs.category == idx].cost_per_kW.mean()
+         for idx in [5, 6, 7]]
+    )
+    return inv_cost_eur * EUR_TO_USD_2017
 
 
 SHS_POWER_CATEGORIES, SHS_SALES_VOLUMES = prepare_shs_power_and_sales_volumes()
@@ -604,13 +677,13 @@ def prepare_scenario_data(
 
 def _compute_ghg_emissions(df, min_tier_level, bau_df=None):
     """Compute green house gases emissions in `extract_results_scenario."""
-    # source : ???
-    df['hh_no_access_consumption'] = 55
-    # source : ???
+    # source : CDM AMS.I-L (https://cdm.unfccc.int/methodologies/PAmethodologies/tools/am-tool-07-v1.1.pdf/history_view
+    df['hh_no_access_consumption'] = 55  # kWh/year/hh
     df['grid_emission_factor'] = df.emission_factor / 1000
-    df['mg_emission_factor'] = 0.2
+    # 20% diesel share
+    df['mg_emission_factor'] = 0.2  # t_CO2/MWh
     df['shs_emission_factor'] = 0
-    df['no_access_emission_factor'] = 6.8
+    df['no_access_emission_factor'] = 6.8  # t_CO2/MWh
 
     df['pop_no_access_2030'] = df.pop_newly_electrified_2030 - df[
         ['pop_get_%s_2030' % opt for opt in ELECTRIFICATION_OPTIONS]].sum(axis=1)
@@ -622,18 +695,18 @@ def _compute_ghg_emissions(df, min_tier_level, bau_df=None):
         * df.hh_grid_tier_yearly_electricity_consumption \
         * (df.grid_emission_factor / 1000)
     # integral is the surface of a triangle
-    df['ghg_grid_cumul'] = 0.5 * df.ghg_grid_2030 * (2030 - 2017)
+    df['ghg_grid_cumul'] = 0.5 * df.ghg_grid_2030 * (14)
 
     df['ghg_mg_2030'] = \
         (df.pop_get_mg_2030 / df.hh_av_size) \
         * df.hh_mg_tier_yearly_electricity_consumption \
         * (df.mg_emission_factor / 1000)
     # integral is the surface of a triangle
-    df['ghg_mg_cumul'] = 0.5 * df.ghg_mg_2030 * (2030 - 2017)
+    df['ghg_mg_cumul'] = 0.5 * df.ghg_mg_2030 * (14)
 
     df['ghg_shs_2030'] = df.pop_get_shs_2030 * df.shs_emission_factor
     # integral is the surface of a triangle
-    df['ghg_shs_cumul'] = 0.5 * df.ghg_shs_2030 * (2030 - 2017)
+    df['ghg_shs_cumul'] = 0.5 * df.ghg_shs_2030 * (14)
 
     df['ghg_no_access_2017'] = \
         (df.dark_rate * df.pop_2017 / df.hh_av_size) \
@@ -661,13 +734,13 @@ def _compute_ghg_emissions(df, min_tier_level, bau_df=None):
 
         # integral is the surface of a triangle as everyone has access
         # to electricity by 2030 in these scenarios
-        df['ghg_no_access_cumul'] = 0.5 * df.ghg_no_access_2017 * (2030 - 2017)
+        df['ghg_no_access_cumul'] = 0.5 * df.ghg_no_access_2017 * (14)
     else:
         # integral is the sum of the surfaces of a triangle and a square
         df['ghg_no_access_cumul'] = (
                                             df.ghg_no_access_2030
                                             + (df.ghg_no_access_2017 - df.ghg_no_access_2030) / 2
-                                    ) * (2030 - 2017)
+                                    ) * (14)
 
     df['ghg_tot_cumul'] = \
         df.ghg_grid_cumul \
@@ -697,18 +770,18 @@ def _compute_ghg_emissions(df, min_tier_level, bau_df=None):
         * df.hh_grid_tier_cap_yearly_electricity_consumption \
         * (df.grid_emission_factor / 1000)
     # integral is the surface of a triangle
-    df['tier_capped_ghg_grid_cumul'] = 0.5 * df.tier_capped_ghg_grid_2030 * (2030 - 2017)
+    df['tier_capped_ghg_grid_cumul'] = 0.5 * df.tier_capped_ghg_grid_2030 * (14)
 
     df['tier_capped_ghg_mg_2030'] = \
         (df.pop_get_mg_2030 / df.hh_av_size) \
         * df.hh_mg_tier_cap_yearly_electricity_consumption \
         * (df.mg_emission_factor / 1000)
     # integral is the surface of a triangle
-    df['tier_capped_ghg_mg_cumul'] = 0.5 * df.tier_capped_ghg_mg_2030 * (2030 - 2017)
+    df['tier_capped_ghg_mg_cumul'] = 0.5 * df.tier_capped_ghg_mg_2030 * (14)
 
     df['tier_capped_ghg_shs_2030'] = df.ghg_shs_2030
     # integral is the surface of a triangle
-    df['tier_capped_ghg_shs_cumul'] = 0.5 * df.tier_capped_ghg_shs_2030 * (2030 - 2017)
+    df['tier_capped_ghg_shs_cumul'] = 0.5 * df.tier_capped_ghg_shs_2030 * (14)
 
     df['tier_capped_ghg_no_access_2030'] = df.ghg_no_access_2030
 
@@ -729,13 +802,13 @@ def _compute_ghg_emissions(df, min_tier_level, bau_df=None):
 
         # integral is the surface of a triangle as everyone has access
         # to electricity by 2030 in these scenarios
-        df['tier_capped_ghg_no_access_cumul'] = 0.5 * df.ghg_no_access_2017 * (2030 - 2017)
+        df['tier_capped_ghg_no_access_cumul'] = 0.5 * df.ghg_no_access_2017 * (14)
     else:
         # integral is the sum of the surfaces of a triangle and a square
         df['tier_capped_ghg_no_access_cumul'] = (
             df.ghg_no_access_2030
             + (df.ghg_no_access_2017 - df.ghg_no_access_2030) / 2
-        ) * (2030 - 2017)
+        ) * (14)
 
     df['tier_capped_ghg_tot_cumul'] = \
         df.tier_capped_ghg_grid_cumul \
@@ -862,7 +935,7 @@ def compute_ndc_results_from_raw_data(scenario, min_tier_level, fname='data/raw_
     :return:
     """
     # Load data from csv
-    df = pd.read_csv(fname, float_precision='high')
+    df = pd.read_csv(fname, float_precision='high', encoding='latin')
     # Compute endogenous results for the given scenario
     df = prepare_scenario_data(df, scenario, min_tier_level, prepare_endogenous=True)
     # Compute the exogenous results

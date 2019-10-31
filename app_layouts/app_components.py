@@ -7,7 +7,7 @@ from dash.dependencies import Output, Input, State
 import dash_daq as daq
 import dash_table
 import plotly.graph_objs as go
-from app_main import APP_BG_COLOR
+from app_main import APP_BG_COLOR, INFO_ICON
 from data.data_preparation import (
     SCENARIOS,
     SCENARIOS_DICT,
@@ -23,7 +23,18 @@ from data.data_preparation import (
     GHG_RES,
     GHG_ER_RES,
     RISE_SUB_INDICATORS,
+    RESULTS_TITLE_HELP,
 )
+
+WORLD_ID = 'WD'
+# Region names in nice format
+REGIONS_GPD = dict(WD='World', SA='South America', AF='Africa', AS='Asia')
+
+# code in the raw data columns
+REGIONS_NDC = dict(WD=['LA', 'SSA', 'DA'], SA='LA', AF='SSA', AS='DA')
+
+# Region names for div dynamic creation
+MAP_REGIONS = {'africa': 'AF', 'asia': 'AS', 'southamerica': 'SA'}
 
 RES_COUNTRY = 'country'
 RES_AGGREGATE = 'aggregate'
@@ -44,19 +55,19 @@ TABLES_HEADER_STYLING = {
 }
 
 POP_ROWS = [
-    'People share',
+    'Share of People',
     'People (Mio)',
-    'HH (Mio)',
+    'Household (Mio)',
 ]
 
 INVEST_ROWS = [
-    'Lower TIER cost',
-    'Higher TIER cost',
+    'Lower TIER case',
+    'Higher TIER case',
 ]
 
 GHG_ROWS = [
-    'Lower TIER',
-    'Higher TIER',
+    'Lower TIER case',
+    'Higher TIER case',
 ]
 GHG_ER_ROWS = [
     'Lower TIER',
@@ -73,21 +84,23 @@ TABLE_ROWS = {
 }
 
 TABLE_ROWS_TOOLTIPS = {
-    'People share': 'Percentage of people getting electricity access by 2030',
+    'Share of People': 'Percentage of people getting electricity access by 2030',
     'People (Mio)': 'Number of people getting electricity access by 2030',
-    'HH (Mio)': 'Number of households getting electricity access by 2030',
+    'Household (Mio)': 'Number of households getting electricity access by 2030',
     'HH demand (MW)': 'Expected household electricity demand by 2030, in MW',
     'HH demand (TIER + 1) (MW)':
         'Expected household electricity demand by 2030 for one TIER level up, in MW',
-    'Lower TIER cost':
+    'Lower TIER case':
         'Needed initial investments to supply expected demand by 2030, in million USD',
-    'Higher TIER cost':
+    'Higher TIER case':
         'Needed initial investments to supply expected demand by 2030 for one TIER level up, '
         'in million USD',
-    'Lower TIER': '1',
-    'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]): '2',
-    'Higher TIER': '3',
-    'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]): '4',
+    'Lower TIER': 'Green-House-Gas emissions by 2030, in million ton CO2',
+    'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]): 'Difference of Green-House-Gas emissions '
+        'with Business-as-Usual scenario emissions, in million tons CO2',
+    'Higher TIER': 'Green-House-Gas emissions by 2030 for one TIER level up, in million ton CO2',
+    'Saved from {}'.format(SCENARIOS_DICT[BAU_SCENARIO]): 'Difference of Green-House-Gas emissions '
+        'with Business-as-Usual scenario emissions for one TIER level up, in million tons CO2',
 }
 # labels of the columns of the result tables
 TABLE_COLUMNS_LABEL = ELECTRIFICATION_DICT.copy()
@@ -95,6 +108,15 @@ TABLE_COLUMNS_LABEL['labels'] = ''
 TABLE_COLUMNS_LABEL[NO_ACCESS] = NO_ACCESS
 TABLE_COLUMNS_LABEL['total'] = 'Total'
 TABLE_COLUMNS_ID = ['labels'] + ELECTRIFICATION_OPTIONS + [NO_ACCESS] + ['total']
+
+TABLE_COLUMNS_ID = {
+    POP_RES: ['labels'] + ELECTRIFICATION_OPTIONS + [NO_ACCESS] + ['total'],
+    INVEST_RES: ['labels'] + ELECTRIFICATION_OPTIONS + ['total'],
+    GHG_RES: ['labels'] + ELECTRIFICATION_OPTIONS + [NO_ACCESS] + ['total'],
+    GHG_ER_RES: ['labels'] + ELECTRIFICATION_OPTIONS + [NO_ACCESS] + ['total']
+}
+
+
 COMPARE_COLUMNS_ID = ['labels']
 for opt in ELECTRIFICATION_OPTIONS + [NO_ACCESS] + ['total']:
     COMPARE_COLUMNS_ID.append(opt)
@@ -108,7 +130,17 @@ BARPLOT_ELECTRIFICATION_COLORS = {
     NO_ACCESS: '#a6a6a6'
 }
 
-BARPLOT_YAXIS_OPT = ELECTRIFICATION_OPTIONS.copy() + [NO_ACCESS]
+BARPLOT_YAXIS_OPT = {
+    POP_RES: ELECTRIFICATION_OPTIONS.copy() + [NO_ACCESS],
+    INVEST_RES: ELECTRIFICATION_OPTIONS.copy(),
+    GHG_RES: ELECTRIFICATION_OPTIONS.copy() + [NO_ACCESS],
+    GHG_ER_RES: ELECTRIFICATION_OPTIONS.copy() + [NO_ACCESS],
+}
+
+BARPLOT_INVEST_YLABEL = 'Initial Investments (in billion USD)'
+BARPLOT_GHG_YLABEL = 'GHG Emissions (in million tons CO2)'
+
+MAP_DIV_STYLE = 'cell small-10 medium-4 '
 
 
 def round_digits(val):
@@ -156,6 +188,34 @@ def create_tooltip(cell):
     )
 
 
+def map_div(region, layout, map_data):
+    return html.Div(
+        id='{}-map-div'.format(region),
+        className=MAP_DIV_STYLE + 'select-map',
+        children=html.Div(
+            className='grid-x',
+            children=[
+                html.H4(
+                    children=REGIONS_GPD[MAP_REGIONS[region]],
+                    className='cell align__center',
+                ),
+                html.Button(
+                    id='{}-map-btn'.format(region),
+                    children='Select Region',
+                    className='btn btn--hollow cell medium-offset-4 medium-4'
+                ),
+                dcc.Graph(
+                    id='{}-map'.format(region),
+                    className='cell align__center',
+                    figure=go.Figure(
+                        data=map_data,
+                        layout=layout),
+                )
+            ]
+        )
+    )
+
+
 def results_div(result_type, result_category, flex_case=''):
     """
     :param result_type: one of country, aggregate, or compare
@@ -174,9 +234,14 @@ def results_div(result_type, result_category, flex_case=''):
     barplot_mode = 'stack'
     if result_type == RES_COMPARE:
         barplot_mode = 'group'
+        show_legends = False
+    else:
+        show_legends = True
 
     x_vals = [SCENARIOS_DICT[sce] for sce in SCENARIOS]
     fs = 15
+
+    barplot_yaxis_opt = BARPLOT_YAXIS_OPT[result_category]
 
     # add a barplot above the tables with the results
     barplot = dcc.Graph(
@@ -186,26 +251,26 @@ def results_div(result_type, result_category, flex_case=''):
                 go.Bar(
                     x=x_vals,
                     y=[0, 0, 0],
-                    name=y_opt,
-                    text=y_opt,
-                    insidetextfont={'size': fs},
-                    textposition='auto',
+                    name=y_opt.upper(),
+                    text=y_opt.upper(),
+                    insidetextfont={'size': fs, 'color': 'white'},
+                    textposition='inside',
                     marker=dict(
                         color=BARPLOT_ELECTRIFICATION_COLORS[y_opt],
                     ),
                     hoverinfo='y+text'
                 )
-                for y_opt in BARPLOT_YAXIS_OPT
+                for y_opt in barplot_yaxis_opt
             ],
             layout=go.Layout(
                 title='',
                 barmode=barplot_mode,
                 paper_bgcolor=APP_BG_COLOR,
                 plot_bgcolor=APP_BG_COLOR,
-                showlegend=True,
+                showlegend=show_legends,
                 autosize=True,
                 margin=dict(
-                    l=55,
+                    l=80,
                     r=0,
                     b=30,
                     t=30
@@ -224,14 +289,15 @@ def results_div(result_type, result_category, flex_case=''):
 
     columns_ids = []
     table_rows = TABLE_ROWS[result_category]
+    table_columns = TABLE_COLUMNS_ID[result_category]
 
     if result_type in [RES_COUNTRY, RES_AGGREGATE]:
         duplicate_headers = False
-        columns_ids = [{'name': TABLE_COLUMNS_LABEL[col], 'id': col} for col in TABLE_COLUMNS_ID]
+        columns_ids = [{'name': TABLE_COLUMNS_LABEL[col], 'id': col} for col in table_columns]
 
     elif result_type == RES_COMPARE:
         duplicate_headers = True
-        for col in TABLE_COLUMNS_ID:
+        for col in table_columns:
             if col != 'labels':
                 columns_ids.append({'name': [TABLE_COLUMNS_LABEL[col], 'value'], 'id': col})
                 columns_ids.append(
@@ -244,9 +310,24 @@ def results_div(result_type, result_category, flex_case=''):
         print('error in the result type in results_div()')
 
     results_div_content = [
-        html.H3(
-            id='{}-results-title'.format(id_name),
-            children='Results'
+        html.Div(
+            className='grid-x',
+            children=[
+                html.H3(
+                    id='{}-results-title'.format(id_name),
+                    children='Results',
+                    className='cell medium-10 medium-offset-1'
+                ),
+                html.Div(
+                    className='cell medium-1 align__right',
+                    children=html.Img(
+                        id='{}-results-title-help'.format(id_name),
+                        src='data:image/png;base64,{}'.format(INFO_ICON.decode()),
+                        title=RESULTS_TITLE_HELP[result_category],
+                        className='info__icon'
+                    )
+                ),
+            ]
         ),
         dcc.Dropdown(
             id='{}-barplot-yaxis-input'.format(id_name),
@@ -254,16 +335,42 @@ def results_div(result_type, result_category, flex_case=''):
             value=table_rows[0],
         ),
         barplot,
+        html.Div(
+            className='grid-x',
+            children=[
+                html.H3(
+                    id='{}-results-table-title'.format(id_name),
+                    children='Detailed results for scenario',
+                    className='cell medium-10 medium-offset-1'
+
+                ),
+                html.Div(
+                    className='cell medium-1 align__right display__none',
+                    children=html.Img(
+                        id='{}-results-table-title-help'.format(id_name),
+                        src='data:image/png;base64,{}'.format(INFO_ICON.decode()),
+                        title='Hover text',
+                        className='info__icon'
+                    )
+                ),
+            ]
+        ),
         dash_table.DataTable(
             id='{}-results-table'.format(id_name),
             columns=columns_ids,
             style_data_conditional=TABLES_LABEL_STYLING,
             style_header=TABLES_HEADER_STYLING,
-            css=[{
-                'selector': '.dash-cell div.dash-cell-value',
-                'rule': 'display: inline; white-space: inherit; '
-                        'overflow: inherit; text-overflow: inherit;'
-            }],
+            css=[
+                {
+                    'selector': '.dash-cell div.dash-cell-value',
+                    'rule': 'display: inline; white-space: inherit; '
+                            'overflow: inherit; text-overflow: inherit;'
+                },
+                {
+                    'selector': '.column-0',
+                    'rule': 'text-decoration: underline; text-decoration-style: dotted;'
+                },
+            ],
             style_table={
                 'marginTop': '10px'
             },
@@ -303,15 +410,20 @@ def rise_slider(id_name, display_name):
         className='cell medium-4 grid-x grid-margin-x',
         title='rise mg description',
         children=[
-            html.Button(
+            html.Div(
                 id='flex-rise-{}-label'.format(id_name),
                 className='cell medium-4 medium-offset-3 daq__slider__label',
-                children=display_name
+                children="RISE Score for \n {}".format(ELECTRIFICATION_DICT[id_name])
             ),
             html.Div(
                 id='flex-rise-{}-value'.format(id_name),
                 className='cell medium-3 daq__slider__value',
                 children=''
+            ),
+            html.Button(
+                id='flex-rise-{}-btn'.format(id_name),
+                className='cell medium-7 medium-offset-3 daq__slider__btn',
+                children=display_name
             ),
             dcc.Slider(
                 id='flex-rise-{}-input'.format(id_name),
@@ -353,13 +465,31 @@ def sub_indicator_line(id_name, text, score, sub_group_idx, sub_idx):
 def sub_indicator_table(id_name, sub_df=RISE_SUB_INDICATORS):
     """Fills the RISE sub indicators table."""
     sub_groups = sub_df.loc['rise_{}'.format(id_name)].sub_indicator_group.unique()
-    divs = []
-    divs.append(html.H3(className='cell', children='RISE {} sub-indicators'.format(id_name)))
-    divs.append(
+    divs = [
+        html.H3(className='cell', children='RISE {} sub-indicators'.format(id_name)),
         html.Div(
-            'Explain indicators here and instruct the user'
+            className='cell grid-x',
+            children=[
+                html.P(
+                    className='cell medium-10',
+                    children='''The Rise Subindicators set the framework for the development of a chosen indicator (Grid, MG, SHS). By answereing the questions by selecting yes or no from the drop down buttom you can experiment with different framework scenarios.''',
+                ),
+                html.Div(
+                    className='cell medium-2 rise_sub__dropdown',
+                    children=dcc.Dropdown(
+                        id='flex-rise-{}-general-toggle'.format(id_name),
+                        options=[
+                            {'label': 'Yes to all', 'value': 1},
+                            {'label': 'No to all', 'value': 0},
+                            {'label': 'Default', 'value': -1},
+                        ],
+                        value=0,
+                        clearable=False
+                    )
+                )
+            ]
         )
-    )
+    ]
     for j, sub_group in enumerate(sub_groups):
         divs.append(
             html.H4(className='cell', children=sub_group)
@@ -448,9 +578,9 @@ def controls_div():
             children=html.Div(
                 className='grid-x align-center',
                 children=[
-                    rise_slider('grid', 'RISE Grid'),
-                    rise_slider('mg', 'RISE MG'),
-                    rise_slider('shs', 'RISE SHS'),
+                    rise_slider('grid', 'Show RISE Sub-Indicators'),
+                    rise_slider('mg', 'Show RISE Sub-Indicators'),
+                    rise_slider('shs', 'Show RISE Sub-Indicators'),
                     html.Div(
                         id='flex-rise-sub-indicators-div',
                         className='cell medium-9',
