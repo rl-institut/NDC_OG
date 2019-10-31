@@ -20,6 +20,15 @@ Here is a template for new release sections
 
 ### Added
 
+### Changed
+
+### Removed
+
+
+## [2.0.0] 2019-10-31
+
+### Added
+
 - Specific description for Nigeria (#63)
 - Link for Greenwerk (#64)
 - Avoid plotting points which have 0% no electricity access (#67)
@@ -29,6 +38,7 @@ Here is a template for new release sections
 
 ### Changed
 
+- Now one can select a region by selecting a map
 - Display electrification rate in % (#64)
 - Instruction in README (#64)
 - SE4ALL to uEA (#65)
