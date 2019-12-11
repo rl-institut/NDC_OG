@@ -65,7 +65,7 @@ SCENARIOS_DICT = {
 # Names for long display
 SCENARIOS_NAMES = {
     BAU_SCENARIO: 'Business-as-Usual',
-    SE4ALL_SCENARIO: 'Universal-Energy-Access',
+    SE4ALL_SCENARIO: 'Universal-Electricity-Access',
     PROG_SCENARIO: 'Progressive-Off-Grid',
 }
 
@@ -84,7 +84,7 @@ SCENARIOS_DESCRIPTIONS = {
          html.H4('How it is obtained:'),  '''Regional projections of electrification rates and 
          technologies are mapped to the country-level and modelled until 2030. Based on these projections, ''', html.Span('investment needs'), ''' and ''', html.Span('emission reduction'), ''' potentials are calculated. The BaU scenario is based on the "New Policies" Scenario of the ''', html.A(children="international Energy Agency’s World Energy Outlook 2018", href='https://www.iea.org/weo2018/scenarios/', target='_blank'), '''. '''],
     SE4ALL_SCENARIO:
-        [html.H4('What it shows:'), '''The ''', html.Span('Universal-Energy-Access'), ''' (''',
+        [html.H4('What it shows:'), '''The ''', html.Span('Universal-Electricity-Access'), ''' (''',
          html.Span('uEA'), ''') scenario estimates the number of new ''', html.Span('technology-specific electrifications'), ''' (Grid Extension, Mini-Grids or Solar-Home-Systems) necessary to achieve the universal access goal until 2030. These estimations account for expected population growth rates, current infrastructure and current regulatory frameworks. The scenario further modells ''', html.Span('investment needs'), ''' and ''', html.Span('emission reduction'), ''' potentials, for which either a   Lower Tier or a Higher Tier case can be displayed. ''',
          html.H4('How it is obtained:'),  '''Existing datasets providing night lights, population densities and transmission grids are combined to estimate the number of people lacking access to electricity. Appropriate electrification options are determined based on the remoteness and density of neglected populations. In this way, the model estimates the share of people that remain to be electrified by either ''', html.Span('Grid'), ''' Extension, ''', html.Span('Mini-Grid'), ''' deployment or ''', html.Span('Solar-Home-System'), ''' adoption until 2030.''',
          ''' The GIS based estimates are further refined by accounting for (the lack of) favourable technology-specific frameworks through the integration of ''', html.A(children="ESMAP’s RISE Indicators", href='https://rise.esmap.org/', target='_blank'), ''' into the model’s calculations. '''],
