@@ -45,6 +45,7 @@ from .app_components import (
     TABLE_COLUMNS_ID,
     COMPARE_COLUMNS_ID,
     TABLE_COLUMNS_LABEL,
+    REGIONS_NDC,
 )
 
 URL_PATHNAME = 'flex'
@@ -57,11 +58,6 @@ def extract_centroids(reg):
     centroids = pd.read_csv('data/centroid.csv')
     return centroids.loc[centroids.region.isin(reg)].copy()
 
-
-WORLD_ID = 'WD'
-REGIONS_GPD = dict(WD='World', SA='South America', AF='Africa', AS='Asia')
-
-REGIONS_NDC = dict(WD=['LA', 'SSA', 'DA'], SA='LA', AF='SSA', AS='DA')
 
 VIEW_COUNTRY_SELECT = 'country'
 VIEW_CONTROLS = 'general'

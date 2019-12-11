@@ -28,7 +28,7 @@ from data.data_preparation import (
 
 WORLD_ID = 'WD'
 # Region names in nice format
-REGIONS_GPD = dict(WD='World', SA='South America', AF='Africa', AS='Asia')
+REGIONS_GPD = dict(WD='World', SA='Central & South America', AF='Africa', AS='Asia')
 
 # code in the raw data columns
 REGIONS_NDC = dict(WD=['LA', 'SSA', 'DA'], SA='LA', AF='SSA', AS='DA')
