@@ -23,8 +23,12 @@ about_content = [
 ]
 
 citation_content = [
-    html.H3('Citation'),
-    html.P('Here goes the instruction for citation'),
+    html.H3('Impressum and citation'),
+    html.P(['This tool “Renewable Energy Off-Grid Explorer” has been developed in the framework '
+            'of the project “Strategies for Renewable Energy for Climate Protection in Developing Countries”. It has been financed by the Federal Minister for the Environment, Nature Conservation, and Nuclear Safety (', html.A(children='BMU', href='https://www.bmu.de/en/ ', target='_blank'), ' and the German Development Agency (', html.A(children='GIZ', href='', target='_blank'), '). The presented scenarios are meant to support informed policy and planning decisions, but do not represent official planning.']),
+    html.P(['The project was implemented by Reiner Lemoine Institut (',
+           html.A(children='RLI', href='https://reiner-lemoine-institut.de/en/', target='_blank'),
+           ') and the ', html.A(children='greenwerk', href='https://www.thegreenwerk.net/', target='_blank'), '. Back-and front-end development was led by Pierre-Francois Duc (', html.A(children='RLI', href='https://reiner-lemoine-institut.de/en/', target='_blank'),').']),
 ]
 
 layout = html.Div(
