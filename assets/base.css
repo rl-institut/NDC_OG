@@ -8,18 +8,22 @@ body {
 
 #header-content {
     text-align: left;
+    margin-bottom: 2rem;
+    margin-top: 1.5rem;
 }
 
-#header-content h1 {
+.hdr__h2 {
     font-size: 1.25rem;
+    font-weight: 550;
+    margin-top: .5rem;
     margin-bottom: 0;
 }
 
-#header-content h2 {
+#header-content h1 {
     font-size: 2rem;
-    font-weight: 300;
+    font-weight: 600;
     margin-top: .5rem;
-    margin-bottom: 2rem;
+    margin-bottom: 0;
 }
 
 #intro-text-div {
@@ -137,7 +141,7 @@ body {
 }
 
 .header_style {
-    background: #333333;
+    background: #d09c0b;
     color: #FFFFFF;
 }
 
