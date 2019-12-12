@@ -20,12 +20,13 @@ Here is a template for new release sections
 
 ### Added
 - Tool citation and impressum (#96)
+- Favicon (#97)
 
 ### Changed
 - New banner (#96)
 - Rename South America to Central and South America (#95)
 - Rename Universal-Energy-Access to Universal-Electricity-Access (#95)
-
+- Colorset for plotting (#97)
 
 ## [2.0.0] 2019-10-31
 
