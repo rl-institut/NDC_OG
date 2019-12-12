@@ -25,16 +25,19 @@ app.layout = html.Div(
                 ),
                 html.Div(
                     id='header-content',
-                    className='grid-x grid-padding-x align-center',
+                    className='grid-x',
                     children=[
-                        html.H1(
-                            className='cell',
+                        html.Div(
+                            className='cell large-10 small-offset-1 hdr__h2',
                             children='NDC Off-Grid Alternatives'
                         ),
-                        html.H2(
-                            className='cell',
-                            children='The Off-Grid Renewable Energy Tool: Visualization of '
-                                     'Electrification Scenarios until 2030',
+                        html.H1(
+                            className='cell large-10 small-offset-1',
+                            children='Renewable Energy Off-Grid Explorer',
+                        ),
+                        html.Div(
+                            className='cell large-10 small-offset-1 hdr__h2',
+                            children='Visualization of Electrification Scenarios until 2030',
                         ),
                     ]
                 ),
