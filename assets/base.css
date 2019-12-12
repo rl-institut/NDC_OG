@@ -71,11 +71,9 @@ body {
 
 #back-intro-link{
   position: absolute;
-  top: 170px;
+  top: 155px;
   right: 5px;
   z-index: 9999999;
-  color: orange;
-  border-color: orange;
 }
 
 #intro-text-div span{
