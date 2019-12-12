@@ -81,27 +81,6 @@ for idx, row in DF.iterrows():
     list_countries_dropdown.append({'label': row['country'], 'value': row['country_iso']})
 
 
-def country_hover_text(input_df):
-    """Format the text displayed by the hover."""
-    df = input_df.copy()
-    # share of the population with electricity in 2030 (per electrification option)
-    df[POP_GET] = df[POP_GET].div(df.pop_newly_electrified_2030, axis=0)
-
-    return df.country + '<br>' \
-        + '2017 <br>' \
-        + '  Pop : ' + df.pop_2017.div(1e6).map('{:.1f} MIO'.format) + '<br>' \
-        + '  Household electric consumption: ' + '<br>' \
-        + '  ' + df.hh_yearly_electricity_consumption.map('{:.1f} kWh/year'.format) + '<br>' \
-        + '  Grid share: ' + df.pop_grid_share.map('{:.1%}'.format) + '<br>' \
-        + '  MG: ' + df.pop_mg_share.map('{:.1%}'.format) + '<br>' \
-        + '  SHS: ' + df.pop_shs_share.map('{:.1%}'.format) + '<br>' \
-        + '2030 <br>' \
-        + '  Est Pop (2030): ' + df.pop_2030.div(1e6).map('{:.1f} MIO'.format) + '<br>' \
-        + '  Grid share: ' + df.pop_get_grid_2030.map('{:.1%}'.format) + '<br>' \
-        + '  MG: ' + df.pop_get_mg_2030.map('{:.1%}'.format) + '<br>' \
-        + '  SHS: ' + df.pop_get_shs_2030.map('{:.1%}'.format) + '<br>'
-
-
 scl = [
     [0.0, '#f0f0f0'],
     [0.001, '#d2fbd4'],
