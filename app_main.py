@@ -10,6 +10,8 @@ LOGOS = [
     for fn in os.listdir('logos') if fn.endswith('.png')
 ]
 
+HDR_LOGO = base64.b64encode(open('icons/header-logo.png', 'rb').read())
+
 INFO_ICON = base64.b64encode(open('icons/information.png', 'rb').read())
 
 PLACEHOLDER = base64.b64encode(open('assets/placeholder.png', 'rb').read())

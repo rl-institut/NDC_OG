@@ -12,6 +12,19 @@ body {
     margin-top: 1.5rem;
 }
 
+.hdr__logo{
+ position: absolute;
+ right: 5rem;
+ top: 1.4rem;
+}
+
+.hdr__logo__small{
+ height: 4rem;
+ position: absolute;
+ right: 2rem;
+ top: 1.4rem;
+}
+
 .hdr__h2 {
     font-size: 1.25rem;
     font-weight: 550;

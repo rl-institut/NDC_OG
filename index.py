@@ -2,7 +2,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 
-from app_main import app, URL_BASEPATH, LOGOS
+from app_main import app, URL_BASEPATH, LOGOS, HDR_LOGO
 from app_layouts import intro_layout, static_layout, flex_layout
 
 server = app.server
@@ -38,6 +38,22 @@ app.layout = html.Div(
                         ),
                     ]
                 ),
+                html.Div(
+                    className='show-for-large',
+                    children=html.Img(
+                        className='hdr__logo',
+                        src='data:image/png;base64,{}'.format(HDR_LOGO.decode())
+
+                    )
+                ),
+                html.Div(
+                    className='hide-for-large',
+                    children=html.Img(
+                        className='hdr__logo__small',
+                        src='data:image/png;base64,{}'.format(HDR_LOGO.decode())
+
+                    )
+                )
             ]
         ),
         html.Div(
