@@ -99,7 +99,7 @@ def country_hover_text(input_df):
 
     return df.country + '<br>' \
            + '2030 Predictions <br>' \
-           + '  Est Pop (2030): ' + df.pop_2030.div(1e6).map('{:.1f} MIO'.format) + '<br>' \
+           + '  Population: ' + df.pop_2030.div(1e6).map('{:.1f} MIO'.format) + '<br>' \
            + '  Grid share: ' + df.pop_get_grid_2030.map('{:.1%}'.format) + '<br>' \
            + '  MG: ' + df.pop_get_mg_2030.map('{:.1%}'.format) + '<br>' \
            + '  SHS: ' + df.pop_get_shs_2030.map('{:.1%}'.format) + '<br>'
