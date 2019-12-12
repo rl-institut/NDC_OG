@@ -10,6 +10,8 @@ LOGOS = [
     for fn in os.listdir('logos') if fn.endswith('.png')
 ]
 
+HDR_LOGO = base64.b64encode(open('icons/header-logo.png', 'rb').read())
+
 INFO_ICON = base64.b64encode(open('icons/information.png', 'rb').read())
 
 PLACEHOLDER = base64.b64encode(open('assets/placeholder.png', 'rb').read())
@@ -18,13 +20,6 @@ APP_BG_COLOR = '#FFFFFF'
 
 # Initializes dash app
 app = dash.Dash(__name__)
-
-# Load css file
-external_css = [
-    'https://raw.githack.com/rl-institut/WAM/dev/static/foundation/css/app.css',
-]
-for css in external_css:
-    app.css.append_css({"external_url": css})
 
 app.index_string = '''
     <!DOCTYPE html>
