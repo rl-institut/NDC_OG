@@ -2,10 +2,10 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 
-from app_main import app, URL_BASEPATH, LOGOS, HDR_LOGO
+from app_main import app, server, URL_BASEPATH, LOGOS, HDR_LOGO
 from app_layouts import intro_layout, static_layout, flex_layout
 
-server = app.server
+server = server
 
 # the app and its options are defined in the main_app module
 app.layout = html.Div(

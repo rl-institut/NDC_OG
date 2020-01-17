@@ -1,5 +1,6 @@
 import base64
 import os
+from flask import Flask, send_from_directory
 
 import dash
 
@@ -18,8 +19,10 @@ PLACEHOLDER = base64.b64encode(open('assets/placeholder.png', 'rb').read())
 
 APP_BG_COLOR = '#FFFFFF'
 
+server = Flask(__name__)
+
 # Initializes dash app
-app = dash.Dash(__name__)
+app = dash.Dash(server=server)
 
 app.index_string = '''
     <!DOCTYPE html>
