@@ -58,6 +58,11 @@ def download(path):
     return send_from_directory('data', path, as_attachment=True)
 
 
+@server.route('/favicon.ico')
+def favicon():
+    return send_from_directory('assets', 'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
+
 stylesheets = ['app.css', 'base.css', 'intro.css']
 static_css_route = 'assets'
 
