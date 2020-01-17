@@ -32,7 +32,6 @@ app.index_string = '''
             <meta charset="UTF-8">
             <meta description="NDC visualisation">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            {%favicon%}
             {%css%}
         </head>
 
