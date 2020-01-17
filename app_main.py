@@ -56,3 +56,23 @@ app.config.suppress_callback_exceptions = True
 def download(path):
     """Serve a file from the upload directory."""
     return send_from_directory('data', path, as_attachment=True)
+
+
+css_directory = os.getcwd()
+stylesheets = ['app.css', 'base.css', 'intro.css']
+static_css_route = 'assets'
+
+
+@app.server.route('/static/<stylesheet>')
+def serve_stylesheet(stylesheet):
+    if stylesheet not in stylesheets:
+        raise Exception(
+            '"{}" is excluded from the allowed static files'.format(
+                stylesheet
+            )
+        )
+    return send_from_directory(css_directory, stylesheet)
+
+
+for stylesheet in stylesheets:
+    app.css.append_css({"external_url": "/static/{}".format(stylesheet)})
