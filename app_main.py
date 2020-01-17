@@ -50,3 +50,9 @@ app.index_string = '''
 app.title = 'NDC visualisation'
 
 app.config.suppress_callback_exceptions = True
+
+
+@server.route("/download/<path:path>")
+def download(path):
+    """Serve a file from the upload directory."""
+    return send_from_directory('data', path, as_attachment=True)
