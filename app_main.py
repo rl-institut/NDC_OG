@@ -58,7 +58,6 @@ def download(path):
     return send_from_directory('data', path, as_attachment=True)
 
 
-css_directory = os.getcwd()
 stylesheets = ['app.css', 'base.css', 'intro.css']
 static_css_route = 'assets'
 
@@ -71,7 +70,7 @@ def serve_stylesheet(stylesheet):
                 stylesheet
             )
         )
-    return send_from_directory(css_directory, stylesheet)
+    return send_from_directory('assets', stylesheet)
 
 
 for stylesheet in stylesheets:
