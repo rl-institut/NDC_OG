@@ -1,5 +1,6 @@
 import dash_core_components as dcc
 import dash_html_components as html
+from urllib.parse import quote as urlquote
 from dash.dependencies import Input, Output
 
 from app_main import app, URL_BASEPATH, PLACEHOLDER
@@ -22,6 +23,8 @@ about_content = [
     html.P([html.Span('UNDERSTAND'), ' how (the lack of) favourable technology-specific frameworks can alter electrification scenarios.']),
 ]
 
+location = "/download/{}".format(urlquote('Off_Grid_Report_WEB_DS_96.pdf'))
+
 citation_content = [
     html.H3('Impressum and citation'),
     html.P(['This tool “Renewable Energy Off-Grid Explorer” has been developed in the framework '
@@ -30,7 +33,7 @@ citation_content = [
            html.A(children='RLI', href='https://reiner-lemoine-institut.de/en/', target='_blank'),
            ') and the ', html.A(children='Greenwerk', href='https://www.thegreenwerk.net/', target='_blank'), '.']),
     html.P(['Back-and front-end development was led by Pierre-Francois Duc (', html.A(children='RLI', href='https://reiner-lemoine-institut.de/en/', target='_blank'),').']),
-    html.P(['Cite this report if you wish to use some of the results displayed here : report link']),
+    html.P(['Cite this report if you wish to use some of the results displayed here: ', html.Span(id='report-link', children='Blechinger, P., Köhler, M., Juette, C., Berendes, S. and Nettersheim, C. (2019): Off-Grid Renewable Energy for Climate Action – Pathways for change, published by Deutsche Gesellschaft für Internationale Zusammenarbeit (GIZ), December 2019'),  ' (', html.A('Download', href=location), ')']),
 ]
 
 layout = html.Div(
