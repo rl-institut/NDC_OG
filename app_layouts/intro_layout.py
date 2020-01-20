@@ -53,6 +53,7 @@ citation_content = [
                     html.A(children='the greenwerk.', href='https://www.thegreenwerk.net/', target='_blank'), '.']),
             html.P(['Back-and front-end development was led by Pierre-Francois Duc (',
                     html.A(children='RLI', href='https://reiner-lemoine-institut.de/en/', target='_blank'), ').']),
+            html.P(["The original scenario's output data are licensed under CC0 v1.0 ", html.A(href="http://creativecommons.org/publicdomain/zero/1.0/", children=html.Img(src="https://licensebuttons.net/p/zero/1.0/88x31.png", alt="CC0", style={"border-style": "none"}))]),
         ]
     ),
     html.Div(
