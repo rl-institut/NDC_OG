@@ -26,14 +26,43 @@ about_content = [
 location = "/download/{}".format(urlquote('Off_Grid_Report_WEB_DS_96.pdf'))
 
 citation_content = [
-    html.H3('Impressum and citation'),
-    html.P(['This tool “Renewable Energy Off-Grid Explorer” has been developed in the framework '
-            'of the project “Strategies for Renewable Energy for Climate Protection in Developing Countries”. It has been financed by the Federal Minister for the Environment, Nature Conservation, and Nuclear Safety (', html.A(children='BMU', href='https://www.bmu.de/en/ ', target='_blank'), ') and the German Development Agency (', html.A(children='GIZ', href='https://www.giz.de/en/html/index.html', target='_blank'), '). The presented scenarios are meant to support informed policy and planning decisions, but do not represent official planning.']),
-    html.P(['The project was implemented by Reiner Lemoine Institut (',
-           html.A(children='RLI', href='https://reiner-lemoine-institut.de/en/', target='_blank'),
-           ') and ', html.A(children='the greenwerk.', href='https://www.thegreenwerk.net/', target='_blank'), '.']),
-    html.P(['Back-and front-end development was led by Pierre-Francois Duc (', html.A(children='RLI', href='https://reiner-lemoine-institut.de/en/', target='_blank'),').']),
-    html.P(['Cite this report if you wish to use some of the results displayed here: ', html.Span(id='report-link', children='Blechinger, P., Köhler, M., Juette, C., Berendes, S. and Nettersheim, C. (2019): Off-Grid Renewable Energy for Climate Action – Pathways for change, published by Deutsche Gesellschaft für Internationale Zusammenarbeit (GIZ), December 2019'),  ' (', html.A('Download', href=location), ')']),
+    html.H3('Impressum and citation', className='cell'),
+    html.P('Cite this report if you wish to use some of the results displayed here: '),
+    html.Div(
+        className='medium-7',
+        children=[
+            html.P([
+                html.Span(id='report-link', children='Blechinger, P., Köhler, M., Juette, C., Berendes, S. and Nettersheim, C. (2019): Off-Grid Renewable Energy for Climate Action – Pathways for change, published by Deutsche Gesellschaft für Internationale Zusammenarbeit (GIZ), December 2019 ('),
+                html.A('Download', href=location),
+                ')'
+            ]),
+            html.P(
+                [
+                    'This tool “Renewable Energy Off-Grid Explorer” has been developed in the framework '
+                    'of the project “Strategies for Renewable Energy for Climate Protection in Developing Countries”. It has been financed by the Federal Minister for the Environment, Nature Conservation, and Nuclear Safety (',
+                    html.A(children='BMU', href='https://www.bmu.de/en/ ', target='_blank'),
+                    ') and the German Development Agency (',
+                    html.A(children='GIZ', href='https://www.giz.de/en/html/index.html',
+                           target='_blank'),
+                    '). The presented scenarios are meant to support informed policy and planning decisions, but do not represent official planning.'
+                ]
+            ),
+            html.P(['The project was implemented by Reiner Lemoine Institut (',
+                    html.A(children='RLI', href='https://reiner-lemoine-institut.de/en/', target='_blank'),
+                    ') and ',
+                    html.A(children='the greenwerk.', href='https://www.thegreenwerk.net/', target='_blank'), '.']),
+            html.P(['Back-and front-end development was led by Pierre-Francois Duc (',
+                    html.A(children='RLI', href='https://reiner-lemoine-institut.de/en/', target='_blank'), ').']),
+        ]
+    ),
+    html.Div(
+        className='medium-offset-1 medium-4',
+        children=html.A(href=location, children=html.Img(
+            src='data:image/png;base64,{}'.format(REPORT_IMG.decode()),
+        ))
+    ),
+
+
 ]
 
 layout = html.Div(
@@ -63,6 +92,7 @@ layout = html.Div(
                                 ),
                                 html.Div(
                                     id='intro-citation-content',
+                                    className='grid-x',
                                     children=citation_content
                                 ),
                                 html.Div(
