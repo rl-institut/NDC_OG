@@ -3,7 +3,7 @@ import dash_html_components as html
 from urllib.parse import quote as urlquote
 from dash.dependencies import Input, Output
 
-from app_main import app, URL_BASEPATH, PLACEHOLDER
+from app_main import app, URL_BASEPATH, REPORT_IMG
 
 from . import static_layout, flex_layout
 
