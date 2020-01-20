@@ -2,10 +2,10 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 
-from app_main import app, URL_BASEPATH, LOGOS
+from app_main import app, server, URL_BASEPATH, LOGOS, HDR_LOGO
 from app_layouts import intro_layout, static_layout, flex_layout
 
-server = app.server
+server = server
 
 # the app and its options are defined in the main_app module
 app.layout = html.Div(
@@ -25,19 +25,38 @@ app.layout = html.Div(
                 ),
                 html.Div(
                     id='header-content',
-                    className='grid-x grid-padding-x align-center',
+                    className='grid-x',
                     children=[
-                        html.H1(
-                            className='cell',
+                        html.Div(
+                            className='cell large-10 small-offset-1 hdr__h2',
                             children='NDC Off-Grid Alternatives'
                         ),
-                        html.H2(
-                            className='cell',
-                            children='The Off-Grid Renewable Energy Tool: Visualization of '
-                                     'Electrification Scenarios until 2030',
+                        html.H1(
+                            className='cell large-10 small-offset-1',
+                            children='Renewable Energy Off-Grid Explorer',
+                        ),
+                        html.Div(
+                            className='cell large-10 small-offset-1 hdr__h2',
+                            children='Visualization of Electrification Scenarios until 2030',
                         ),
                     ]
                 ),
+                html.Div(
+                    className='show-for-large',
+                    children=html.Img(
+                        className='hdr__logo',
+                        src='data:image/png;base64,{}'.format(HDR_LOGO.decode())
+
+                    )
+                ),
+                html.Div(
+                    className='hide-for-large',
+                    children=html.Img(
+                        className='hdr__logo__small',
+                        src='data:image/png;base64,{}'.format(HDR_LOGO.decode())
+
+                    )
+                )
             ]
         ),
         html.Div(

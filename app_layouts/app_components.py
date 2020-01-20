@@ -28,7 +28,7 @@ from data.data_preparation import (
 
 WORLD_ID = 'WD'
 # Region names in nice format
-REGIONS_GPD = dict(WD='World', SA='South America', AF='Africa', AS='Asia')
+REGIONS_GPD = dict(WD='World', SA='Central & South America', AF='Africa', AS='Asia')
 
 # code in the raw data columns
 REGIONS_NDC = dict(WD=['LA', 'SSA', 'DA'], SA='LA', AF='SSA', AS='DA')
@@ -124,10 +124,10 @@ for opt in ELECTRIFICATION_OPTIONS + [NO_ACCESS] + ['total']:
 
 
 BARPLOT_ELECTRIFICATION_COLORS = {
-    GRID: '#7030a0',
-    MG: '#5b9bd5',
-    SHS: '#ed7d31',
-    NO_ACCESS: '#a6a6a6'
+    GRID: '#005386',
+    MG: '#33759e',
+    SHS: '#febc10',
+    NO_ACCESS: '#455a65'
 }
 
 BARPLOT_YAXIS_OPT = {

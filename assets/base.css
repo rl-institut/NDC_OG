@@ -8,18 +8,36 @@ body {
 
 #header-content {
     text-align: left;
+    margin-bottom: 2rem;
+    margin-top: 1.5rem;
+}
+
+.hdr__logo{
+ position: absolute;
+ right: 5rem;
+ top: 1.4rem;
+}
+
+.hdr__logo__small{
+ height: 4rem;
+ position: absolute;
+ right: 2rem;
+ top: 1.4rem;
+}
+
+.hdr__h2 {
+    font-size: 1.25rem;
+    font-weight: 550;
+    margin-top: .5rem;
+    margin-bottom: 0;
+    margin-right: 0.5rem;
 }
 
 #header-content h1 {
-    font-size: 1.25rem;
-    margin-bottom: 0;
-}
-
-#header-content h2 {
     font-size: 2rem;
-    font-weight: 300;
-    margin-top: .5rem;
-    margin-bottom: 2rem;
+    font-weight: 600;
+    margin-top: .7rem;
+    margin-bottom: 0;
 }
 
 #intro-text-div {
@@ -52,13 +70,16 @@ body {
     background-color: #EFEFEF;
 }
 
+#report-link{
+    font-style: italic;
+    font-weight: normal;
+}
+
 #back-intro-link{
   position: absolute;
-  top: 170px;
+  top: 155px;
   right: 5px;
   z-index: 9999999;
-  color: orange;
-  border-color: orange;
 }
 
 #intro-text-div span{
@@ -137,7 +158,7 @@ body {
 }
 
 .header_style {
-    background: #333333;
+    background: #d09c0b;
     color: #FFFFFF;
 }
 
