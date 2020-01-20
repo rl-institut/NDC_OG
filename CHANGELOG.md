@@ -16,7 +16,7 @@ Here is a template for new release sections
 ### Removed
 -
 ```
-## [Unreleased]
+## [2.1.0] 2020-01-20
 
 ### Added
 - Tool citation and impressum (#96)
