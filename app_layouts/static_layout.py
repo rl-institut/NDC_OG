@@ -1464,9 +1464,24 @@ def callbacks(app_handle):
             df = pd.read_json(cur_data[scenario])
             df = df.loc[df.country_iso == country_iso]
             pop_2017 = np.round(df.pop_2017.values[0] * 1e-6, 2)
+            pop_2017_coarse = np.round(df.pop_2017.values[0] * 1e-6, 0)
+            pop_2030_coarse = np.round(df.pop_2030.values[0] * 1e-6, 0)
+            pop_newly_electrified_2030 = np.round(df.pop_newly_electrified_2030.values[0] * 1e-6, 0)
+            electrification_rate = np.round(df.electrification_rate.values[0] * 100, 0)
             name = df.country.values[0]
             image_filename = 'icons/{}.png'.format(country_iso)
             encoded_image = base64.b64encode(open(image_filename, 'rb').read())
+
+            country_desc = """{} Its current population is approximately {:d} million people and for 
+2030 it is expected to grow to {:d} million people. We estimated a current 
+electrification rate of {:d} % which leads to almost {:d} million people to be newly 
+electrified from 2017 until 2030.""".format(
+                df.description.values[0],
+                int(pop_2017_coarse),
+                int(pop_2030_coarse),
+                int(electrification_rate),
+                int(pop_newly_electrified_2030)
+            )
 
             divs = [
                 html.Div(
@@ -1485,7 +1500,7 @@ def callbacks(app_handle):
                 ),
                 html.Div(
                     className='country__info__desc',
-                    children=df.description
+                    children=country_desc
                 ),
 
                 html.Table(
