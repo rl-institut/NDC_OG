@@ -1433,10 +1433,11 @@ def callbacks(app_handle):
         [
             Input('data-store', 'data'),
             Input('region-input', 'value'),
+            Input('url-store', 'data')
         ],
         [State('country-input', 'value')]
     )
-    def update_selected_country_on_map(cur_data, region_id, cur_val):
+    def update_selected_country_on_map(cur_data, region_id,  url_data, cur_val):
 
         # return None if the trigger is the region-input
         country_iso = None
@@ -1447,6 +1448,9 @@ def callbacks(app_handle):
                 country_iso = cur_data.get('selected_country')
                 if country_iso is None:
                     country_iso = cur_val
+            else:
+                if "country_iso" in url_data:
+                    country_iso = url_data['country_iso']
         return country_iso
 
     @app_handle.callback(
