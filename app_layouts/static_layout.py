@@ -180,12 +180,25 @@ MAP_LAYOUTS = {
 
 
 def layout(country_iso=None, sce=None, compare_iso=None):
+    app_view = VIEW_GENERAL
     if sce is None or sce not in SCENARIOS:
         sce = BAU_SCENARIO
     if country_iso not in COUNTRIES_ISO:
         country_iso = None
     if compare_iso not in COMPARE_ISO:
         compare_iso = None
+
+    map_div_style = {'display': 'flex'}
+    results_info_div_style = {'display': 'none'}
+    if country_iso is not None:
+        app_view = VIEW_COUNTRY
+        map_div_style = {'display': 'none'}
+        results_info_div_style = {'display': 'flex'}
+    if compare_iso is not None:
+        app_view = VIEW_COMPARE
+        map_div_style = {'display': 'none'}
+        results_info_div_style = {'display': 'flex'}
+
     return html.Div(
         id='main-div',
         children=[
@@ -206,7 +219,7 @@ def layout(country_iso=None, sce=None, compare_iso=None):
             dcc.Store(
                 id='view-store',
                 storage_type='session',
-                data={'app_view': VIEW_GENERAL}
+                data={'app_view': app_view}
             ),
             html.Div(
                 id='main-content',
@@ -330,9 +343,7 @@ def layout(country_iso=None, sce=None, compare_iso=None):
                                                         multi=False
                                                     )
                                                 ),
-
                                             ],
-
                                         ),
                                         html.Div(
                                             id='specific-info-div',
@@ -341,18 +352,19 @@ def layout(country_iso=None, sce=None, compare_iso=None):
                                         ),
                                     ]
                                 ),
-
                             ]
                         ),
                     ),
                     html.Div(
                         id='maps-div',
                         className='grid-x grid-margin-x align-center',
+                        style=map_div_style,
                         children=[
                             map_div(region, MAP_LAYOUTS[region], map_data)
                             for region in MAP_REGIONS
                         ]
                     ),
+
                     html.Div(
                         id='main-results-div',
                         children=html.Div(
@@ -366,6 +378,7 @@ def layout(country_iso=None, sce=None, compare_iso=None):
                                              children=''
                                          ),
                                      ] + [
+                                         style=results_info_div_style
                                          results_div(res_type, res_category)
                                          for res_category in [POP_RES, INVEST_RES, GHG_RES]
                                          for res_type in [RES_COUNTRY, RES_AGGREGATE, RES_COMPARE]
@@ -378,8 +391,6 @@ def layout(country_iso=None, sce=None, compare_iso=None):
     )
 
 # Barplot and results callbacks for single country
-
-
 def country_barplot_callback(app_handle, result_category):
     """Generate a callback for input components."""
 
@@ -1107,7 +1118,7 @@ def toggle_results_div_callback(app_handle, result_type, result_category):
         if result_type == RES_COUNTRY:
             if cur_view['app_view'] == VIEW_COUNTRY:
                 cur_style = {}
-            elif cur_view['app_view'] in [VIEW_GENERAL,VIEW_AGGREGATE, VIEW_COMPARE]:
+            elif cur_view['app_view'] in [VIEW_GENERAL, VIEW_AGGREGATE, VIEW_COMPARE]:
                 cur_style.update({'display': 'none'})
         elif result_type == RES_AGGREGATE:
             if cur_view['app_view'] == VIEW_AGGREGATE:
@@ -1336,18 +1347,23 @@ def callbacks(app_handle):
 
     @app_handle.callback(
         Output('specific-info-div', 'style'),
-        [Input('view-store', 'data')],
+        [
+            Input('view-store', 'data'),
+            Input('specific-info-div', 'children')
+        ],
         [State('specific-info-div', 'style')]
     )
-    def toggle_specific_info_display(cur_view, cur_style):
+    def toggle_specific_info_display(cur_view, content, cur_style):
         """Change the display information between the app's views."""
         if cur_style is None:
-            cur_style = {'display': 'block'}
+            cur_style = {'display': 'none'}
 
         if cur_view['app_view'] in [VIEW_GENERAL, VIEW_AGGREGATE]:
             cur_style = {}
         elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
             cur_style.update({'display': 'none'})
+        if content == '' or content == []:
+            cur_style = {'display': 'none'}
         return cur_style
 
     @app_handle.callback(
@@ -1358,36 +1374,23 @@ def callbacks(app_handle):
     def toggle_map_div_display(cur_view, cur_style):
         """Change the display of map between the app's views."""
         if cur_style is None:
-            cur_style = {'display': 'block'}
+            cur_style = {'display': 'flex'}
 
         if cur_view['app_view'] in [VIEW_GENERAL, VIEW_AGGREGATE]:
-            cur_style = {}
-        elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
-            cur_style.update({'display': 'none'})
-        return cur_style
-
-    @app_handle.callback(
-        Output('right-map-div', 'style'),
-        [Input('view-store', 'data')],
-        [State('right-map-div', 'style')]
-    )
-    def toggle_map_div_display(cur_view, cur_style):
-        """Change the display of map between the app's views."""
-        if cur_style is None:
-            cur_style = {'display': 'block'}
-
-        if cur_view['app_view'] in [VIEW_GENERAL, VIEW_AGGREGATE]:
-            cur_style = {}
+            cur_style = {'display': 'flex'}
         elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
             cur_style.update({'display': 'none'})
         return cur_style
 
     @app_handle.callback(
         Output('results-info-div', 'style'),
-        [Input('view-store', 'data')],
+        [
+            Input('view-store', 'data'),
+            Input('results-info-div', 'children')
+        ],
         [State('results-info-div', 'style')]
     )
-    def toggle_results_info_div_display(cur_view, cur_style):
+    def toggle_results_info_div_display(cur_view, content, cur_style):
         """Change the display of results-info-div between the app's views."""
         if cur_style is None:
             cur_style = {'display': 'none'}
@@ -1396,6 +1399,8 @@ def callbacks(app_handle):
             cur_style = {}
         elif cur_view['app_view'] in [VIEW_GENERAL, VIEW_AGGREGATE, VIEW_COMPARE]:
             cur_style.update({'display': 'none'})
+        if content == '' or content == []:
+            cur_style = {'display': 'none'}
         return cur_style
 
     @app_handle.callback(
