@@ -1,6 +1,7 @@
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
+from urllib.parse import urlparse, parse_qs
 
 from app_main import app, server, URL_BASEPATH, LOGOS, HDR_LOGO
 from app_layouts import intro_layout, static_layout, flex_layout
@@ -11,6 +12,11 @@ server = server
 app.layout = html.Div(
     className='grid-x app_style',
     children=[
+        dcc.Store(
+            id='url-store',
+            storage_type='session',
+            data={'previous_href': ''}
+        ),
         dcc.Location(id='url', refresh=False),
         html.Div(
             id='header-div',
@@ -104,12 +110,25 @@ def display_page(pathname):
 
 
 @app.callback(
+    Output('url-store', 'data'),
+    [Input('url', 'href')],
+)
+def reset_url(href):
+    data = {}
+    query_params = parse_qs(urlparse(href).query)
+    if "country_iso" in query_params:
+        data['country_iso'] = query_params['country_iso'][0]
+    return data
+
+
+@app.callback(
     Output('back-intro-link', 'style'),
     [Input('url', 'pathname')],
     [State('back-intro-link', 'style')]
 )
 def display_page(pathname, cur_style):
     """Manage display of the return to index button between the different layouts"""
+
     if cur_style is None:
         cur_style = {'display': 'none'}
 

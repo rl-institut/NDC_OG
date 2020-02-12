@@ -1433,10 +1433,11 @@ def callbacks(app_handle):
         [
             Input('data-store', 'data'),
             Input('region-input', 'value'),
+            Input('url-store', 'data')
         ],
         [State('country-input', 'value')]
     )
-    def update_selected_country_on_map(cur_data, region_id, cur_val):
+    def update_selected_country_on_map(cur_data, region_id,  url_data, cur_val):
 
         # return None if the trigger is the region-input
         country_iso = None
@@ -1447,6 +1448,9 @@ def callbacks(app_handle):
                 country_iso = cur_data.get('selected_country')
                 if country_iso is None:
                     country_iso = cur_val
+            else:
+                if "country_iso" in url_data:
+                    country_iso = url_data['country_iso']
         return country_iso
 
     @app_handle.callback(
@@ -1464,9 +1468,24 @@ def callbacks(app_handle):
             df = pd.read_json(cur_data[scenario])
             df = df.loc[df.country_iso == country_iso]
             pop_2017 = np.round(df.pop_2017.values[0] * 1e-6, 2)
+            pop_2017_coarse = np.round(df.pop_2017.values[0] * 1e-6, 0)
+            pop_2030_coarse = np.round(df.pop_2030.values[0] * 1e-6, 0)
+            pop_newly_electrified_2030 = np.round(df.pop_newly_electrified_2030.values[0] * 1e-6, 0)
+            electrification_rate = np.round(df.electrification_rate.values[0] * 100, 0)
             name = df.country.values[0]
             image_filename = 'icons/{}.png'.format(country_iso)
             encoded_image = base64.b64encode(open(image_filename, 'rb').read())
+
+            country_desc = """{} Its current population is approximately {:d} million people and for 
+2030 it is expected to grow to {:d} million people. We estimated a current 
+electrification rate of {:d} % which leads to almost {:d} million people to be newly 
+electrified from 2017 until 2030.""".format(
+                df.description.values[0],
+                int(pop_2017_coarse),
+                int(pop_2030_coarse),
+                int(electrification_rate),
+                int(pop_newly_electrified_2030)
+            )
 
             divs = [
                 html.Div(
@@ -1485,7 +1504,7 @@ def callbacks(app_handle):
                 ),
                 html.Div(
                     className='country__info__desc',
-                    children=df.description
+                    children=country_desc
                 ),
 
                 html.Table(
@@ -1508,7 +1527,7 @@ def callbacks(app_handle):
                                         format_percent(df.electrification_rate.values[0] * 100)
                                     )
                                 ),
-                                html.Td('{} Billion USD'.format(df.gdp_per_capita.values[0])),
+                                html.Td('{:.2f} Billion USD'.format(df.gdp.values[0])),
                                 html.Td(df.capital.values[0]),
                                 html.Td(df.currency.values[0]),
                             ]
