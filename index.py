@@ -78,11 +78,15 @@ app.layout = html.Div(
             children=[
                 html.Div(
                     className='footer-logo',
-                    children=html.Img(
-                        src='data:image/png;base64,{}'.format(logo.decode()),
+                    children=html.A(
+                        children=html.Img(
+                            src='data:image/png;base64,{}'.format(logo.decode()),
+                        ),
+                        href=url,
+                        target='_blank'
                     )
                 )
-                for logo in LOGOS
+                for url, logo in LOGOS.items()
             ]
         ),
     ]

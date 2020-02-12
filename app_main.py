@@ -6,10 +6,16 @@ import dash
 
 URL_BASEPATH = 'NDC-visualization'
 
-LOGOS = [
-    base64.b64encode(open('logos/{}'.format(fn), 'rb').read())
+URLS = {
+    'rli': 'https://reiner-lemoine-institut.de/en/',
+    'greenwerk': 'https://www.thegreenwerk.net/',
+    'giz': 'https://www.giz.de/en/html/index.htm',
+}
+
+LOGOS = {
+    URLS[fn.split('.')[0]]: base64.b64encode(open('logos/{}'.format(fn), 'rb').read())
     for fn in os.listdir('logos') if fn.endswith('.png')
-]
+}
 
 HDR_LOGO = base64.b64encode(open('icons/header-logo.png', 'rb').read())
 
