@@ -193,6 +193,15 @@ def layout(country_iso=None, sce=None, compare_iso=None):
         id='main-div',
         children=[
             dcc.Store(
+                id='static-url-store',
+                storage_type='session',
+                data=dict(
+                    country_iso=country_iso,
+                    sce=sce,
+                    compare_iso=compare_iso
+                )
+            ),
+            dcc.Store(
                 id='data-store',
                 storage_type='session',
                 data=SCENARIOS_DATA.copy()
@@ -1459,9 +1468,6 @@ def callbacks(app_handle):
                 country_iso = cur_data.get('selected_country')
                 if country_iso is None:
                     country_iso = cur_val
-            else:
-                if "country_iso" in url_data:
-                    country_iso = url_data['country_iso']
         return country_iso
 
     @app_handle.callback(
@@ -1597,12 +1603,16 @@ electrified from 2017 until 2030.""".format(
 
     @app_handle.callback(
         Output('data-store', 'data'),
-        [Input('{}-map'.format(region), 'clickData') for region in MAP_REGIONS],
+        [Input('{}-map'.format(region), 'clickData') for region in MAP_REGIONS]+
+        [Input('static-url-store', 'data')],
         [State('data-store', 'data')]
     )
     def update_data_store(*args):
         cur_data = args[-1]
-        for clicked_data in args[:-2]:
+        url_data = args[-2]
+        if 'country_iso' in url_data:
+            cur_data.update({'selected_country': url_data['country_iso']})
+        for clicked_data in args[:-3]:
             if clicked_data is not None:
                 country_iso = clicked_data['points'][0]['location']
                 cur_data.update({'selected_country': country_iso})
