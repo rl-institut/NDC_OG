@@ -345,10 +345,12 @@ def layout(country_iso=None, sce=None, compare_iso=None):
                                                 ),
                                             ],
                                         ),
-                                        html.Div(
-                                            id='specific-info-div',
-                                            className='instructions',
-                                            children=''
+                                        dcc.Loading(
+                                            children=html.Div(
+                                                id='specific-info-div',
+                                                className='instructions',
+                                                children='',
+                                            )
                                         ),
                                     ]
                                 ),
@@ -371,18 +373,25 @@ def layout(country_iso=None, sce=None, compare_iso=None):
                             id='main-results-contents',
                             className='grid-x align-center',
                             children=[
-
-                                         html.Div(
-                                             id='results-info-div',
-                                             className='cell medium-10 large-8 country_info_style',
-                                             children=''
-                                         ),
-                                     ] + [
+                                 dcc.Loading(
+                                     children=html.Div(
+                                         id='results-info-div',
+                                         className='country_info_style',
+                                         children='',
                                          style=results_info_div_style
+                                     ),
+                                     className='cell medium-10 large-8',
+                                 )
+                            ] + [
+                                 dcc.Loading(
+                                     children=[
                                          results_div(res_type, res_category)
                                          for res_category in [POP_RES, INVEST_RES, GHG_RES]
                                          for res_type in [RES_COUNTRY, RES_AGGREGATE, RES_COMPARE]
-                                     ]
+                                     ],
+                                     className='cell grid-x align-center'
+                                 )
+                            ]
                         ),
                     ),
                 ]
