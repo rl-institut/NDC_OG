@@ -46,6 +46,7 @@ from .app_components import (
     COMPARE_COLUMNS_ID,
     TABLE_COLUMNS_LABEL,
     REGIONS_NDC,
+    WORLD_ID,
 )
 
 URL_PATHNAME = 'flex'
@@ -71,6 +72,8 @@ SCENARIOS_DATA = {
 SCENARIOS_DATA.update(
     {reg: extract_centroids(REGIONS_NDC[reg]).to_json() for reg in REGIONS_NDC}
 )
+
+COUNTRIES_ISO = extract_centroids(REGIONS_NDC[WORLD_ID]).country_iso.tolist()
 
 RISE_SUB_INDICATOR_SCORES = pd.read_csv('data/RISE_subindicators_country.csv')
 
@@ -135,145 +138,151 @@ COLOR_WORSE = '#8F2D56'
 
 fig_map = go.Figure(data=data, layout=layout)
 
-layout = html.Div(
-    id='flex-main-div',
-    children=[
-        dcc.Store(
-            id='flex-store',
-            storage_type='session',
-            data=SCENARIOS_DATA.copy()
-        ),
-        dcc.Store(
-            id='flex-view-store',
-            storage_type='session',
-            data={
-                'app_view': VIEW_COUNTRY_SELECT,
-                'sub_indicators_view': '',
-                'sub_indicators_change': True
-            }
-        ),
-        dcc.Store(
-            id='flex-rise-store',
-            storage_type='session',
-            data={}
-        ),
-        html.Div(
-            id='flex-main-content',
-            className='grid-x',
-            children=[
-                html.Div(
-                    id='flex-main-head-div',
-                    className='cell',
-                    children=html.Div(
-                        id='flex-main-head-content',
-                        className='grid-x grid-padding-x',
-                        children=[
-                            html.Div(
-                                id='flex-left-header-div',
-                                className='cell medium-6',
-                                children=[
-                                    html.Div(
-                                        id='flex-general-info-div',
-                                        className='scenario__info',
-                                        children=[
-                                            html.H4('Custom Scenarios'),
-                                            '''Complementary to the static evaluation of the modelled scenarios, the *Off-Grid Tool* allows the exploration and creation of your own scenarios. The universal-Electricity-Access scneario and the progressive-Off-Grid scenraio are based on the RISE indicators, reflecting countries' regulatory framework conditions. Through the alteration of RISE subindicators, one can simulate how technology-specific framework changes may affect a country's electrification development until 2030.'''
-                                        ]
-                                    ),
-                                ]
-                            ),
-                            html.Div(
-                                id='flex-right-header-div',
-                                className='cell medium-6',
-                                children=[
-                                    html.Div(
-                                        id='flex-scenario-input-div',
-                                        className='grid-x input-div',
-                                        children=[
-                                            html.Div(
-                                                id='flex-scenario-label',
-                                                className='cell medium-3',
-                                                children='Explore a scenario:'
-                                            ),
-                                            html.Div(
-                                                id='flex-scenario-input-wrapper',
-                                                className='cell medium-9',
-                                                children=dcc.Dropdown(
-                                                    id='flex-scenario-input',
-                                                    options=[
-                                                        {
-                                                            'label': '{} ({})'.format(
-                                                                SCENARIOS_NAMES[k],
-                                                                SCENARIOS_DICT[k]
-                                                            ),
-                                                            'value': k
-                                                        }
-                                                        for k in SCENARIOS
-                                                    ],
-                                                    value=BAU_SCENARIO,
+
+def layout(country_iso=None, sce=None):
+    if sce is None or sce not in SCENARIOS:
+        sce = BAU_SCENARIO
+    if country_iso not in COUNTRIES_ISO:
+        country_iso = None
+    return html.Div(
+        id='flex-main-div',
+        children=[
+            dcc.Store(
+                id='flex-store',
+                storage_type='session',
+                data=SCENARIOS_DATA.copy()
+            ),
+            dcc.Store(
+                id='flex-view-store',
+                storage_type='session',
+                data={
+                    'app_view': VIEW_COUNTRY_SELECT,
+                    'sub_indicators_view': '',
+                    'sub_indicators_change': True
+                }
+            ),
+            dcc.Store(
+                id='flex-rise-store',
+                storage_type='session',
+                data={}
+            ),
+            html.Div(
+                id='flex-main-content',
+                className='grid-x',
+                children=[
+                    html.Div(
+                        id='flex-main-head-div',
+                        className='cell',
+                        children=html.Div(
+                            id='flex-main-head-content',
+                            className='grid-x grid-padding-x',
+                            children=[
+                                html.Div(
+                                    id='flex-left-header-div',
+                                    className='cell medium-6',
+                                    children=[
+                                        html.Div(
+                                            id='flex-general-info-div',
+                                            className='scenario__info',
+                                            children=[
+                                                html.H4('Custom Scenarios'),
+                                                '''Complementary to the static evaluation of the modelled scenarios, the *Off-Grid Tool* allows the exploration and creation of your own scenarios. The universal-Electricity-Access scneario and the progressive-Off-Grid scenraio are based on the RISE indicators, reflecting countries' regulatory framework conditions. Through the alteration of RISE subindicators, one can simulate how technology-specific framework changes may affect a country's electrification development until 2030.'''
+                                            ]
+                                        ),
+                                    ]
+                                ),
+                                html.Div(
+                                    id='flex-right-header-div',
+                                    className='cell medium-6',
+                                    children=[
+                                        html.Div(
+                                            id='flex-scenario-input-div',
+                                            className='grid-x input-div',
+                                            children=[
+                                                html.Div(
+                                                    id='flex-scenario-label',
+                                                    className='cell medium-3',
+                                                    children='Explore a scenario:'
+                                                ),
+                                                html.Div(
+                                                    id='flex-scenario-input-wrapper',
+                                                    className='cell medium-9',
+                                                    children=dcc.Dropdown(
+                                                        id='flex-scenario-input',
+                                                        options=[
+                                                            {
+                                                                'label': '{} ({})'.format(
+                                                                    SCENARIOS_NAMES[k],
+                                                                    SCENARIOS_DICT[k]
+                                                                ),
+                                                                'value': k
+                                                            }
+                                                            for k in SCENARIOS
+                                                        ],
+                                                        value=sce,
+                                                    )
                                                 )
-                                            )
-                                        ]
-                                    ),
-                                    html.Div(
-                                        id='flex-country-input-div',
-                                        title='country selection description',
-                                        className='grid-x input-div',
-                                        children=[
-                                            html.Div(
-                                                id='flex-country-label',
-                                                className='cell medium-3',
-                                                children='Country:'
-                                            ),
-                                            html.Div(
-                                                id='flex-country-input-wrapper',
-                                                className='cell medium-9',
-                                                children=dcc.Dropdown(
-                                                    id='flex-country-input',
-                                                    options=list_countries_dropdown,
-                                                    value=None,
-                                                    multi=False
-                                                )
-                                            ),
-                                        ]
-                                    ),
-                                    html.Div(
-                                        id='flex-specific-info-div',
-                                        className='instructions',
-                                        children=[
-                                            html.H4('What you can do'),
-                                            '''Select a starting scenario and choose a country from the dropdown menu. Select one of the technology-specific RISE indicators to customize its subindicators (RISE Grid, RISE MG, RISE SHS).'''
-                                        ]
-                                    ),
-                                ]
-                            ),
-                        ]
+                                            ]
+                                        ),
+                                        html.Div(
+                                            id='flex-country-input-div',
+                                            title='country selection description',
+                                            className='grid-x input-div',
+                                            children=[
+                                                html.Div(
+                                                    id='flex-country-label',
+                                                    className='cell medium-3',
+                                                    children='Country:'
+                                                ),
+                                                html.Div(
+                                                    id='flex-country-input-wrapper',
+                                                    className='cell medium-9',
+                                                    children=dcc.Dropdown(
+                                                        id='flex-country-input',
+                                                        options=list_countries_dropdown,
+                                                        value=country_iso,
+                                                        multi=False
+                                                    )
+                                                ),
+                                            ]
+                                        ),
+                                        html.Div(
+                                            id='flex-specific-info-div',
+                                            className='instructions',
+                                            children=[
+                                                html.H4('What you can do'),
+                                                '''Select a starting scenario and choose a country from the dropdown menu. Select one of the technology-specific RISE indicators to customize its subindicators (RISE Grid, RISE MG, RISE SHS).'''
+                                            ]
+                                        ),
+                                    ]
+                                ),
+                            ]
+                        ),
                     ),
-                ),
-                html.Div(
-                    id='flex-controls-div',
-                    className='cell',
-                    children=html.Div(
-                        className='grid-x',
-                        children=controls_div(),
-                    )
-                ),
-                html.Div(
-                    id='flex-main-results-div',
-                    className='cell',
-                    children=html.Div(
-                        id='flex-main-results-contents',
-                        className='grid-x align-center',
-                        children=[
-                            results_div(RES_COMPARE, res_category, 'flex-')
-                            for res_category in [POP_RES, INVEST_RES, GHG_RES]
-                        ]
+                    html.Div(
+                        id='flex-controls-div',
+                        className='cell',
+                        children=html.Div(
+                            className='grid-x',
+                            children=controls_div(),
+                        )
                     ),
-                ),
-            ]
-        ),
-    ]
-)
+                    html.Div(
+                        id='flex-main-results-div',
+                        className='cell',
+                        children=html.Div(
+                            id='flex-main-results-contents',
+                            className='grid-x align-center',
+                            children=[
+                                results_div(RES_COMPARE, res_category, 'flex-')
+                                for res_category in [POP_RES, INVEST_RES, GHG_RES]
+                            ]
+                        ),
+                    ),
+                ]
+            ),
+        ]
+    )
 
 
 def result_title_callback(app_handle, result_category):
