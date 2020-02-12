@@ -25,6 +25,34 @@ about_content = [
 
 location = "/download/{}".format(urlquote('Off_Grid_Report_WEB_DS_96.pdf'))
 
+impressum_content = [
+    html.P(
+        [
+            'This tool “Renewable Energy Off-Grid Explorer” has been developed in the framework '
+            'of the project “Strategies for Renewable Energy for Climate Protection in Developing Countries”. It has been financed by the Federal Minister for the Environment, Nature Conservation, and Nuclear Safety (',
+            html.A(children='BMU', href='https://www.bmu.de/en/ ', target='_blank'),
+            ') and the German Development Agency (',
+            html.A(children='GIZ', href=URLS['giz'],
+                   target='_blank'),
+            '). The presented scenarios are meant to support informed policy and planning decisions, but do not represent official planning.'
+        ]
+    ),
+    html.P(['The project was implemented by Reiner Lemoine Institut (',
+            html.A(children='RLI', href=URLS['rli'],
+                   target='_blank'),
+            ') and ',
+            html.A(children='the greenwerk.', href=URLS['greenwerk'],
+                   target='_blank')]),
+    html.P(['Back-and front-end development was led by Pierre-Francois Duc (',
+            html.A(children='RLI', href=URLS['rli'],
+                   target='_blank'), ')']),
+    html.P(["The original scenario's output data are licensed under CC0 v1.0 ",
+            html.A(href="http://creativecommons.org/publicdomain/zero/1.0/",
+                   children=html.Img(src="https://licensebuttons.net/p/zero/1.0/88x31.png",
+                                     alt="CC0", style={"border-style": "none"}))]),
+
+]
+
 citation_content = [
     html.H3('Impressum and citation', className='cell'),
     html.P('Cite this report if you wish to use some of the results displayed here: '),
@@ -36,26 +64,6 @@ citation_content = [
                 html.A('Download', href=location),
                 ')'
             ]),
-            html.P(
-                [
-                    'This tool “Renewable Energy Off-Grid Explorer” has been developed in the framework '
-                    'of the project “Strategies for Renewable Energy for Climate Protection in Developing Countries”. It has been financed by the Federal Minister for the Environment, Nature Conservation, and Nuclear Safety (',
-                    html.A(children='BMU', href='https://www.bmu.de/en/ ', target='_blank'),
-                    ') and the German Development Agency (',
-                    html.A(children='GIZ', href=URLS['giz'],
-                           target='_blank'),
-                    '). The presented scenarios are meant to support informed policy and planning decisions, but do not represent official planning.'
-                ]
-            ),
-            html.P(['The project was implemented by Reiner Lemoine Institut (',
-                    html.A(children='RLI', href=URLS['rli'],
-                           target='_blank'),
-                    ') and ',
-                    html.A(children='the greenwerk.', href=URLS['greenwerk'],
-                           target='_blank')]),
-            html.P(['Back-and front-end development was led by Pierre-Francois Duc (',
-                    html.A(children='RLI', href=URLS['rli'],
-                           target='_blank'), ')']),
         ]
     ),
     html.Div(
@@ -64,8 +72,11 @@ citation_content = [
             src='data:image/png;base64,{}'.format(REPORT_IMG.decode()),
         ))
     ),
-
-
+    html.Div(
+        className="cell",
+        style={"margin-top": "1rem"},
+        children=impressum_content
+    )
 ]
 
 layout = html.Div(
@@ -105,7 +116,6 @@ layout = html.Div(
                                 )
                             ],
                         )
-
                     ]
                 )
             ]
