@@ -20,7 +20,7 @@ Here is a template for new release sections
 ## Unreleased
 
 ### Added
-- Possibility to select a country via url (#101)
+- Possibility to select a country via url (#101, #102) 
 
 ### Fixed
 - Country descriptions source its number directly from raw_data (#101)
