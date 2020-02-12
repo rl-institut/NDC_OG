@@ -95,30 +95,32 @@ flex_layout.callbacks(app)
 
 @app.callback(
     Output('page-content', 'children'),
-    [Input('url', 'pathname')]
+    [Input('url', 'pathname')],
+    [State('url', 'href')]
 )
-def display_page(pathname):
+def display_page(pathname, href):
     """Manage the url path between the different layouts"""
+
+    country_iso = None
+    compare_iso = None
+    sce = None
+
+    query_params = parse_qs(urlparse(href).query)
+    if "sce" in query_params:
+        sce = query_params['sce'][0]
+    if "country_iso" in query_params:
+        country_iso = query_params['country_iso'][0]
+    if "compare_iso" in query_params:
+        compare_iso = query_params['compare_iso'][0]
+
     if pathname == '/{}'.format(URL_BASEPATH) \
             or pathname == '/{}/'.format(URL_BASEPATH) \
             or pathname == '/' or pathname is None:
         return intro_layout.layout
     elif pathname == '/{}/{}'.format(URL_BASEPATH, static_layout.URL_PATHNAME):
-        return static_layout.layout
+        return static_layout.layout(country_iso=country_iso, sce=sce, compare_iso=compare_iso)
     elif pathname == '/{}/{}'.format(URL_BASEPATH, flex_layout.URL_PATHNAME):
-        return flex_layout.layout
-
-
-@app.callback(
-    Output('url-store', 'data'),
-    [Input('url', 'href')],
-)
-def reset_url(href):
-    data = {}
-    query_params = parse_qs(urlparse(href).query)
-    if "country_iso" in query_params:
-        data['country_iso'] = query_params['country_iso'][0]
-    return data
+        return flex_layout.layout(country_iso=country_iso, sce=sce)
 
 
 @app.callback(
