@@ -46,6 +46,7 @@ from .app_components import (
     COMPARE_COLUMNS_ID,
     TABLE_COLUMNS_LABEL,
     REGIONS_NDC,
+    WORLD_ID,
 )
 
 URL_PATHNAME = 'flex'
@@ -71,6 +72,8 @@ SCENARIOS_DATA = {
 SCENARIOS_DATA.update(
     {reg: extract_centroids(REGIONS_NDC[reg]).to_json() for reg in REGIONS_NDC}
 )
+
+COUNTRIES_ISO = extract_centroids(REGIONS_NDC[WORLD_ID]).country_iso.tolist()
 
 RISE_SUB_INDICATOR_SCORES = pd.read_csv('data/RISE_subindicators_country.csv')
 
@@ -137,6 +140,10 @@ fig_map = go.Figure(data=data, layout=layout)
 
 
 def layout(country_iso=None, sce=None):
+    if sce is None or sce not in SCENARIOS:
+        sce = BAU_SCENARIO
+    if country_iso not in COUNTRIES_ISO:
+        country_iso = None
     return html.Div(
         id='flex-main-div',
         children=[

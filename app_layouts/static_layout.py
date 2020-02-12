@@ -80,11 +80,14 @@ SCENARIOS_DATA.update(
 )
 
 
-# list all region and countries to sompare with a single country
+# list all region and countries to compare with a single country
 COMPARE_OPTIONS = []
 for _, r in pd.read_json(SCENARIOS_DATA[BAU_SCENARIO]).sort_values('country').iterrows():
     COMPARE_OPTIONS.append({'label': r['country'], 'value': r['country_iso']})
 COMPARE_OPTIONS = [{'label': v, 'value': k} for k, v in REGIONS_GPD.items()] + COMPARE_OPTIONS
+
+COUNTRIES_ISO = extract_centroids(REGIONS_NDC[WORLD_ID]).country_iso.tolist()
+COMPARE_ISO = COUNTRIES_ISO + list(REGIONS_NDC.keys())
 
 # colors for hightlight of comparison
 COLOR_BETTER = '#218380'
@@ -180,6 +183,12 @@ MAP_LAYOUTS = {
 
 
 def layout(country_iso=None, sce=None, compare_iso=None):
+    if sce is None or sce not in SCENARIOS:
+        sce = BAU_SCENARIO
+    if country_iso not in COUNTRIES_ISO:
+        country_iso = None
+    if compare_iso not in COMPARE_ISO:
+        compare_iso = None
     return html.Div(
         id='main-div',
         children=[
