@@ -1527,7 +1527,7 @@ electrified from 2017 until 2030.""".format(
                                         format_percent(df.electrification_rate.values[0] * 100)
                                     )
                                 ),
-                                html.Td('{} Billion USD'.format(df.gdp_per_capita.values[0])),
+                                html.Td('{:.2f} Billion USD'.format(df.gdp.values[0])),
                                 html.Td(df.capital.values[0]),
                                 html.Td(df.currency.values[0]),
                             ]
