@@ -178,187 +178,189 @@ MAP_LAYOUTS = {
     )
 }
 
-layout = html.Div(
-    id='main-div',
-    children=[
-        dcc.Store(
-            id='data-store',
-            storage_type='session',
-            data=SCENARIOS_DATA.copy()
-        ),
-        dcc.Store(
-            id='view-store',
-            storage_type='session',
-            data={'app_view': VIEW_GENERAL}
-        ),
-        html.Div(
-            id='main-content',
-            className='grid-x',
-            children=[
-                html.Div(
-                    id='main-head-div',
-                    className='cell',
-                    children=html.Div(
-                        id='main-head-content',
-                        className='grid-x',
+
+def layout(country_iso=None, sce=None, compare_iso=None):
+    return html.Div(
+        id='main-div',
+        children=[
+            dcc.Store(
+                id='data-store',
+                storage_type='session',
+                data=SCENARIOS_DATA.copy()
+            ),
+            dcc.Store(
+                id='view-store',
+                storage_type='session',
+                data={'app_view': VIEW_GENERAL}
+            ),
+            html.Div(
+                id='main-content',
+                className='grid-x',
+                children=[
+                    html.Div(
+                        id='main-head-div',
+                        className='cell',
+                        children=html.Div(
+                            id='main-head-content',
+                            className='grid-x',
+                            children=[
+                                html.Div(
+                                    id='left-header-div',
+                                    className='cell medium-6',
+                                    children=[
+
+                                        html.Div(
+                                            id='general-info-div',
+                                            className='scenario__info',
+                                            children=''
+                                        ),
+                                    ]
+                                ),
+                                html.Div(
+                                    id='right-header-div',
+                                    className='cell medium-6',
+                                    children=[
+                                        html.Div(
+                                            id='scenario-input-div',
+                                            className='grid-x input-div',
+                                            children=[
+                                                html.Div(
+                                                    id='scenario-label',
+                                                    className='cell medium-3',
+                                                    children='Explore a scenario:'
+                                                ),
+                                                html.Div(
+                                                    id='scenario-input-wrapper',
+                                                    className='cell medium-9',
+                                                    children=dcc.Dropdown(
+                                                        id='scenario-input',
+                                                        options=[
+                                                            {
+                                                                'label': '{} ({})'.format(
+                                                                    SCENARIOS_NAMES[k],
+                                                                    SCENARIOS_DICT[k]
+                                                                ),
+                                                                'value': k
+                                                            }
+                                                            for k in SCENARIOS
+                                                        ],
+                                                        value=sce,
+                                                    )
+                                                )
+                                            ]
+                                        ),
+                                        html.Div(
+                                            id='region-input-div',
+                                            className='grid-x input-div',
+                                            children=[
+                                                html.Div(
+                                                    id='region-label',
+                                                    className='cell medium-3',
+                                                    children='Region:'
+                                                ),
+                                                html.Div(
+                                                    id='region-input-wrapper',
+                                                    className='cell medium-9',
+                                                    title='region selection description',
+                                                    children=dcc.Dropdown(
+                                                        id='region-input',
+                                                        options=[
+                                                            {'label': v, 'value': k}
+                                                            for k, v in REGIONS_GPD.items()
+                                                        ],
+                                                        value=WORLD_ID
+                                                    )
+                                                ),
+                                            ]
+                                        ),
+                                        html.Div(
+                                            id='country-input-div',
+                                            title='country selection description',
+                                            className='grid-x input-div',
+                                            children=[
+                                                html.Div(
+                                                    id='country-label',
+                                                    className='cell medium-3',
+                                                    children='Country:'
+                                                ),
+                                                html.Div(
+                                                    id='country-input-wrapper',
+                                                    className='cell medium-9',
+                                                    children=dcc.Dropdown(
+                                                        id='country-input',
+                                                        options=[],
+                                                        value=country_iso,
+                                                        multi=False
+                                                    )
+                                                ),
+                                            ]
+                                        ),
+                                        html.Div(
+                                            id='compare-input-div',
+                                            className='grid-x input-div',
+                                            style={'visibility': 'hidden'},
+                                            children=[
+                                                html.Div(
+                                                    id='country-comp-label',
+                                                    className='cell medium-3',
+                                                    children='Compare with:'
+                                                ),
+                                                html.Div(
+                                                    id='compare-input-wrapper',
+                                                    className='cell medium-9',
+                                                    children=dcc.Dropdown(
+                                                        id='compare-input',
+                                                        options=COMPARE_OPTIONS,
+                                                        value=compare_iso,
+                                                        multi=False
+                                                    )
+                                                ),
+
+                                            ],
+
+                                        ),
+                                        html.Div(
+                                            id='specific-info-div',
+                                            className='instructions',
+                                            children=''
+                                        ),
+                                    ]
+                                ),
+
+                            ]
+                        ),
+                    ),
+                    html.Div(
+                        id='maps-div',
+                        className='grid-x grid-margin-x align-center',
                         children=[
-                            html.Div(
-                                id='left-header-div',
-                                className='cell medium-6',
-                                children=[
-
-                                    html.Div(
-                                        id='general-info-div',
-                                        className='scenario__info',
-                                        children=''
-                                    ),
-                                ]
-                            ),
-                            html.Div(
-                                id='right-header-div',
-                                className='cell medium-6',
-                                children=[
-                                    html.Div(
-                                        id='scenario-input-div',
-                                        className='grid-x input-div',
-                                        children=[
-                                            html.Div(
-                                                id='scenario-label',
-                                                className='cell medium-3',
-                                                children='Explore a scenario:'
-                                            ),
-                                            html.Div(
-                                                id='scenario-input-wrapper',
-                                                className='cell medium-9',
-                                                children=dcc.Dropdown(
-                                                    id='scenario-input',
-                                                    options=[
-                                                        {
-                                                            'label': '{} ({})'.format(
-                                                                SCENARIOS_NAMES[k],
-                                                                SCENARIOS_DICT[k]
-                                                            ),
-                                                            'value': k
-                                                        }
-                                                        for k in SCENARIOS
-                                                    ],
-                                                    value=BAU_SCENARIO,
-                                                )
-                                            )
-                                        ]
-                                    ),
-                                    html.Div(
-                                        id='region-input-div',
-                                        className='grid-x input-div',
-                                        children=[
-                                            html.Div(
-                                                id='region-label',
-                                                className='cell medium-3',
-                                                children='Region:'
-                                            ),
-                                            html.Div(
-                                                id='region-input-wrapper',
-                                                className='cell medium-9',
-                                                title='region selection description',
-                                                children=dcc.Dropdown(
-                                                    id='region-input',
-                                                    options=[
-                                                        {'label': v, 'value': k}
-                                                        for k, v in REGIONS_GPD.items()
-                                                    ],
-                                                    value=WORLD_ID
-                                                )
-                                            ),
-                                        ]
-                                    ),
-                                    html.Div(
-                                        id='country-input-div',
-                                        title='country selection description',
-                                        className='grid-x input-div',
-                                        children=[
-                                            html.Div(
-                                                id='country-label',
-                                                className='cell medium-3',
-                                                children='Country:'
-                                            ),
-                                            html.Div(
-                                                id='country-input-wrapper',
-                                                className='cell medium-9',
-                                                children=dcc.Dropdown(
-                                                    id='country-input',
-                                                    options=[],
-                                                    value=None,
-                                                    multi=False
-                                                )
-                                            ),
-                                        ]
-                                    ),
-                                    html.Div(
-                                        id='compare-input-div',
-                                        className='grid-x input-div',
-                                        style={'visibility': 'hidden'},
-                                        children=[
-                                            html.Div(
-                                                id='country-comp-label',
-                                                className='cell medium-3',
-                                                children='Compare with:'
-                                            ),
-                                            html.Div(
-                                                id='compare-input-wrapper',
-                                                className='cell medium-9',
-                                                children=dcc.Dropdown(
-                                                    id='compare-input',
-                                                    options=COMPARE_OPTIONS,
-                                                    value=None,
-                                                    multi=False
-                                                )
-                                            ),
-
-                                        ],
-
-                                    ),
-                                    html.Div(
-                                        id='specific-info-div',
-                                        className='instructions',
-                                        children='Blablabla'
-                                    ),
-                                ]
-                            ),
-
+                            map_div(region, MAP_LAYOUTS[region], map_data)
+                            for region in MAP_REGIONS
                         ]
                     ),
-                ),
-                html.Div(
-                    id='maps-div',
-                    className='grid-x grid-margin-x align-center',
-                    children=[
-                        map_div(region, MAP_LAYOUTS[region], map_data)
-                        for region in MAP_REGIONS
-                    ]
-                ),
-                html.Div(
-                    id='main-results-div',
-                    children=html.Div(
-                        id='main-results-contents',
-                        className='grid-x align-center',
-                        children=[
+                    html.Div(
+                        id='main-results-div',
+                        children=html.Div(
+                            id='main-results-contents',
+                            className='grid-x align-center',
+                            children=[
 
-                                     html.Div(
-                                         id='results-info-div',
-                                         className='cell medium-10 large-8 country_info_style',
-                                         children=''
-                                     ),
-                                 ] + [
-                                     results_div(res_type, res_category)
-                                     for res_category in [POP_RES, INVEST_RES, GHG_RES]
-                                     for res_type in [RES_COUNTRY, RES_AGGREGATE, RES_COMPARE]
-                                 ]
+                                         html.Div(
+                                             id='results-info-div',
+                                             className='cell medium-10 large-8 country_info_style',
+                                             children=''
+                                         ),
+                                     ] + [
+                                         results_div(res_type, res_category)
+                                         for res_category in [POP_RES, INVEST_RES, GHG_RES]
+                                         for res_type in [RES_COUNTRY, RES_AGGREGATE, RES_COMPARE]
+                                     ]
+                        ),
                     ),
-                ),
-            ]
-        ),
-    ]
-)
+                ]
+            ),
+        ]
+    )
 
 # Barplot and results callbacks for single country
 
