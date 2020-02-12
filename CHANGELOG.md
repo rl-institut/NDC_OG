@@ -16,6 +16,16 @@ Here is a template for new release sections
 ### Removed
 -
 ```
+
+## Unreleased
+
+### Added
+- Possibility to select a country via url (#101)
+
+### Fixed
+- Country descriptions source its number directly from raw_data (#101)
+
+
 ## [2.1.0] 2020-01-20
 
 ### Added
