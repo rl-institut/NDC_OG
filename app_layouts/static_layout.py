@@ -345,12 +345,10 @@ def layout(country_iso=None, sce=None, compare_iso=None):
                                                 ),
                                             ],
                                         ),
-                                        dcc.Loading(
-                                            children=html.Div(
+                                        html.Div(
                                                 id='specific-info-div',
                                                 className='instructions',
                                                 children='',
-                                            )
                                         ),
                                     ]
                                 ),
@@ -373,15 +371,12 @@ def layout(country_iso=None, sce=None, compare_iso=None):
                             id='main-results-contents',
                             className='grid-x align-center',
                             children=[
-                                 dcc.Loading(
-                                     children=html.Div(
+                                html.Div(
                                          id='results-info-div',
-                                         className='country_info_style',
+                                         className='cell medium-10 large-8 country_info_style',
                                          children='',
                                          style=results_info_div_style
                                      ),
-                                     className='cell medium-10 large-8',
-                                 )
                             ] + [
                                  dcc.Loading(
                                      children=[
@@ -398,6 +393,7 @@ def layout(country_iso=None, sce=None, compare_iso=None):
             ),
         ]
     )
+
 
 # Barplot and results callbacks for single country
 def country_barplot_callback(app_handle, result_category):
