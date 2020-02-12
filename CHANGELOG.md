@@ -21,7 +21,10 @@ Here is a template for new release sections
 
 ### Added
 - Possibility to select a country via url (#101, #102) 
+- Logo are clickable now (#103)
 
+### Changed
+- Text of impressum and citation below the citation expands larger (#103)
 ### Fixed
 - Country descriptions source its number directly from raw_data (#101)
 
