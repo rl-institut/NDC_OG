@@ -71,18 +71,15 @@ VIEW_COUNTRY = 'specific'
 VIEW_AGGREGATE = 'aggregate'
 VIEW_COMPARE = 'compare'
 
-# A dict with the data for each scenario in json format
-SCENARIOS_DATA = {
-    sce: compute_ndc_results_from_raw_data(sce, MIN_TIER_LEVEL).to_json() for sce in SCENARIOS
+LOCAL_SCENARIO_DATA = {
+    sce: compute_ndc_results_from_raw_data(sce, MIN_TIER_LEVEL) for sce in SCENARIOS
 }
-SCENARIOS_DATA.update(
-    {reg: extract_centroids(REGIONS_NDC[reg]).to_json() for reg in REGIONS_NDC}
-)
 
+CENTROIDS_DATA = {reg: extract_centroids(REGIONS_NDC[reg]).to_json() for reg in REGIONS_NDC}
 
 # list all region and countries to compare with a single country
 COMPARE_OPTIONS = []
-for _, r in pd.read_json(SCENARIOS_DATA[BAU_SCENARIO]).sort_values('country').iterrows():
+for _, r in LOCAL_SCENARIO_DATA[BAU_SCENARIO].sort_values('country').iterrows():
     COMPARE_OPTIONS.append({'label': r['country'], 'value': r['country_iso']})
 COMPARE_OPTIONS = [{'label': v, 'value': k} for k, v in REGIONS_GPD.items()] + COMPARE_OPTIONS
 
@@ -183,12 +180,25 @@ MAP_LAYOUTS = {
 
 
 def layout(country_iso=None, sce=None, compare_iso=None):
+    app_view = VIEW_GENERAL
     if sce is None or sce not in SCENARIOS:
         sce = BAU_SCENARIO
     if country_iso not in COUNTRIES_ISO:
         country_iso = None
     if compare_iso not in COMPARE_ISO:
         compare_iso = None
+
+    map_div_style = {'display': 'flex'}
+    results_info_div_style = {'display': 'none'}
+    if country_iso is not None:
+        app_view = VIEW_COUNTRY
+        map_div_style = {'display': 'none'}
+        results_info_div_style = {'display': 'flex'}
+    if compare_iso is not None:
+        app_view = VIEW_COMPARE
+        map_div_style = {'display': 'none'}
+        results_info_div_style = {'display': 'flex'}
+
     return html.Div(
         id='main-div',
         children=[
@@ -204,12 +214,12 @@ def layout(country_iso=None, sce=None, compare_iso=None):
             dcc.Store(
                 id='data-store',
                 storage_type='session',
-                data=SCENARIOS_DATA.copy()
+                data=CENTROIDS_DATA.copy()
             ),
             dcc.Store(
                 id='view-store',
                 storage_type='session',
-                data={'app_view': VIEW_GENERAL}
+                data={'app_view': app_view}
             ),
             html.Div(
                 id='main-content',
@@ -333,46 +343,55 @@ def layout(country_iso=None, sce=None, compare_iso=None):
                                                         multi=False
                                                     )
                                                 ),
-
                                             ],
-
                                         ),
-                                        html.Div(
-                                            id='specific-info-div',
-                                            className='instructions',
-                                            children=''
+                                        dcc.Loading(
+                                            children=html.Div(
+                                                id='specific-info-div',
+                                                className='instructions',
+                                                children='',
+                                            )
                                         ),
                                     ]
                                 ),
-
                             ]
                         ),
                     ),
                     html.Div(
                         id='maps-div',
                         className='grid-x grid-margin-x align-center',
+                        style=map_div_style,
                         children=[
                             map_div(region, MAP_LAYOUTS[region], map_data)
                             for region in MAP_REGIONS
                         ]
                     ),
+
                     html.Div(
                         id='main-results-div',
                         children=html.Div(
                             id='main-results-contents',
                             className='grid-x align-center',
                             children=[
-
-                                         html.Div(
-                                             id='results-info-div',
-                                             className='cell medium-10 large-8 country_info_style',
-                                             children=''
-                                         ),
-                                     ] + [
+                                 dcc.Loading(
+                                     children=html.Div(
+                                         id='results-info-div',
+                                         className='country_info_style',
+                                         children='',
+                                         style=results_info_div_style
+                                     ),
+                                     className='cell medium-10 large-8',
+                                 )
+                            ] + [
+                                 dcc.Loading(
+                                     children=[
                                          results_div(res_type, res_category)
                                          for res_category in [POP_RES, INVEST_RES, GHG_RES]
                                          for res_type in [RES_COUNTRY, RES_AGGREGATE, RES_COMPARE]
-                                     ]
+                                     ],
+                                     className='cell grid-x align-center'
+                                 )
+                            ]
                         ),
                     ),
                 ]
@@ -381,8 +400,6 @@ def layout(country_iso=None, sce=None, compare_iso=None):
     )
 
 # Barplot and results callbacks for single country
-
-
 def country_barplot_callback(app_handle, result_category):
     """Generate a callback for input components."""
 
@@ -397,11 +414,10 @@ def country_barplot_callback(app_handle, result_category):
             Input('{}-barplot-yaxis-input'.format(id_name), 'value')
         ],
         [
-            State('data-store', 'data'),
             State('{}-barplot'.format(id_name), 'figure')
         ]
     )
-    def update_barplot(country_sel, y_sel, cur_data, fig):
+    def update_barplot(country_sel, y_sel, fig):
 
         if y_sel is None:
             idx_y = 0
@@ -414,7 +430,7 @@ def country_barplot_callback(app_handle, result_category):
             y_vals = []
             for sce_id, sce in enumerate(SCENARIOS):
 
-                df = pd.read_json(cur_data[sce])
+                df = LOCAL_SCENARIO_DATA[sce]
                 # narrow to the country's results
                 df = df.loc[df.country_iso == country_iso]
                 # extract the results formatted with good units
@@ -462,13 +478,11 @@ def country_table_callback(app_handle, result_category):
         [
             Input('country-input', 'value'),
             Input('scenario-input', 'value'),
-        ],
-        [State('data-store', 'data')]
+        ]
     )
     def update_table(
             country_iso,
             scenario,
-            cur_data,
     ):
         """Display information and study's results for a country."""
 
@@ -478,7 +492,7 @@ def country_table_callback(app_handle, result_category):
         if country_iso is not None:
             if scenario in SCENARIOS:
 
-                df = pd.read_json(cur_data[scenario])
+                df = LOCAL_SCENARIO_DATA[scenario]
                 df = df.loc[df.country_iso == country_iso]
 
                 ghg_er = False
@@ -535,11 +549,10 @@ def aggregate_barplot_callback(app_handle, result_category):
             Input('{}-barplot-yaxis-input'.format(id_name), 'value')
         ],
         [
-            State('data-store', 'data'),
             State('{}-barplot'.format(id_name), 'figure')
         ]
     )
-    def update_barplot(region_id, y_sel, cur_data, fig):
+    def update_barplot(region_id, y_sel, fig):
 
         if y_sel is None:
             idx_y = 0
@@ -550,7 +563,7 @@ def aggregate_barplot_callback(app_handle, result_category):
             x_vals = [SCENARIOS_DICT[sce] for sce in SCENARIOS]
             y_vals = []
             for sce_id, sce in enumerate(SCENARIOS):
-                df = pd.read_json(cur_data[sce])
+                df = LOCAL_SCENARIO_DATA[sce]
 
                 if region_id != WORLD_ID:
                     # narrow to the region if the scope is not on the whole world
@@ -604,12 +617,10 @@ def aggregate_table_callback(app_handle, result_category):
             Input('region-input', 'value'),
             Input('scenario-input', 'value'),
         ],
-        [State('data-store', 'data')]
     )
     def update_table(
             region_id,
             scenario,
-            cur_data,
     ):
         """Display information and study's results for a country."""
 
@@ -619,7 +630,7 @@ def aggregate_table_callback(app_handle, result_category):
         if region_id is not None:
             if scenario in SCENARIOS:
 
-                df = pd.read_json(cur_data[scenario])
+                df = LOCAL_SCENARIO_DATA[scenario]
                 if region_id != WORLD_ID:
                     # narrow to the region if the scope is not on the whole world
                     df = df.loc[df.region == REGIONS_NDC[region_id]]
@@ -684,14 +695,13 @@ def country_aggregate_title_callback(app_handle, result_type, result_category):
     @app_handle.callback(
         Output('{}-results-title'.format(id_name), 'children'),
         inputs,
-        [State('data-store', 'data')]
     )
-    def update_title(input_trigger, scenario, cur_data):
+    def update_title(input_trigger, scenario):
 
         answer = 'Results'
         if scenario in SCENARIOS and input_trigger is not None:
             if result_type == RES_COUNTRY:
-                df = pd.read_json(cur_data[scenario])
+                df = LOCAL_SCENARIO_DATA[scenario]
                 answer = '{}: '.format(df.loc[df.country_iso == input_trigger].country.values[0])
             elif result_type == RES_AGGREGATE:
                 answer = '{}: Aggregated '.format(
@@ -722,11 +732,10 @@ def compare_barplot_callback(app_handle, result_category):
             Input('{}-barplot-yaxis-input'.format(id_name), 'value')
         ],
         [
-            State('data-store', 'data'),
             State('{}-barplot'.format(id_name), 'figure')
         ]
     )
-    def update_barplot(country_sel, comp_sel, scenario, y_sel, cur_data, fig):
+    def update_barplot(country_sel, comp_sel, scenario, y_sel, fig):
         if y_sel is None:
             idx_y = 0
         else:
@@ -734,7 +743,7 @@ def compare_barplot_callback(app_handle, result_category):
 
         if country_sel is not None and comp_sel is not None:
             comp_name = comp_sel
-            df = pd.read_json(cur_data[scenario])
+            df = LOCAL_SCENARIO_DATA[scenario]
             df_comp = df.copy()
             df_ref = df.loc[df.country_iso == country_sel]
             if comp_sel in REGIONS_NDC:
@@ -834,9 +843,8 @@ def compare_table_callback(app_handle, result_category):
             Input('compare-input', 'value'),
             Input('scenario-input', 'value'),
         ],
-        [State('data-store', 'data')]
     )
-    def update_table(country_iso, comp_sel, scenario, cur_data):
+    def update_table(country_iso, comp_sel, scenario):
         """Display information and study's results comparison between countries."""
         answer_table = []
 
@@ -845,7 +853,7 @@ def compare_table_callback(app_handle, result_category):
         # extract the data from the selected scenario if a country was selected
         if country_iso is not None and comp_sel is not None:
             if scenario in SCENARIOS:
-                df = pd.read_json(cur_data[scenario])
+                df = LOCAL_SCENARIO_DATA[scenario]
                 df_comp = df.copy()
                 df = df.loc[df.country_iso == country_iso]
                 if comp_sel in REGIONS_NDC:
@@ -919,13 +927,12 @@ def compare_title_callback(app_handle, result_category):
             Input('compare-input', 'value'),
             Input('scenario-input', 'value')
         ],
-        [State('data-store', 'data')]
     )
-    def update_title(country_iso, comp_sel, scenario, cur_data):
+    def update_title(country_iso, comp_sel, scenario):
 
         answer = 'Results'
         if scenario in SCENARIOS and country_iso is not None and comp_sel is not None:
-            df = pd.read_json(cur_data[scenario])
+            df = LOCAL_SCENARIO_DATA[scenario]
             if comp_sel in REGIONS_NDC:
                 comp_name = REGIONS_GPD[comp_sel]
             else:
@@ -1120,7 +1127,7 @@ def toggle_results_div_callback(app_handle, result_type, result_category):
         if result_type == RES_COUNTRY:
             if cur_view['app_view'] == VIEW_COUNTRY:
                 cur_style = {}
-            elif cur_view['app_view'] in [VIEW_GENERAL,VIEW_AGGREGATE, VIEW_COMPARE]:
+            elif cur_view['app_view'] in [VIEW_GENERAL, VIEW_AGGREGATE, VIEW_COMPARE]:
                 cur_style.update({'display': 'none'})
         elif result_type == RES_AGGREGATE:
             if cur_view['app_view'] == VIEW_AGGREGATE:
@@ -1156,7 +1163,7 @@ def update_maps_callback(app_handle, region):
         region_id = MAP_REGIONS[region]
 
         # load the data of the scenario
-        df = pd.read_json(cur_data[scenario])
+        df = LOCAL_SCENARIO_DATA[scenario]
 
         centroid = pd.read_json(cur_data[region_id])
 
@@ -1349,18 +1356,23 @@ def callbacks(app_handle):
 
     @app_handle.callback(
         Output('specific-info-div', 'style'),
-        [Input('view-store', 'data')],
+        [
+            Input('view-store', 'data'),
+            Input('specific-info-div', 'children')
+        ],
         [State('specific-info-div', 'style')]
     )
-    def toggle_specific_info_display(cur_view, cur_style):
+    def toggle_specific_info_display(cur_view, content, cur_style):
         """Change the display information between the app's views."""
         if cur_style is None:
-            cur_style = {'display': 'block'}
+            cur_style = {'display': 'none'}
 
         if cur_view['app_view'] in [VIEW_GENERAL, VIEW_AGGREGATE]:
             cur_style = {}
         elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
             cur_style.update({'display': 'none'})
+        if content == '' or content == []:
+            cur_style = {'display': 'none'}
         return cur_style
 
     @app_handle.callback(
@@ -1371,36 +1383,23 @@ def callbacks(app_handle):
     def toggle_map_div_display(cur_view, cur_style):
         """Change the display of map between the app's views."""
         if cur_style is None:
-            cur_style = {'display': 'block'}
+            cur_style = {'display': 'flex'}
 
         if cur_view['app_view'] in [VIEW_GENERAL, VIEW_AGGREGATE]:
-            cur_style = {}
-        elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
-            cur_style.update({'display': 'none'})
-        return cur_style
-
-    @app_handle.callback(
-        Output('right-map-div', 'style'),
-        [Input('view-store', 'data')],
-        [State('right-map-div', 'style')]
-    )
-    def toggle_map_div_display(cur_view, cur_style):
-        """Change the display of map between the app's views."""
-        if cur_style is None:
-            cur_style = {'display': 'block'}
-
-        if cur_view['app_view'] in [VIEW_GENERAL, VIEW_AGGREGATE]:
-            cur_style = {}
+            cur_style = {'display': 'flex'}
         elif cur_view['app_view'] in [VIEW_COUNTRY, VIEW_COMPARE]:
             cur_style.update({'display': 'none'})
         return cur_style
 
     @app_handle.callback(
         Output('results-info-div', 'style'),
-        [Input('view-store', 'data')],
+        [
+            Input('view-store', 'data'),
+            Input('results-info-div', 'children')
+        ],
         [State('results-info-div', 'style')]
     )
-    def toggle_results_info_div_display(cur_view, cur_style):
+    def toggle_results_info_div_display(cur_view, content, cur_style):
         """Change the display of results-info-div between the app's views."""
         if cur_style is None:
             cur_style = {'display': 'none'}
@@ -1409,6 +1408,8 @@ def callbacks(app_handle):
             cur_style = {}
         elif cur_view['app_view'] in [VIEW_GENERAL, VIEW_AGGREGATE, VIEW_COMPARE]:
             cur_style.update({'display': 'none'})
+        if content == '' or content == []:
+            cur_style = {'display': 'none'}
         return cur_style
 
     @app_handle.callback(
@@ -1453,11 +1454,10 @@ def callbacks(app_handle):
         [
             Input('data-store', 'data'),
             Input('region-input', 'value'),
-            Input('url-store', 'data')
         ],
         [State('country-input', 'value')]
     )
-    def update_selected_country_on_map(cur_data, region_id,  url_data, cur_val):
+    def update_selected_country_on_map(cur_data, region_id,  cur_val):
 
         # return None if the trigger is the region-input
         country_iso = None
@@ -1476,13 +1476,12 @@ def callbacks(app_handle):
             Input('scenario-input', 'value'),
             Input('country-input', 'value')
         ],
-        [State('data-store', 'data')]
     )
-    def update_results_info_div(scenario, country_iso, cur_data):
+    def update_results_info_div(scenario, country_iso):
 
         divs = []
         if scenario in SCENARIOS and country_iso is not None:
-            df = pd.read_json(cur_data[scenario])
+            df = LOCAL_SCENARIO_DATA[scenario]
             df = df.loc[df.country_iso == country_iso]
             pop_2017 = np.round(df.pop_2017.values[0] * 1e-6, 2)
             pop_2017_coarse = np.round(df.pop_2017.values[0] * 1e-6, 0)
@@ -1561,13 +1560,12 @@ electrified from 2017 until 2030.""".format(
             Input('scenario-input', 'value'),
             Input('region-input', 'value')
         ],
-        [State('data-store', 'data')]
     )
-    def update_aggregate_info_div(scenario, region_id, cur_data):
+    def update_aggregate_info_div(scenario, region_id):
 
         pop_2017 = ''
         if scenario in SCENARIOS and region_id is not None:
-            df = pd.read_json(cur_data[scenario])
+            df = LOCAL_SCENARIO_DATA[scenario]
             pop_2017 = df.pop_2017.sum(axis=0)
 
         return html.Div('Population (2017) : {}'.format(pop_2017))
@@ -1577,15 +1575,15 @@ electrified from 2017 until 2030.""".format(
         [Input('region-input', 'value')],
         [
             State('scenario-input', 'value'),
-            State('data-store', 'data')
+
         ]
     )
-    def update_country_selection_options(region_id, scenario, cur_data):
+    def update_country_selection_options(region_id, scenario):
         """List the countries in a given region in alphabetical order."""
         countries_in_region = []
         if scenario is not None:
             # load the data of the scenario
-            df = pd.read_json(cur_data[scenario])
+            df = LOCAL_SCENARIO_DATA[scenario]
 
             if region_id is None:
                 region_id = WORLD_ID

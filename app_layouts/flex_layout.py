@@ -273,10 +273,13 @@ def layout(country_iso=None, sce=None):
                         children=html.Div(
                             id='flex-main-results-contents',
                             className='grid-x align-center',
-                            children=[
-                                results_div(RES_COMPARE, res_category, 'flex-')
-                                for res_category in [POP_RES, INVEST_RES, GHG_RES]
-                            ]
+                            children=dcc.Loading(
+                                children=[
+                                    results_div(RES_COMPARE, res_category, 'flex-')
+                                    for res_category in [POP_RES, INVEST_RES, GHG_RES]
+                                ],
+                                className='cell grid-x align-center'
+                            )
                         ),
                     ),
                 ]
@@ -478,7 +481,7 @@ def compare_table_callback(app_handle, result_category):
             results_data = np.hstack([flex_results_data, comp_results_data])
 
             comp_ids = ['comp_{}'.format(c) for c in ELECTRIFICATION_OPTIONS] \
-                + ['comp_{}'.format(NO_ACCESS)]
+                       + ['comp_{}'.format(NO_ACCESS)]
             # prepare a DataFrame
             results_data = pd.DataFrame(
                 data=results_data,
