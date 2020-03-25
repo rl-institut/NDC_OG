@@ -24,6 +24,9 @@ about_content = [
 ]
 
 location = "/download/{}".format(urlquote('Off_Grid_Report_WEB_DS_96.pdf'))
+location_dd_ETH = "/download/{}".format(urlquote('2020-02-13 Deep Dive Report Ethiopia.pdf'))
+location_dd_MAD = "/download/{}".format(urlquote('2020-01-09 Deep Dive Report Madagascar.pdf'))
+location_dd_NIG = "/download/{}".format(urlquote('2019-06-27 Deep Dive Report Nigeria .pdf'))
 
 impressum_content = [
     html.P(
@@ -71,6 +74,18 @@ citation_content = [
         children=html.A(href=location, children=html.Img(
             src='data:image/png;base64,{}'.format(REPORT_IMG.decode()),
         ))
+    ),
+    html.Div(
+        className="cell deep-dives",
+        children=html.P(
+            ["Complementary to the report, we derived three country deep dives for ",
+             html.A(href=location_dd_NIG, children="Nigeria"), ", ",
+             html.A(href=location_dd_ETH, children="Ethiopia"),
+             " and ", html.A(href=location_dd_MAD, children="Madagascar"),
+             ". ", "Please note that the deep dives were built upon preliminary results of the "
+                   "quantitative study. ",
+             " Numbers in the deep dives might differ from results in the online tool."]
+        )
     ),
     html.Div(
         className="cell",

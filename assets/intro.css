@@ -14,3 +14,11 @@
     border-radius: 5px;
     padding: 5px
 }
+.deep-dives{
+    padding-top:10px;
+}
+
+.deep-dives p{
+    padding-bottom: 0px;
+    margin-bottom: 0px;
+}
