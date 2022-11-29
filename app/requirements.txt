@@ -1,0 +1,9 @@
+dash==0.39.0
+dash_daq==0.1.4
+plotly==3.7.1
+geopandas
+pandas
+numpy
+matplotlib
+descartes
+gunicorn

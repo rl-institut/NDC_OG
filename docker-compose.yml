@@ -1,0 +1,32 @@
+version: "3.7"
+
+services:
+
+  ndc_app:
+    build:
+      context: ./app
+      dockerfile: ./Dockerfile
+    container_name: ndc_app
+    restart: always
+    expose:
+      - 8050  # use expose instead of port to expose ports internal between containers and not to the host maschine
+    networks:
+      - ndc_network
+
+
+  nginx_ndc:
+    image: nginx:1.21-alpine
+    container_name: ngx_ndc
+    restart: always
+    ports:
+      - "8050:80"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+    depends_on:
+      - ndc_app
+    networks:
+      - ndc_network
+
+
+networks:
+  ndc_network:
