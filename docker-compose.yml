@@ -10,6 +10,8 @@ services:
     restart: always
     expose:
       - 8050  # use expose instead of port to expose ports internal between containers and not to the host maschine
+    volumes:
+      - ndc_static:/app/asset
     networks:
       - ndc_network
 
@@ -26,6 +28,9 @@ services:
       - ndc_app
     networks:
       - ndc_network
+
+volumes:
+  ndc_static:
 
 
 networks:
