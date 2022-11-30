@@ -11,7 +11,7 @@ services:
     expose:
       - 8050  # use expose instead of port to expose ports internal between containers and not to the host maschine
     volumes:
-      - ndc_static:/app/asset
+      - ndc_static:/app/assets
     networks:
       - ndc_network
 
