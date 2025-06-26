@@ -1,9 +1,11 @@
 dash==0.39.0
 dash_daq==0.1.4
 plotly==3.7.1
-geopandas
-pandas
-numpy
-matplotlib
-descartes
-gunicorn
+geopandas==0.12.1
+pandas==1.5.2
+numpy==1.23.5
+matplotlib==3.6.2
+descartes==1.1.0
+flask==2.2.2
+werkzeug==2.3.7
+gunicorn==
