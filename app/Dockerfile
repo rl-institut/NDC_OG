@@ -8,4 +8,4 @@ RUN set -ex && \
     pip install -r requirements.txt
 EXPOSE 8050
 RUN pip freeze
-CMD ["gunicorn", "-b", "0.0.0.0:8050", "--reload", "index:server"]
+CMD ["gunicorn", "-b", "0.0.0.0:8050", "index:server"]
