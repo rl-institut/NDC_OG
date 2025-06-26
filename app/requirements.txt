@@ -8,4 +8,4 @@ matplotlib==3.6.2
 descartes==1.1.0
 flask==2.2.2
 werkzeug==2.3.7
-gunicorn==
+gunicorn==20.1.0
