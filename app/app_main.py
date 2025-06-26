@@ -65,6 +65,9 @@ def download(path):
     """Serve a file from the upload directory."""
     return send_from_directory('data', path, as_attachment=True)
 
+@app.server.route('/healthcheck')
+def healthcheck():
+    return 'OK', 200
 
 @server.route('/favicon.ico')
 def favicon():

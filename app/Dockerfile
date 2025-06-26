@@ -5,6 +5,7 @@ WORKDIR /app
 COPY app/requirements.txt requirements.txt
 ADD . /app
 RUN set -ex && \
+    pip install --upgrade pip && \
     pip install -r requirements.txt
 EXPOSE 8050
 RUN pip freeze
